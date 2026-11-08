@@ -5,6 +5,7 @@ import { dailyTargets, isTrainingDay, totalsFor } from '../lib/nutrition';
 import { allExercises, exerciseHistory, weeklySummaries } from '../lib/training';
 import { addDays, fmt, shortDate, today } from '../lib/util';
 import { chartTheme, NumField, Seg, Stat } from '../components/ui';
+import { CyclePattern } from '../components/Cycle';
 
 export function Progress() {
   const [tab, setTab] = useState<'body' | 'strength' | 'effort' | 'diet'>('body');
@@ -168,6 +169,7 @@ function EffortTab() {
           <Stat v={fmt(avg('runKm'), 1)} l="km run / week" />
         </div>
       </div>
+      <CyclePattern />
       <div className="card">
         <h2>Session mix</h2>
         <div className="chart" style={{ height: 180 }}>

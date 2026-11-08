@@ -4,6 +4,8 @@ import { fmt, fmtDuration, today } from '../lib/util';
 import { MacroSummary, WaterCard } from './Diet';
 import { startWorkout } from './Train';
 import { Stat } from '../components/ui';
+import { ReadinessCard } from '../components/Readiness';
+import { CycleCard } from '../components/Cycle';
 import type { Tab } from '../App';
 
 export function Today({ go }: { go: (t: Tab) => void }) {
@@ -48,6 +50,9 @@ export function Today({ go }: { go: (t: Tab) => void }) {
           </div>
         )}
       </div>
+
+      {!todays.length && <ReadinessCard compact />}
+      <CycleCard />
 
       <div className="card" onClick={() => go('progress')} style={{ cursor: 'pointer' }}>
         <h2>This week</h2>

@@ -259,14 +259,15 @@ function SevPicker({ label, value, onChange }: { label: string; value: Severity;
 
 function Gut({ ask }: { ask: (q: string) => void }) {
   const s = useAppState();
-  const existing = (s.gut ?? []).find((g) => g.date === today());
-  const [g, setG] = useState<GutLog>(existing ?? { date: today(), bloating: 0, pain: 0, reflux: 0 });
+  const existingAny = (s.gut ?? []).find((x) => x.date === today());
+  const existing = existingAny?.wellnessOnly ? undefined : existingAny;
+  const [g, setG] = useState<GutLog>(existingAny ?? { date: today(), bloating: 0, pain: 0, reflux: 0 });
   const [saved, setSaved] = useState(false);
   const pat = useMemo(() => gutPatterns(s), [s]);
-  const recent = [...(s.gut ?? [])].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
+  const recent = [...(s.gut ?? [])].filter((x) => !x.wellnessOnly).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
 
   const save = () => {
-    mutate((st) => { st.gut = [...(st.gut ?? []).filter((x) => x.date !== g.date), g]; });
+    mutate((st) => { st.gut = [...(st.gut ?? []).filter((x) => x.date !== g.date), { ...g, wellnessOnly: undefined }]; });
     setSaved(true); setTimeout(() => setSaved(false), 1500);
   };
 
@@ -278,11 +279,11 @@ function Gut({ ask }: { ask: (q: string) => void }) {
         <SevPicker label="Stomach pain / cramps" value={g.pain} onChange={(v) => setG({ ...g, pain: v })} />
         <SevPicker label="Reflux / heartburn" value={g.reflux} onChange={(v) => setG({ ...g, reflux: v })} />
         <SevPicker label="Skin / eczema (itch, flare)" value={g.skin ?? 0} onChange={(v) => setG({ ...g, skin: v })} />
-        <div className="grid3">
-          {(['energy', 'sleep', 'mood'] as const).map((k) => (
+        <div className="grid4">
+          {(['energy', 'sleep', 'mood', 'soreness'] as const).map((k) => (
             <label key={k} className="field"><span>{k[0].toUpperCase() + k.slice(1)}</span>
               <select value={g[k] ?? ''} onChange={(e) => setG({ ...g, [k]: e.target.value === '' ? undefined : (+e.target.value as Severity) })}>
-                <option value="">–</option>{WELL.map((l, i) => <option key={l} value={i}>{l}</option>)}
+                <option value="">–</option>{(k === 'soreness' ? ['None', 'Mild', 'Quite sore', 'Very sore'] : WELL).map((l, i) => <option key={l} value={i}>{l}</option>)}
               </select>
             </label>
           ))}

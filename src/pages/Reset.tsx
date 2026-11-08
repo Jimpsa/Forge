@@ -18,7 +18,7 @@ export function Reset({ goGut, ask }: { goGut: () => void; ask: (q: string) => v
   if (!p) return <StartProtocol />;
   const ph = PHASES[p.phase];
   const day = dayOf(p.phaseStart);
-  const checkedIn = (s.gut ?? []).some((g) => g.date === today());
+  const checkedIn = (s.gut ?? []).some((g) => g.date === today() && !g.wellnessOnly);
 
   return (
     <>

@@ -70,7 +70,7 @@ export interface Exercise {
 
 export interface SetLog { reps: number; weight: number; rpe?: number; done: boolean; warmup?: boolean }
 
-export interface ExerciseLog { exerciseId: string; sets: SetLog[]; notes?: string; restSec?: number }
+export interface ExerciseLog { exerciseId: string; sets: SetLog[]; notes?: string; restSec?: number; targetReps?: number }
 
 export type CardioActivity = 'run' | 'cycle' | 'row' | 'swim' | 'walk' | 'elliptical' | 'hiit' | 'other';
 
@@ -128,6 +128,7 @@ export interface Profile {
   trainingDayKcal: number; // extra kcal (from carbs) on days with a workout
   waterGoalMl: number;
   maxHr?: number;
+  cycle?: CycleSettings;
   kcalOverride?: number;
   maintenanceKcal?: number; // measured from intake + weight trend (replaces the formula when set)
 }
@@ -147,6 +148,7 @@ export interface AppState {
   gut?: GutLog[];
   protocol?: Protocol;
   chat?: ChatMessage[];
+  periodStarts?: string[]; // first day of each period (YYYY-MM-DD)
 }
 
 export type Severity = 0 | 1 | 2 | 3; // none, mild, moderate, severe
@@ -154,6 +156,10 @@ export interface GutLog {
   date: string; bloating: Severity; pain: Severity; reflux: Severity; stool?: number; notes?: string;
   skin?: Severity; // eczema / itch / flare
   energy?: Severity; sleep?: Severity; mood?: Severity; // 0 poor … 3 great
+  soreness?: Severity; // muscle soreness, 0 none … 3 severe
+  period?: boolean; // menstruating today
+  cycleSymptoms?: Severity; // cramps, PMS, headache …
+  wellnessOnly?: boolean; // created by the readiness questions — gut fields not answered yet
 }
 
 export interface ReintroTest { id: string; food: string; start: string; result: 'testing' | 'ok' | 'reaction'; ended?: string; note?: string }
@@ -166,3 +172,9 @@ export interface Protocol {
   yogurt?: { start: string; cap?: number };
 }
 export interface ChatMessage { role: 'user' | 'assistant'; content: string; at: number }
+
+export interface CycleSettings {
+  track: boolean;
+  contraception: 'none' | 'hormonal'; // hormonal = pill, implant, hormonal IUD, ring …
+  typicalLength: number; // days, used until there is enough logged data
+}

@@ -34,6 +34,26 @@ export function ProfileForm({ onboarding }: { onboarding?: boolean }) {
           <NumField label="Height" suffix="cm" value={p.heightCm} onChange={(v) => set('heightCm', v ?? 0)} />
           <NumField label="Weight" suffix="kg" value={p.weightKg} onChange={(v) => set('weightKg', v ?? 0)} step={0.1} />
         </div>
+        {p.sex === 'female' && (
+          <div className="stack" style={{ padding: 12, borderRadius: 12, background: 'var(--surface-2)' }}>
+            <label className="row small" style={{ gap: 8 }}>
+              <input type="checkbox" style={{ width: 'auto' }} checked={!!p.cycle?.track} onChange={(e) => set('cycle', { contraception: 'none', typicalLength: 28, ...p.cycle, track: e.target.checked })} />
+              Track my menstrual cycle (adjusts training advice to symptoms)
+            </label>
+            {p.cycle?.track && (
+              <div className="grid2">
+                <label className="field"><span>Contraception</span>
+                  <select value={p.cycle.contraception} onChange={(e) => set('cycle', { ...p.cycle!, contraception: e.target.value as 'none' | 'hormonal' })}>
+                    <option value="none">None / copper IUD</option>
+                    <option value="hormonal">Hormonal (pill, implant, hormonal IUD…)</option>
+                  </select>
+                </label>
+                <NumField label="Typical cycle length" suffix="days" value={p.cycle.typicalLength} onChange={(v) => set('cycle', { ...p.cycle!, typicalLength: v ?? 28 })} />
+              </div>
+            )}
+            <p className="tiny muted">Private to you. Cycle data is only used for your own training advice.</p>
+          </div>
+        )}
         <label className="field"><span>Daily activity outside of training</span>
           <select value={p.activity} onChange={(e) => set('activity', e.target.value as P['activity'])}>
             {Object.entries(ACTIVITY_FACTORS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}

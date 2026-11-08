@@ -106,7 +106,7 @@ const avgScore = (logs: GutLog[]) => (logs.length ? logs.reduce((a, g) => a + re
 
 /** Compare symptoms during a test (start … +2 days) with the 3 days before it. */
 export function assessTest(s: AppState, t: ReintroTest) {
-  const logs = s.gut ?? [];
+  const logs = (s.gut ?? []).filter((g) => !g.wellnessOnly);
   const end = t.ended ?? addDays(t.start, 2);
   const before = logs.filter((g) => g.date >= addDays(t.start, -3) && g.date < t.start);
   const during = logs.filter((g) => g.date >= t.start && g.date <= end);
@@ -143,7 +143,7 @@ export function weeklyScores(s: AppState) {
   const weeks = Math.max(1, Math.ceil(dayOf(p.start) / 7));
   return Array.from({ length: weeks }, (_, i) => {
     const from = addDays(p.start, i * 7), to = addDays(p.start, i * 7 + 6);
-    const logs = (s.gut ?? []).filter((g) => g.date >= from && g.date <= to);
+    const logs = (s.gut ?? []).filter((g) => !g.wellnessOnly && g.date >= from && g.date <= to);
     const skin = logs.filter((g) => g.skin !== undefined);
     return { week: i + 1, from, n: logs.length, score: avgScore(logs), skin: skin.length ? skin.reduce((a, g) => a + g.skin!, 0) / skin.length : undefined };
   });

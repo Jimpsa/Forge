@@ -36,7 +36,7 @@ export interface Pattern { key: string; label: string; why: string; withAvg: num
 
 /** Compares symptom scores on days when a trigger was eaten (same day or the day before) vs days without. */
 export function gutPatterns(s: AppState): { patterns: Pattern[]; checkins: number; extra: string[] } {
-  const logs = (s.gut ?? []).filter((g) => g.date > addDays(today(), -60));
+  const logs = (s.gut ?? []).filter((g) => !g.wellnessOnly && g.date > addDays(today(), -60));
   const extra: string[] = [];
   if (logs.length < 7) return { patterns: [], checkins: logs.length, extra };
   const ate = (date: string, re: RegExp) => entriesFor(s, date).some((e) => re.test(e.name));

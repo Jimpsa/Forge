@@ -6,6 +6,8 @@ import { CARDIO } from '../data/exercises';
 import { fmt, fmtDuration, fmtPace, prettyDate, today, uid } from '../lib/util';
 import { NumField, Sheet, Stat } from "../components/ui";
 import { askConfirm } from '../components/confirm';
+import { progression, readiness } from '../lib/readiness';
+import { ReadinessCard } from '../components/Readiness';
 
 const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Legs', 'Glutes', 'Core', 'Full body'];
 
@@ -15,8 +17,9 @@ export function startWorkout(t?: Template) {
     st.active = {
       name: t?.name ?? 'Workout', startedAt: Date.now(), cardio: [], restSec: 120,
       exercises: (t?.exercises ?? []).map((te) => {
-        const last = exerciseHistory(s, te.exerciseId).at(-1);
-        return { exerciseId: te.exerciseId, restSec: te.restSec, sets: Array.from({ length: te.sets }, (_, i) => ({ reps: last?.sets[i]?.reps ?? te.reps, weight: last?.sets[i]?.weight ?? last?.topWeight ?? 0, done: false })) };
+        // Pre-fill with today's suggestion (progression + readiness).
+        const p = progression(s, te.exerciseId, te.reps, readiness(s));
+        return { exerciseId: te.exerciseId, restSec: te.restSec, targetReps: te.reps, sets: Array.from({ length: te.sets }, () => ({ reps: p.reps, weight: p.weight, done: false })) };
       }),
     };
   });
@@ -130,6 +133,15 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
         <span className="num muted">{Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}</span>
       </div>
 
+      <ReadinessCard compact onApply={() => upd((w) => {
+        const st = getState();
+        for (const e of w.exercises) {
+          const p = progression(st, e.exerciseId, e.targetReps, readiness(st));
+          if (p.kind === 'first') continue;
+          for (const set of e.sets) if (!set.done && !set.warmup) { set.weight = p.weight; set.reps = p.reps; }
+        }
+      })} />
+
       {restLeft > 0 && (
         <div className="rest-banner">
           <span>Rest {Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</span>
@@ -149,6 +161,7 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
               <h2 style={{ margin: 0 }}>{exerciseName(s, ex.exerciseId)}</h2>
               <button className="icon-btn" title="Remove exercise" onClick={async () => (await askConfirm('Remove this exercise?', 'Remove')) && upd((w) => { w.exercises.splice(ei, 1); })}>✕</button>
             </div>
+            <Suggestion exerciseId={ex.exerciseId} targetReps={ex.targetReps} onApply={(wgt, reps) => upd((w) => { for (const set of w.exercises[ei].sets) if (!set.done && !set.warmup) { set.weight = wgt; set.reps = reps; } })} />
             {last && <div className="tiny muted">Last time ({prettyDate(last.date)}): {last.sets.map((x) => `${fmt(x.weight, 1)}×${x.reps}`).join(', ')} · best e1RM {fmt(Math.max(...hist.map((h) => h.e1rm)), 1)} kg</div>}
             <div className="set-row tiny muted" style={{ marginTop: 10 }}><span>Set</span><span>kg</span><span>Reps</span><span>RPE</span><span /></div>
             {ex.sets.map((set, si) => (
@@ -198,11 +211,33 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
       </div>
 
       <ExercisePicker open={adding} onClose={() => setAdding(false)} onPick={(id) => {
-        upd((w) => { const last = exerciseHistory(getState(), id).at(-1); w.exercises.push({ exerciseId: id, sets: [{ reps: last?.sets[0]?.reps ?? 8, weight: last?.topWeight ?? 0, done: false }] }); });
+        upd((w) => { const st = getState(); const p = progression(st, id, undefined, readiness(st)); w.exercises.push({ exerciseId: id, sets: [{ reps: p.reps, weight: p.weight, done: false }] }); });
         setAdding(false);
       }} />
       <CardioForm open={cardio} onClose={() => setCardio(false)} onSave={(c) => { upd((w) => { w.cardio.push(c); }); setCardio(false); }} />
       <FinishSheet open={finishing} onClose={() => setFinishing(false)} onSaved={onSaved} elapsedMin={Math.max(1, Math.round(elapsed / 60))} />
+    </div>
+  );
+}
+
+const SUGGEST_STYLE: Record<string, [string, string]> = {
+  increase: ['⬆', 'var(--accent)'], reps: ['➕', 'var(--protein)'], hold: ['⏸', 'var(--muted)'],
+  deload: ['⬇', 'var(--warn)'], easy: ['🫶', 'var(--warn)'], first: ['🆕', 'var(--muted)'],
+};
+
+function Suggestion({ exerciseId, targetReps, onApply }: { exerciseId: string; targetReps?: number; onApply: (w: number, r: number) => void }) {
+  const s = useAppState();
+  const p = progression(s, exerciseId, targetReps, readiness(s));
+  const [ico, color] = SUGGEST_STYLE[p.kind];
+  const sets = s.active?.exercises.find((e) => e.exerciseId === exerciseId)?.sets.filter((x) => !x.done && !x.warmup) ?? [];
+  const applied = sets.length > 0 && sets.every((x) => x.weight === p.weight && x.reps === p.reps);
+  return (
+    <div style={{ margin: '6px 0', padding: '8px 10px', borderRadius: 10, background: 'var(--surface-2)', borderLeft: `3px solid ${color}` }}>
+      <div className="row between">
+        <strong className="small">{ico} {p.text}</strong>
+        {p.kind !== 'first' && sets.length > 0 && (applied ? <span className="tiny muted">applied</span> : <button className="btn sm" onClick={() => onApply(p.weight, p.reps)}>Apply</button>)}
+      </div>
+      <div className="tiny muted" style={{ marginTop: 2 }}>{p.why}</div>
     </div>
   );
 }
