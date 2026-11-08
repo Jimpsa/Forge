@@ -6,6 +6,7 @@ import { gutPatterns, symptomScore, BRISTOL } from './gut';
 import { age, dailyTargets } from './nutrition';
 import { weeklySummaries, exerciseName, exerciseHistory } from './training';
 import { addDays, today } from './util';
+import { protocolContext } from './protocol';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type SampleFn = ((input: any, opts?: any) => Promise<{ text: string; truncated: boolean }>) | null;
@@ -36,6 +37,8 @@ SAFETY:
 - Supplements: general information only; mention checking with a doctor or pharmacist if they take medication, are pregnant, or have a condition.
 - Don't tell the user to cut gluten before a coeliac test.
 
+PROTOCOLS: If the data shows the user is on a gut reset protocol, respect it: suggest meals and swaps only from foods allowed in their current phase, follow its one-food-at-a-time rule, and help them interpret reactions. Give honest, brief safety facts when relevant (e.g. raw-food infection risk, high-histamine foods, nutrient gaps in a restrictive phase, when to see a doctor or dietitian), without lecturing or repeating them every message.
+
 STYLE: Reply in the user's language. Be friendly and direct. Keep answers short and skimmable (under ~200 words unless they ask for more), using short paragraphs and "- " bullet lists. Use **bold** sparingly. No tables.`;
 
 /** Compact snapshot of the user's data for the model (kept small on purpose). */
@@ -60,9 +63,11 @@ export function buildContext(s: AppState): string {
   const gut = (s.gut ?? []).filter((g) => g.date > addDays(today(), -14));
   if (gut.length) {
     const g = gutPatterns(s);
-    lines.push(`Gut check-ins (14 d): ${gut.length}. Avg symptom score ${(gut.reduce((x, y) => x + symptomScore(y), 0) / gut.length).toFixed(1)} (0–10). Recent: ${gut.slice(-5).map((x) => `${x.date} bloating ${x.bloating}/3 pain ${x.pain}/3 reflux ${x.reflux}/3${x.stool ? ` stool type ${x.stool} (${BRISTOL[x.stool - 1].meaning})` : ''}${x.notes ? ` note "${x.notes.slice(0, 80)}"` : ''}`).join('; ')}.`);
+    lines.push(`Gut check-ins (14 d): ${gut.length}. Avg symptom score ${(gut.reduce((x, y) => x + symptomScore(y), 0) / gut.length).toFixed(1)} (0–10). Recent: ${gut.slice(-5).map((x) => `${x.date} bloating ${x.bloating}/3 pain ${x.pain}/3 reflux ${x.reflux}/3${x.skin !== undefined ? ` skin ${x.skin}/3` : ''}${x.energy !== undefined ? ` energy ${x.energy}/3` : ''}${x.sleep !== undefined ? ` sleep ${x.sleep}/3` : ''}${x.stool ? ` stool type ${x.stool} (${BRISTOL[x.stool - 1].meaning})` : ''}${x.notes ? ` note "${x.notes.slice(0, 80)}"` : ''}`).join('; ')}.`);
     if (g.patterns.length) lines.push(`Possible triggers (correlation only): ${g.patterns.map((x) => `${x.label} ×${x.ratio.toFixed(1)}`).join(', ')}.`);
   }
+  const pc = protocolContext(s);
+  if (pc) lines.push(pc);
   return lines.join('\n');
 }
 

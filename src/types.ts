@@ -145,9 +145,24 @@ export interface AppState {
   active?: ActiveWorkout;
   body: BodyEntry[];
   gut?: GutLog[];
+  protocol?: Protocol;
   chat?: ChatMessage[];
 }
 
 export type Severity = 0 | 1 | 2 | 3; // none, mild, moderate, severe
-export interface GutLog { date: string; bloating: Severity; pain: Severity; reflux: Severity; stool?: number; notes?: string }
+export interface GutLog {
+  date: string; bloating: Severity; pain: Severity; reflux: Severity; stool?: number; notes?: string;
+  skin?: Severity; // eczema / itch / flare
+  energy?: Severity; sleep?: Severity; mood?: Severity; // 0 poor … 3 great
+}
+
+export interface ReintroTest { id: string; food: string; start: string; result: 'testing' | 'ok' | 'reaction'; ended?: string; note?: string }
+export interface Protocol {
+  start: string;
+  phase: 1 | 2 | 3;
+  phaseStart: string;
+  raw: boolean; // false = use high-quality cooked/pasteurised alternatives for the raw steps
+  tests: ReintroTest[];
+  yogurt?: { start: string; cap?: number };
+}
 export interface ChatMessage { role: 'user' | 'assistant'; content: string; at: number }

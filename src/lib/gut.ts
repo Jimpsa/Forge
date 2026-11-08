@@ -16,6 +16,8 @@ export const BRISTOL: { type: number; label: string; meaning: string }[] = [
 ];
 
 export const symptomScore = (g: GutLog) => g.bloating + g.pain + g.reflux + (g.stool && (g.stool <= 2 || g.stool >= 6) ? 1 : 0);
+/** Gut symptoms + skin (eczema), used for food-pattern detection. */
+export const totalScore = (g: GutLog) => symptomScore(g) + (g.skin ?? 0);
 
 // Common trigger groups, matched on logged food names (English + some Swedish words).
 const TRIGGERS: { key: string; label: string; re: RegExp; why: string }[] = [
@@ -45,8 +47,8 @@ export function gutPatterns(s: AppState): { patterns: Pattern[]; checkins: numbe
     for (const lag of [0, 1]) {
       const w = logs.filter((g) => ate(addDays(g.date, -lag), t.re)), wo = logs.filter((g) => !ate(addDays(g.date, -lag), t.re));
       if (w.length < 3 || wo.length < 3) continue;
-      const withAvg = w.reduce((a, g) => a + symptomScore(g), 0) / w.length;
-      const withoutAvg = wo.reduce((a, g) => a + symptomScore(g), 0) / wo.length;
+      const withAvg = w.reduce((a, g) => a + totalScore(g), 0) / w.length;
+      const withoutAvg = wo.reduce((a, g) => a + totalScore(g), 0) / wo.length;
       const ratio = (withAvg + 0.25) / (withoutAvg + 0.25);
       if (withAvg - withoutAvg >= 0.75 && ratio >= 1.4 && (!best || ratio > best.ratio))
         best = { key: t.key, label: t.label + (lag ? ' (day before)' : ''), why: t.why, withAvg, withoutAvg, nWith: w.length, nWithout: wo.length, ratio };
@@ -68,9 +70,9 @@ export function gutPatterns(s: AppState): { patterns: Pattern[]; checkins: numbe
   if (stools.length >= 5 && loose / stools.length >= 0.4) extra.push(`Loose stools on ${Math.round((loose / stools.length) * 100)}% of check-ins. See “Loose stools” below — and see a doctor if it has lasted more than 2–3 weeks.`);
   const highFatDays = logs.filter((g) => { const n = sum(entriesFor(s, g.date).map((e) => e.nutrients)); return (n.fat ?? 0) > dailyTargets(s.profile, isTrainingDay(s, g.date)).fat * 1.3; });
   if (highFatDays.length >= 3) {
-    const hi = highFatDays.reduce((a, g) => a + symptomScore(g), 0) / highFatDays.length;
+    const hi = highFatDays.reduce((a, g) => a + totalScore(g), 0) / highFatDays.length;
     const rest = logs.filter((g) => !highFatDays.includes(g));
-    const lo = rest.length ? rest.reduce((a, g) => a + symptomScore(g), 0) / rest.length : hi;
+    const lo = rest.length ? rest.reduce((a, g) => a + totalScore(g), 0) / rest.length : hi;
     if (hi - lo >= 0.75) extra.push('Symptoms are worse on high-fat days. Large fatty meals slow digestion and relax the valve above the stomach (reflux) — try smaller, leaner meals.');
   }
   return { patterns, checkins: logs.length, extra };

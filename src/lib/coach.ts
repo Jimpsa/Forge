@@ -4,6 +4,7 @@ import { BUILTIN_FOODS } from '../data/foods';
 import { dailyTargets, entriesFor, findFood, isTrainingDay, microTargets, scale, sum, tdee } from './nutrition';
 import { sessionKind } from './training';
 import { addDays, parseDate, today } from './util';
+import { allowedNow } from './protocol';
 
 // ---------------- Food categories ----------------
 
@@ -24,7 +25,13 @@ const BUILTIN_CAT: Record<string, Category> = {
 };
 for (const n of ['Oats, rolled (dry)', 'White rice, cooked', 'Brown rice, cooked', 'Pasta, cooked', 'Quinoa, cooked', 'Potato, boiled',
   'Sweet potato, baked', 'Whole wheat bread', 'White bread', 'Rice cakes']) BUILTIN_CAT[n] = 'starch';
-for (const n of ['Banana', 'Apple', 'Orange', 'Blueberries', 'Strawberries']) BUILTIN_CAT[n] = 'fruit';
+for (const n of ['Banana', 'Apple', 'Orange', 'Blueberries', 'Strawberries', 'Kiwi', 'Papaya']) BUILTIN_CAT[n] = 'fruit';
+for (const n of ['Carrot, boiled', 'Zucchini, peeled, cooked', 'Butternut squash, baked', 'Pumpkin, cooked', 'Parsnip, boiled', 'Green beans, cooked', 'Spinach, cooked', 'Lettuce', 'Sauerkraut', 'Kimchi']) BUILTIN_CAT[n] = 'veg';
+Object.assign(BUILTIN_CAT, {
+  'Beef steak, cooked': 'protein', 'Beef tartare (raw)': 'protein', 'Lamb, cooked': 'fatty-meat', 'Turkey breast, cooked': 'lean-protein',
+  'Beef tallow': 'oil', 'Lard': 'oil', 'Duck fat': 'oil', 'Raw butter': 'oil', 'Egg yolk, raw': 'protein', 'Raw cheese (hard)': 'cheese',
+  'Raw milk, whole': 'dairy', 'Whole milk, organic': 'dairy', 'Egg yolk, soft-cooked': 'protein', 'L. reuteri yogurt (homemade)': 'dairy', 'Kefir': 'dairy',
+} as Record<string, Category>);
 for (const n of ['Broccoli', 'Spinach, raw', 'Carrot', 'Tomato', 'Red bell pepper', 'Cucumber', 'Mixed salad greens']) BUILTIN_CAT[n] = 'veg';
 
 export function categorize(name: string, per100: Nutrients, builtin = false): Category {
@@ -137,6 +144,9 @@ const BULK_ADDS: { name: string; grams?: number; label?: string; note: string }[
   { name: 'Oats, rolled (dry)', grams: 60, label: '60 g', note: 'A bigger breakfast bowl, or a pre-bed bowl with milk.' },
   { name: 'Granola', note: 'On top of skyr or yogurt.' },
   { name: 'Banana', note: 'Before or after training.' },
+  { name: 'Beef tallow', note: 'Cook meat and potatoes in it — dense calories that fit the gut reset.' },
+  { name: 'Egg, whole', grams: 100, label: '2 eggs', note: 'Add to any meal.' },
+  { name: 'White rice, cooked', note: 'Cook fresh and eat right away.' },
 ];
 
 const LEAN_PROTEIN = ['Quark / kvarg, low fat', 'Skyr, plain', 'Chicken breast, cooked', 'Tuna, canned in water', 'Egg whites', 'Whey protein powder', 'Cod, cooked', 'Cottage cheese 2%', 'Shrimp, cooked'];
@@ -219,6 +229,9 @@ export function analyze(s: AppState, windowDays = 14): Analysis {
   }
   const topFoods = [...byFood.values()].sort((a, b) => b.kcalPerDay - a.kcalPerDay).map(({ grams: _g, ...rest }) => rest);
 
+  const onProtocol = !!s.protocol && s.protocol.phase < 3;
+  const ok = (name: string) => !onProtocol || allowedNow(s, name);
+
   // ---- Eat less (goal needs fewer calories) ----
   const eatLess: Suggestion[] = [];
   if (gap > 75) {
@@ -229,7 +242,8 @@ export function analyze(s: AppState, windowDays = 14): Analysis {
     let covered = 0;
     for (const { f, save } of cands) {
       if (eatLess.length >= 5 || (covered >= gap && eatLess.length >= 2)) break;
-      eatLess.push({ title: f.name, detail: CUT_SWAPS[f.category]!.tip(clean(f.name)), kcal: -r10(save) });
+      const tip = onProtocol && f.category === 'starch' ? `Make the ${clean(f.name)} portion about a third smaller and add a little more meat or eggs instead.` : onProtocol && f.category === 'oil' ? `Measure the ${clean(f.name)} with a spoon — cooking fat adds up fast.` : CUT_SWAPS[f.category]!.tip(clean(f.name));
+      eatLess.push({ title: f.name, detail: tip, kcal: -r10(save) });
       covered += save;
     }
   }
@@ -250,6 +264,7 @@ export function analyze(s: AppState, windowDays = 14): Analysis {
     for (const a of BULK_ADDS) {
       if (covered >= need || eatMore.length >= 4) break;
       const food = bf(a.name);
+      if (!ok(food.name)) continue;
       if (eatMore.some((x) => x.title.toLowerCase().includes(clean(food.name)))) continue;
       const sv = a.grams ? { label: a.label!, grams: a.grams } : serving(food);
       const k = kcalOf(food, sv.grams);
@@ -285,7 +300,8 @@ export function analyze(s: AppState, windowDays = 14): Analysis {
   const eaten = topFoods.filter((f) => f.proteinPer100kcal >= (p.goal === 'cut' ? 15 : 8)).map((f) => findFood(s, f.foodId)).filter(Boolean) as Food[];
   const options: Suggestion[] = [];
   if (proteinGap > proteinTarget * 0.1) {
-    for (const f of [...eaten, ...pool]) {
+    for (const f of [...eaten, ...pool, ...(onProtocol ? ['Beef steak, cooked', 'Egg, whole', 'Turkey breast, cooked', 'Pork tenderloin, cooked'].map(bf) : [])]) {
+      if (!ok(f.name)) continue;
       if (options.length >= 3 || options.some((o) => o.title.startsWith(f.name.split(',')[0]))) continue;
       const sv = serving(f);
       const pr = ((f.per100.protein ?? 0) * sv.grams) / 100;
@@ -310,9 +326,10 @@ export function analyze(s: AppState, windowDays = 14): Analysis {
     for (const x of logged) for (const e of x.es) m.set(e.name, (m.get(e.name) ?? 0) + (e.nutrients[k] ?? 0));
     return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([n]) => n.toLowerCase()).join(' and ');
   };
-  if (micro.fiber && (avg.fiber ?? 0) < micro.fiber.value * 0.75 && coverage('fiber') > 0.7)
+  if (!onProtocol && micro.fiber && (avg.fiber ?? 0) < micro.fiber.value * 0.75 && coverage('fiber') > 0.7)
     quality.push({ title: `Low fiber: ${Math.round(avg.fiber ?? 0)} g of ${micro.fiber.value} g`, detail: 'Add a portion of beans/lentils (+8 g), oats for breakfast (+4 g per 40 g), berries, or swap white bread/rice for wholegrain. Increase gradually and drink more water to avoid bloating.' });
   for (const k of ['sugar', 'satFat', 'sodium'] as const) {
+    if (onProtocol && k !== 'sugar') continue; // animal fats and 'salt to taste' are part of the protocol
     const lim = micro[k];
     if (lim && (avg[k] ?? 0) > lim.value * 1.1 && coverage(k) > 0.6) {
       const label = k === 'satFat' ? 'Saturated fat' : k === 'sodium' ? 'Sodium (salt)' : 'Sugar';
@@ -321,14 +338,14 @@ export function analyze(s: AppState, windowDays = 14): Analysis {
   }
   for (const k of ['iron', 'calcium', 'vitD', 'potassium', 'magnesium', 'vitB12'] as const) {
     const tgt = micro[k];
-    if (quality.length >= 5) break;
+    if (quality.length >= 5 || onProtocol) break;
     if (tgt && (avg[k] ?? 0) < tgt.value * 0.6 && coverage(k) > 0.7)
       quality.push({ title: `Low ${k === 'vitD' ? 'vitamin D' : k === 'vitB12' ? 'vitamin B12' : k}`, detail: `About ${Math.round(((avg[k] ?? 0) / tgt.value) * 100)}% of the reference value. Good sources: ${MICRO_FOODS[k]}.` });
   }
   const plantsThisWeek = new Set(
     s.entries.filter((e) => e.date > addDays(t, -7)).filter((e) => ['fruit', 'veg', 'legume', 'nuts', 'starch'].includes(foodCategory(s, e))).map((e) => e.foodId),
   ).size;
-  if (plantsThisWeek < 15 && logged.length >= 5) quality.push({ title: `${plantsThisWeek} different plant foods this week`, detail: 'Variety feeds a more diverse gut microbiome. Research links ~30 different plants a week (fruit, veg, legumes, whole grains, nuts, seeds, herbs) to better gut health. Try a frozen veg mix or a new legume each week.' });
+  if (!onProtocol && plantsThisWeek < 15 && logged.length >= 5) quality.push({ title: `${plantsThisWeek} different plant foods this week`, detail: 'Variety feeds a more diverse gut microbiome. Research links ~30 different plants a week (fruit, veg, legumes, whole grains, nuts, seeds, herbs) to better gut health. Try a frozen veg mix or a new legume each week.' });
 
   // ---- Training ----
   const training: Tip[] = [];

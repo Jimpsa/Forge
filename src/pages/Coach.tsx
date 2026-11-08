@@ -7,22 +7,25 @@ import { BRISTOL, GUIDE, RED_FLAGS, SEVERITY, gutPatterns } from '../lib/gut';
 import { fmt, prettyDate, today } from '../lib/util';
 import { Bar, Seg, Stat } from '../components/ui';
 import { askConfirm } from '../components/confirm';
+import { Reset } from './Reset';
 
-type Sub = 'insights' | 'ask' | 'gut';
+type Sub = 'insights' | 'ask' | 'gut' | 'reset';
 
 export function Coach() {
-  const [sub, setSub] = useState<Sub>('insights');
+  const s = useAppState();
+  const [sub, setSub] = useState<Sub>(s.protocol ? 'reset' : 'insights');
   const [draft, setDraft] = useState('');
   const ask = (q: string) => { setDraft(q); setSub('ask'); };
   return (
     <div>
       <div className="page-head"><h1>Coach</h1></div>
       <div style={{ marginBottom: 14 }}>
-        <Seg value={sub} onChange={setSub} options={[{ value: 'insights', label: 'Insights' }, { value: 'ask', label: 'Ask Coach' }, { value: 'gut', label: 'Gut' }]} />
+        <Seg value={sub} onChange={setSub} options={[{ value: 'insights', label: 'Insights' }, { value: 'ask', label: 'Ask' }, { value: 'gut', label: 'Gut' }, { value: 'reset', label: 'Reset' }]} />
       </div>
       {sub === 'insights' && <Insights ask={ask} />}
       {sub === 'ask' && <AskCoach draft={draft} setDraft={setDraft} />}
       {sub === 'gut' && <Gut ask={ask} />}
+      {sub === 'reset' && <Reset goGut={() => setSub('gut')} ask={ask} />}
     </div>
   );
 }
@@ -243,6 +246,8 @@ function AskCoach({ draft, setDraft }: { draft: string; setDraft: (s: string) =>
 
 // ---------------- Gut ----------------
 
+const WELL = ['Poor', 'OK', 'Good', 'Great'];
+
 function SevPicker({ label, value, onChange }: { label: string; value: Severity; onChange: (v: Severity) => void }) {
   return (
     <div>
@@ -272,6 +277,16 @@ function Gut({ ask }: { ask: (q: string) => void }) {
         <SevPicker label="Bloating / gas" value={g.bloating} onChange={(v) => setG({ ...g, bloating: v })} />
         <SevPicker label="Stomach pain / cramps" value={g.pain} onChange={(v) => setG({ ...g, pain: v })} />
         <SevPicker label="Reflux / heartburn" value={g.reflux} onChange={(v) => setG({ ...g, reflux: v })} />
+        <SevPicker label="Skin / eczema (itch, flare)" value={g.skin ?? 0} onChange={(v) => setG({ ...g, skin: v })} />
+        <div className="grid3">
+          {(['energy', 'sleep', 'mood'] as const).map((k) => (
+            <label key={k} className="field"><span>{k[0].toUpperCase() + k.slice(1)}</span>
+              <select value={g[k] ?? ''} onChange={(e) => setG({ ...g, [k]: e.target.value === '' ? undefined : (+e.target.value as Severity) })}>
+                <option value="">–</option>{WELL.map((l, i) => <option key={l} value={i}>{l}</option>)}
+              </select>
+            </label>
+          ))}
+        </div>
         <label className="field"><span>Stool (Bristol scale) — optional</span>
           <select value={g.stool ?? ''} onChange={(e) => setG({ ...g, stool: e.target.value ? +e.target.value : undefined })}>
             <option value="">No bowel movement / skip</option>
@@ -310,7 +325,7 @@ function Gut({ ask }: { ask: (q: string) => void }) {
           {recent.map((x) => (
             <div key={x.date} className="list-item small">
               <span style={{ width: 90 }}>{prettyDate(x.date)}</span>
-              <span className="grow muted">Bloat {SEVERITY[x.bloating]} · Pain {SEVERITY[x.pain]} · Reflux {SEVERITY[x.reflux]}{x.stool ? ` · Type ${x.stool}` : ''}</span>
+              <span className="grow muted">Bloat {SEVERITY[x.bloating]} · Pain {SEVERITY[x.pain]} · Reflux {SEVERITY[x.reflux]}{x.skin !== undefined ? ` · Skin ${SEVERITY[x.skin]}` : ''}{x.stool ? ` · Type ${x.stool}` : ''}{x.energy !== undefined ? ` · Energy ${WELL[x.energy]}` : ''}</span>
             </div>
           ))}
         </div>
