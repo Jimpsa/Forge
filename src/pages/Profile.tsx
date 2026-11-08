@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react';
 import type { Profile as P } from '../types';
-import { defaultState, exportJson, mutate, replaceState, useAppState } from '../lib/storage';
+import { defaultState, exportJson, mutate, replaceState, useAppState, useSyncStatus } from '../lib/storage';
+import { IS_ARTIFACT } from '../lib/env';
 import { ACTIVITY_FACTORS, bmr, dailyTargets, tdee } from '../lib/nutrition';
 import { fmt, today } from '../lib/util';
 import { NumField, Seg, Stat } from '../components/ui';
+import { askConfirm, notify } from '../components/confirm';
 
 export function ProfileForm({ onboarding }: { onboarding?: boolean }) {
   const s = useAppState();
@@ -76,12 +78,13 @@ export function ProfileForm({ onboarding }: { onboarding?: boolean }) {
 export function Profile() {
   const s = useAppState();
   const file = useRef<HTMLInputElement>(null);
+  const sync = useSyncStatus();
   const importFile = async (f: File) => {
     try {
       const data = JSON.parse(await f.text());
       if (data.version !== 1 || !data.profile) throw new Error('bad file');
-      if (confirm('Replace all current data with this backup?')) replaceState(data);
-    } catch { alert('That file is not a valid Forge backup.'); }
+      if (await askConfirm('Replace all current data with this backup?', 'Replace')) replaceState(data);
+    } catch { notify('That file is not a valid Forge backup.'); }
   };
   return (
     <div>
@@ -94,13 +97,16 @@ export function Profile() {
           <Stat v={s.sessions.length} l="workouts" />
           <Stat v={s.body.length} l="weigh-ins" />
         </div>
-        <p className="small muted">Your data is stored on this device only. Export a backup regularly, or to move to another phone.</p>
+        <p className="small muted">
+          {sync.status === 'cloud' || sync.status === 'saving' ? `☁️ ${sync.status === 'saving' ? 'Saving…' : 'Saved'} to your account, privately — only you can see it, on any device where you open this page.`
+            : sync.status === 'error' ? `⚠️ ${sync.message}` : 'Your data is stored on this device only. Export a backup regularly, or to move to another phone.'}
+        </p>
         <div className="grid2" style={{ marginTop: 10 }}>
-          <button className="btn" onClick={exportJson}>⬇ Export backup</button>
+          {!IS_ARTIFACT && <button className="btn" onClick={exportJson}>⬇ Export backup</button>}
           <button className="btn" onClick={() => file.current?.click()}>⬆ Import backup</button>
         </div>
         <input ref={file} type="file" accept="application/json" hidden onChange={(e) => e.target.files?.[0] && importFile(e.target.files[0])} />
-        <button className="btn danger block ghost" style={{ marginTop: 10 }} onClick={() => confirm('Delete ALL data on this device? This cannot be undone.') && replaceState(defaultState())}>Delete all data</button>
+        <button className="btn danger block ghost" style={{ marginTop: 10 }} onClick={async () => (await askConfirm('Delete ALL your data? This cannot be undone.', 'Delete everything')) && replaceState(defaultState())}>Delete all data</button>
       </div>
     </div>
   );

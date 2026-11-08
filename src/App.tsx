@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useAppState } from './lib/storage';
+import { useAppState, useSyncStatus } from './lib/storage';
+import { ConfirmHost } from './components/confirm';
 import { Today } from './pages/Today';
 import { Diet } from './pages/Diet';
 import { Train } from './pages/Train';
@@ -18,13 +19,18 @@ const TABS: { key: Tab; label: string; ico: string }[] = [
 export default function App() {
   const s = useAppState();
   const [tab, setTab] = useState<Tab>(s.active ? 'train' : 'today');
+  const sync = useSyncStatus();
   useEffect(() => { window.scrollTo(0, 0); }, [tab]);
+  useEffect(() => { if (sync.status === 'cloud' && s.active) setTab('train'); }, [sync.status === 'cloud']); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (sync.status === 'loading') return <div className="app"><div className="empty" style={{ marginTop: '30vh' }}>Loading your data…</div></div>;
 
   if (!s.onboarded) {
     return (
       <div className="app">
         <div className="page-head"><div><h1>Welcome to Forge</h1><p className="muted small">Diet and training in one place. Set up your profile to get personal calorie and macro targets.</p></div></div>
         <ProfileForm onboarding />
+        <ConfirmHost />
       </div>
     );
   }
@@ -32,6 +38,7 @@ export default function App() {
   return (
     <>
       <main className="app">
+        {sync.status === 'error' && <div className="card flat small" style={{ borderColor: 'var(--warn)' }}>⚠️ {sync.message}</div>}
         {tab === 'today' && <Today go={setTab} />}
         {tab === 'diet' && <Diet />}
         {tab === 'train' && <Train />}
@@ -47,6 +54,7 @@ export default function App() {
           ))}
         </nav>
       </div>
+      <ConfirmHost />
     </>
   );
 }

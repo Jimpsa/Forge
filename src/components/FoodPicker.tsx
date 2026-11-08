@@ -6,6 +6,7 @@ import { allFoods, findFood, recipePer100, scale } from '../lib/nutrition';
 import { lookupBarcode, searchOff } from '../lib/off';
 import { fmt, uid } from '../lib/util';
 import { NumField, Seg, Sheet } from './ui';
+import { IS_ARTIFACT } from '../lib/env';
 
 type Tab = 'search' | 'scan' | 'create' | 'recipe';
 
@@ -31,7 +32,7 @@ export function FoodPicker({ open, onClose, date, meal: initialMeal }: { open: b
           }} />
       ) : (
         <>
-          <Seg value={tab} onChange={setTab} options={[{ value: 'search', label: 'Search' }, { value: 'scan', label: 'Scan' }, { value: 'create', label: 'New food' }, { value: 'recipe', label: 'Recipe' }]} />
+          <Seg value={tab} onChange={setTab} options={[{ value: 'search' as Tab, label: 'Search' }, ...(IS_ARTIFACT ? [] : [{ value: 'scan' as Tab, label: 'Scan' }]), { value: 'create', label: 'New food' }, { value: 'recipe', label: 'Recipe' }]} />
           <div style={{ marginTop: 14 }}>
             {tab === 'search' && <SearchTab onPick={choose} />}
             {tab === 'scan' && <ScanTab onPick={choose} />}
@@ -94,7 +95,7 @@ function SearchTab({ onPick }: { onPick: (f: Food) => void }) {
       <div style={{ marginTop: 8 }}>
         {!q.trim() && <div className="tiny muted" style={{ margin: '6px 0' }}>{local.length ? 'Favorites & recent' : 'Type to search the built-in database and your foods.'}</div>}
         {local.map((f) => <FoodRow key={f.id} f={f} onPick={onPick} />)}
-        {q.trim() && (
+        {q.trim() && !IS_ARTIFACT && (
           <div style={{ marginTop: 10 }}>
             <button className="btn block" onClick={goOnline} disabled={status === 'loading'}>
               {status === 'loading' ? 'Searching Open Food Facts…' : `Search online for “${q}”`}

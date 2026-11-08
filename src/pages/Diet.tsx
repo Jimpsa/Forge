@@ -6,6 +6,7 @@ import { dailyTargets, entriesFor, findFood, isTrainingDay, microTargets, scale,
 import { addDays, fmt, prettyDate, today, uid } from '../lib/util';
 import { Bar, NumField, Ring, Seg, Sheet } from '../components/ui';
 import { FoodPicker, NutrientTable } from '../components/FoodPicker';
+import { askConfirm } from '../components/confirm';
 
 export function DateNav({ date, setDate }: { date: string; setDate: (d: string) => void }) {
   return (
@@ -182,7 +183,7 @@ function MyFoods({ open, onClose }: { open: boolean; onClose: () => void }) {
             <div className="small">{f.name} {f.favorite && '★'} <span className="pill">{f.source === 'off' ? 'scanned/online' : f.source}</span></div>
             <div className="tiny muted">{fmt(f.per100.kcal)} kcal / 100 g{f.ingredients ? ` · ${f.ingredients.length} ingredients` : ''}</div>
           </div>
-          <button className="icon-btn" title="Remove" onClick={() => confirm(`Remove “${f.name}”? Logged entries are kept.`) && mutate((st) => { st.foods = st.foods.filter((x) => x.id !== f.id); })}>🗑</button>
+          <button className="icon-btn" title="Remove" onClick={async () => (await askConfirm(`Remove “${f.name}”? Logged entries are kept.`, 'Remove')) && mutate((st) => { st.foods = st.foods.filter((x) => x.id !== f.id); })}>🗑</button>
         </div>
       ))}
     </Sheet>

@@ -5,6 +5,7 @@ import { allExercises, detectPRs, exerciseHistory, exerciseName, loadRatio, pace
 import { CARDIO } from '../data/exercises';
 import { fmt, fmtDuration, fmtPace, prettyDate, today, uid } from '../lib/util';
 import { NumField, Sheet, Stat } from "../components/ui";
+import { askConfirm } from '../components/confirm';
 
 const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Legs', 'Glutes', 'Core', 'Full body'];
 
@@ -146,7 +147,7 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
           <div className="card" key={ei}>
             <div className="row between">
               <h2 style={{ margin: 0 }}>{exerciseName(s, ex.exerciseId)}</h2>
-              <button className="icon-btn" title="Remove exercise" onClick={() => confirm('Remove this exercise?') && upd((w) => { w.exercises.splice(ei, 1); })}>✕</button>
+              <button className="icon-btn" title="Remove exercise" onClick={async () => (await askConfirm('Remove this exercise?', 'Remove')) && upd((w) => { w.exercises.splice(ei, 1); })}>✕</button>
             </div>
             {last && <div className="tiny muted">Last time ({prettyDate(last.date)}): {last.sets.map((x) => `${fmt(x.weight, 1)}×${x.reps}`).join(', ')} · best e1RM {fmt(Math.max(...hist.map((h) => h.e1rm)), 1)} kg</div>}
             <div className="set-row tiny muted" style={{ marginTop: 10 }}><span>Set</span><span>kg</span><span>Reps</span><span>RPE</span><span /></div>
@@ -192,7 +193,7 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
         <button className="btn" onClick={() => setCardio(true)}>+ Cardio block</button>
       </div>
       <div className="grid2">
-        <button className="btn danger" onClick={() => confirm('Discard this workout?') && mutate((st) => { st.active = undefined; })}>Discard</button>
+        <button className="btn danger" onClick={async () => (await askConfirm('Discard this workout?', 'Discard')) && mutate((st) => { st.active = undefined; })}>Discard</button>
         <button className="btn primary" onClick={() => setFinishing(true)}>Finish</button>
       </div>
 
@@ -380,7 +381,7 @@ function SessionDetail({ session, onClose }: { session: Session | null; onClose:
       ))}
       {x.notes && <p className="small" style={{ marginTop: 10 }}>📝 {x.notes}</p>}
       <div className="row" style={{ marginTop: 16 }}>
-        <button className="btn danger" onClick={() => { if (confirm('Delete this session?')) { mutate((st) => { st.sessions = st.sessions.filter((y) => y.id !== x.id); }); onClose(); } }}>Delete</button>
+        <button className="btn danger" onClick={async () => { if (await askConfirm('Delete this session?', 'Delete')) { mutate((st) => { st.sessions = st.sessions.filter((y) => y.id !== x.id); }); onClose(); } }}>Delete</button>
         {x.exercises.length > 0 && <button className="btn grow" onClick={() => {
           mutate((st) => { st.templates.push({ id: 't-' + uid(), name: x.name + ' (copy)', exercises: x.exercises.map((e) => ({ exerciseId: e.exerciseId, sets: e.sets.filter((z) => !z.warmup).length, reps: e.sets.at(-1)?.reps ?? 8, restSec: e.restSec ?? 120 })) }); });
           onClose();
@@ -414,7 +415,7 @@ function TemplateEditor({ template, onClose }: { template: Template; onClose: ()
           ))}
           <button className="btn sm" onClick={() => setAdding(true)}>+ Exercise</button>
           <div className="row">
-            {exists && <button className="btn danger" onClick={() => { if (confirm('Delete template?')) { mutate((st) => { st.templates = st.templates.filter((x) => x.id !== t.id); }); onClose(); } }}>Delete</button>}
+            {exists && <button className="btn danger" onClick={async () => { if (await askConfirm('Delete this template?', 'Delete')) { mutate((st) => { st.templates = st.templates.filter((x) => x.id !== t.id); }); onClose(); } }}>Delete</button>}
             <button className="btn primary grow" onClick={save} disabled={!t.name.trim()}>Save template</button>
           </div>
         </div>
