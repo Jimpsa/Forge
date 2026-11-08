@@ -6,12 +6,14 @@ import { Diet } from './pages/Diet';
 import { Train } from './pages/Train';
 import { Progress } from './pages/Progress';
 import { Profile, ProfileForm } from './pages/Profile';
+import { Coach } from './pages/Coach';
 
-export type Tab = 'today' | 'diet' | 'train' | 'progress' | 'profile';
+export type Tab = 'today' | 'diet' | 'train' | 'coach' | 'progress' | 'profile';
 const TABS: { key: Tab; label: string; ico: string }[] = [
   { key: 'today', label: 'Today', ico: '◎' },
   { key: 'diet', label: 'Diet', ico: '🍽' },
   { key: 'train', label: 'Train', ico: '🏋' },
+  { key: 'coach', label: 'Coach', ico: '💬' },
   { key: 'progress', label: 'Progress', ico: '📈' },
   { key: 'profile', label: 'Profile', ico: '👤' },
 ];
@@ -42,6 +44,7 @@ export default function App() {
         {tab === 'today' && <Today go={setTab} />}
         {tab === 'diet' && <Diet />}
         {tab === 'train' && <Train />}
+        {tab === 'coach' && <Coach />}
         {tab === 'progress' && <Progress />}
         {tab === 'profile' && <Profile />}
       </main>

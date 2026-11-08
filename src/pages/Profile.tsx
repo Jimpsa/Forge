@@ -68,7 +68,12 @@ export function ProfileForm({ onboarding }: { onboarding?: boolean }) {
           <div className="stat"><div className="l">Rest day</div><div className="v">{fmt(rest.kcal)} kcal</div><div className="tiny muted">P {rest.protein} · C {rest.carbs} · F {rest.fat} g</div></div>
           <div className="stat"><div className="l">Training day</div><div className="v">{fmt(train.kcal)} kcal</div><div className="tiny muted">P {train.protein} · C {train.carbs} · F {train.fat} g</div></div>
         </div>
-        <p className="tiny muted" style={{ marginTop: 8 }}>BMR {fmt(bmr(p))} kcal (Mifflin–St Jeor) · maintenance ≈ {fmt(tdee(p))} kcal. These are estimates — adjust after 2–3 weeks based on your weight trend.</p>
+        {p.maintenanceKcal ? (
+          <p className="tiny muted" style={{ marginTop: 8 }}>Using your <strong>measured maintenance</strong> of {fmt(p.maintenanceKcal)} kcal (from your intake + weight trend; formula says {fmt(tdee(p))}).{' '}
+            <button className="btn sm ghost" onClick={() => set('maintenanceKcal', undefined)}>Use formula instead</button></p>
+        ) : (
+          <p className="tiny muted" style={{ marginTop: 8 }}>BMR {fmt(bmr(p))} kcal (Mifflin–St Jeor) · maintenance ≈ {fmt(tdee(p))} kcal. Formulas are ±10% for most people — after 2–4 weeks of logging and weigh-ins, the Coach tab measures your real maintenance.</p>
+        )}
         <button className="btn primary block" style={{ marginTop: 12 }} onClick={save}>{onboarding ? 'Get started' : saved ? 'Saved ✓' : 'Save profile'}</button>
       </div>
     </>

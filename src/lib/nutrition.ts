@@ -27,7 +27,7 @@ export interface Targets { kcal: number; protein: number; carbs: number; fat: nu
 /** ~7700 kcal per kg of body weight change. */
 export function dailyTargets(p: Profile, trainingDay: boolean): Targets {
   const delta = p.goal === 'cut' ? -(p.rateKgPerWeek * 7700) / 7 : p.goal === 'bulk' ? (p.rateKgPerWeek * 7700) / 7 : 0;
-  let kcal = p.kcalOverride ?? tdee(p) + delta;
+  let kcal = p.kcalOverride ?? (p.maintenanceKcal ?? tdee(p)) + delta;
   if (trainingDay) kcal += p.trainingDayKcal;
   kcal = Math.max(kcal, p.sex === 'male' ? 1500 : 1200);
   const protein = p.proteinPerKg * p.weightKg;
@@ -43,7 +43,6 @@ export function microTargets(p: Profile, kcal: number): Partial<Record<NutrientK
     fiber: { value: Math.round((14 * kcal) / 1000) },
     sugar: { value: Math.round((kcal * 0.1) / 4), limit: true },
     satFat: { value: Math.round((kcal * 0.1) / 9), limit: true },
-    cholesterol: { value: 300, limit: true },
     sodium: { value: 2300, limit: true },
     potassium: { value: m ? 3400 : 2600 },
     calcium: { value: 1000 },

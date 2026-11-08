@@ -129,6 +129,7 @@ export interface Profile {
   waterGoalMl: number;
   maxHr?: number;
   kcalOverride?: number;
+  maintenanceKcal?: number; // measured from intake + weight trend (replaces the formula when set)
 }
 
 export interface AppState {
@@ -143,4 +144,10 @@ export interface AppState {
   sessions: Session[];
   active?: ActiveWorkout;
   body: BodyEntry[];
+  gut?: GutLog[];
+  chat?: ChatMessage[];
 }
+
+export type Severity = 0 | 1 | 2 | 3; // none, mild, moderate, severe
+export interface GutLog { date: string; bloating: Severity; pain: Severity; reflux: Severity; stool?: number; notes?: string }
+export interface ChatMessage { role: 'user' | 'assistant'; content: string; at: number }
