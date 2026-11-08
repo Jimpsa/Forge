@@ -1,0 +1,81 @@
+import type { Exercise, MuscleGroup, Template, CardioActivity } from '../types';
+
+const E = (name: string, muscle: MuscleGroup, equipment: string): Exercise => ({
+  id: 'x-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, ''),
+  name,
+  muscle,
+  equipment,
+});
+
+export const BUILTIN_EXERCISES: Exercise[] = [
+  E('Bench Press', 'Chest', 'Barbell'),
+  E('Incline Bench Press', 'Chest', 'Barbell'),
+  E('Dumbbell Bench Press', 'Chest', 'Dumbbell'),
+  E('Incline Dumbbell Press', 'Chest', 'Dumbbell'),
+  E('Cable Fly', 'Chest', 'Cable'),
+  E('Push-Up', 'Chest', 'Bodyweight'),
+  E('Dips', 'Triceps', 'Bodyweight'),
+  E('Overhead Press', 'Shoulders', 'Barbell'),
+  E('Dumbbell Shoulder Press', 'Shoulders', 'Dumbbell'),
+  E('Lateral Raise', 'Shoulders', 'Dumbbell'),
+  E('Face Pull', 'Shoulders', 'Cable'),
+  E('Rear Delt Fly', 'Shoulders', 'Dumbbell'),
+  E('Deadlift', 'Back', 'Barbell'),
+  E('Trap Bar Deadlift', 'Back', 'Trap bar'),
+  E('Barbell Row', 'Back', 'Barbell'),
+  E('Dumbbell Row', 'Back', 'Dumbbell'),
+  E('Pull-Up', 'Back', 'Bodyweight'),
+  E('Chin-Up', 'Back', 'Bodyweight'),
+  E('Lat Pulldown', 'Back', 'Cable'),
+  E('Seated Cable Row', 'Back', 'Cable'),
+  E('Shrug', 'Back', 'Dumbbell'),
+  E('Barbell Curl', 'Biceps', 'Barbell'),
+  E('Dumbbell Curl', 'Biceps', 'Dumbbell'),
+  E('Hammer Curl', 'Biceps', 'Dumbbell'),
+  E('Triceps Pushdown', 'Triceps', 'Cable'),
+  E('Skull Crusher', 'Triceps', 'Barbell'),
+  E('Overhead Triceps Extension', 'Triceps', 'Cable'),
+  E('Back Squat', 'Legs', 'Barbell'),
+  E('Front Squat', 'Legs', 'Barbell'),
+  E('Leg Press', 'Legs', 'Machine'),
+  E('Romanian Deadlift', 'Legs', 'Barbell'),
+  E('Bulgarian Split Squat', 'Legs', 'Dumbbell'),
+  E('Walking Lunge', 'Legs', 'Dumbbell'),
+  E('Leg Extension', 'Legs', 'Machine'),
+  E('Leg Curl', 'Legs', 'Machine'),
+  E('Calf Raise', 'Legs', 'Machine'),
+  E('Hip Thrust', 'Glutes', 'Barbell'),
+  E('Good Morning', 'Glutes', 'Barbell'),
+  E('Hanging Leg Raise', 'Core', 'Bodyweight'),
+  E('Cable Crunch', 'Core', 'Cable'),
+  E('Plank (reps = seconds)', 'Core', 'Bodyweight'),
+  E('Ab Wheel Rollout', 'Core', 'Other'),
+  E('Kettlebell Swing', 'Full body', 'Kettlebell'),
+  E('Farmer\'s Carry (reps = metres)', 'Full body', 'Dumbbell'),
+  E('Power Clean', 'Full body', 'Barbell'),
+];
+
+const id = (name: string) => BUILTIN_EXERCISES.find((e) => e.name === name)!.id;
+const T = (name: string, list: [string, number, number, number?][]): Template => ({
+  id: 't-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+  name,
+  exercises: list.map(([n, sets, reps, rest]) => ({ exerciseId: id(n), sets, reps, restSec: rest ?? 120 })),
+});
+
+export const DEFAULT_TEMPLATES: Template[] = [
+  T('Push', [['Bench Press', 4, 6, 180], ['Overhead Press', 3, 8], ['Incline Dumbbell Press', 3, 10, 90], ['Lateral Raise', 3, 15, 60], ['Triceps Pushdown', 3, 12, 60]]),
+  T('Pull', [['Deadlift', 3, 5, 180], ['Pull-Up', 4, 8], ['Barbell Row', 3, 8], ['Face Pull', 3, 15, 60], ['Barbell Curl', 3, 10, 60]]),
+  T('Legs', [['Back Squat', 4, 6, 180], ['Romanian Deadlift', 3, 8], ['Leg Press', 3, 12, 90], ['Leg Curl', 3, 12, 60], ['Calf Raise', 4, 12, 60]]),
+  T('Full Body', [['Back Squat', 3, 5, 180], ['Bench Press', 3, 5, 180], ['Barbell Row', 3, 8], ['Hanging Leg Raise', 3, 12, 60]]),
+];
+
+export const CARDIO: { key: CardioActivity; label: string; met: number; distance: boolean }[] = [
+  { key: 'run', label: 'Running', met: 9.8, distance: true },
+  { key: 'cycle', label: 'Cycling', met: 7.5, distance: true },
+  { key: 'row', label: 'Rowing', met: 7, distance: true },
+  { key: 'swim', label: 'Swimming', met: 7, distance: true },
+  { key: 'walk', label: 'Walking', met: 3.5, distance: true },
+  { key: 'elliptical', label: 'Elliptical', met: 5, distance: false },
+  { key: 'hiit', label: 'HIIT / Circuit', met: 8, distance: false },
+  { key: 'other', label: 'Sport / Other', met: 6, distance: false },
+];
