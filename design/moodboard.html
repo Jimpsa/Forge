@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forge Motion Moodboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a studio pin-board — a grid of live "phone cards", each one effect you can tap.
+   Single dark world (the app is dark-first); palette switch swaps the accent family. */
+:root {
+  --bg: #121014;          /* warm ink, biased toward the ember accent */
+  --surface: #1c181b;
+  --surface-2: #272125;
+  --line: #3a3036;
+  --text: #f4ece8;
+  --muted: #a39590;
+  --accent: #ff7a3d;      /* ember */
+  --accent-2: #ffc24b;    /* molten gold — celebrations */
+  --glow: rgba(255, 122, 61, .35);
+  --good: #5fd49a; --protein: #6cb6ff; --carbs: #f5c35b; --fat: #f28b82; --water: #5ab8ff;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r: 18px;
+  color-scheme: dark;
+}
+.board[data-palette="green"] {
+  --bg: #0e1116; --surface: #171b22; --surface-2: #20252e; --line: #2c3340; --text: #e9edf3; --muted: #8b94a7;
+  --accent: #6ee7a0; --accent-2: #b8f5a6; --glow: rgba(110, 231, 160, .3);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+body { min-height: 100%; }
+.board { background: var(--bg); color: var(--text); transition: background .4s, color .4s; padding: 28px 16px 64px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 34px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: -.01em; }
+h1 { font-size: clamp(1.9rem, 4.5vw, 2.8rem); font-weight: 800; line-height: 1.05; }
+h2 { font-size: 1.35rem; font-weight: 800; }
+h3 { font-size: 1.02rem; font-weight: 600; }
+p { margin: 0; line-height: 1.5; max-width: 65ch; }
+.muted { color: var(--muted); }
+.small { font-size: .88rem; }
+.tiny { font-size: .76rem; }
+.num { font-variant-numeric: tabular-nums; }
+.row { display: flex; align-items: center; gap: 10px; }
+.between { justify-content: space-between; }
+.wrapflex { flex-wrap: wrap; }
+
+header.top { display: grid; gap: 14px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px; gap: 4px; }
+.seg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
+.swatches { display: flex; gap: 6px; }
+.swatches span { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--bg); box-shadow: 0 0 0 1px var(--line); }
+
+section { display: grid; gap: 14px; }
+.sec-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; align-content: start; position: relative; overflow: hidden; }
+.card .what { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.chip { font-size: .7rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+.chip.r1 { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.stage { background: var(--bg); border-radius: 14px; padding: 14px; display: grid; gap: 10px; min-height: 150px; align-content: center; }
+.note { font-size: .82rem; color: var(--muted); }
+
+button.btn { font: inherit; font-weight: 700; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); padding: 10px 14px; border-radius: 12px; cursor: pointer; transition: transform .12s cubic-bezier(.3,.7,.4,1.5), box-shadow .2s, background .2s; }
+button.btn.primary { background: var(--accent); color: #1a0f0a; border-color: transparent; box-shadow: 0 6px 18px -8px var(--glow); }
+.board[data-palette="green"] button.btn.primary { color: #08140d; }
+button.btn:active { transform: scale(.95); }
+button.btn:focus-visible, .seg button:focus-visible, .navbar button:focus-visible, .check:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+button.btn.flat:active { transform: none; }
+
+/* --- set row --- */
+.set { display: grid; grid-template-columns: 30px 1fr 1fr 44px; gap: 8px; align-items: center; }
+.set .cell { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 9px; text-align: center; font-weight: 600; transition: background .3s, border-color .3s; }
+.set.done .cell { border-color: color-mix(in srgb, var(--good) 55%, transparent); background: color-mix(in srgb, var(--good) 9%, transparent); }
+.check { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface-2); color: var(--muted); cursor: pointer; position: relative; display: grid; place-items: center; }
+.check svg { width: 22px; height: 22px; }
+.check.on { background: var(--good); color: #0b1a12; border-color: transparent; animation: pop .42s cubic-bezier(.3,.7,.4,1.6); }
+.check.on::after { content: ""; position: absolute; inset: -2px; border-radius: 14px; border: 2px solid var(--good); animation: ripple .6s ease-out forwards; }
+@keyframes pop { 0% { transform: scale(.7); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes ripple { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(1.7); } }
+.bzz { font-size: .72rem; color: var(--good); opacity: 0; transition: opacity .2s; }
+.bzz.show { opacity: 1; animation: shake .25s linear 2; }
+@keyframes shake { 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+.rest { display: flex; align-items: center; gap: 12px; opacity: .35; transition: opacity .3s; }
+.rest.live { opacity: 1; }
+.rest svg { width: 58px; height: 58px; transform: rotate(-90deg); }
+.rest .t { font-family: var(--font-display); font-size: 1.4rem; font-weight: 800; }
+
+/* --- calorie ring --- */
+.ringwrap { display: grid; grid-template-columns: 120px 1fr; gap: 14px; align-items: center; }
+.ring { position: relative; width: 120px; height: 120px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .lbl { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+.ring .big { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; line-height: 1; }
+.arc { transition: stroke-dashoffset .9s cubic-bezier(.2,.8,.2,1), stroke .4s; }
+.bars { display: grid; gap: 9px; }
+.bar { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.bar > i { display: block; height: 100%; border-radius: 99px; width: 0; transition: width .9s cubic-bezier(.2,.8,.2,1); }
+.hit { box-shadow: 0 0 0 0 var(--glow); animation: glowpulse 1.4s ease-out 1; border-radius: 50%; }
+@keyframes glowpulse { 0% { box-shadow: 0 0 0 0 var(--glow); } 100% { box-shadow: 0 0 0 26px transparent; } }
+
+/* --- water --- */
+.water { display: grid; grid-template-columns: 90px 1fr; gap: 14px; align-items: center; }
+.glass { width: 90px; height: 120px; }
+.wave { animation: wave 2.2s linear infinite; }
+@keyframes wave { from { transform: translateX(0); } to { transform: translateX(-60px); } }
+.fill { transition: transform 1s cubic-bezier(.2,.8,.2,1); }
+
+/* --- press feel --- */
+.press { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.press .btn.flat { box-shadow: none; }
+.press .btn.after { position: relative; overflow: hidden; }
+.press .btn.after .rip { position: absolute; border-radius: 50%; background: rgba(255,255,255,.35); transform: scale(0); animation: rip .5s ease-out forwards; pointer-events: none; }
+@keyframes rip { to { transform: scale(4); opacity: 0; } }
+
+/* --- PR card --- */
+.pr { border-radius: 16px; padding: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--accent-2) 22%, var(--surface-2)), var(--surface-2)); border: 1px solid color-mix(in srgb, var(--accent-2) 55%, transparent); display: grid; gap: 4px; position: relative; overflow: hidden; transform-origin: center; }
+.pr.go { animation: prin .7s cubic-bezier(.2,.9,.3,1.4); }
+.pr.go::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.35) 48%, transparent 66%); transform: translateX(-100%); animation: sheen 1.2s .35s ease-out forwards; }
+@keyframes prin { 0% { transform: scale(.6) rotate(-4deg); opacity: 0; } 70% { transform: scale(1.06) rotate(1deg); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes sheen { to { transform: translateX(100%); } }
+.pr .trophy { width: 34px; height: 34px; color: var(--accent-2); }
+.pr .kg { font-family: var(--font-display); font-weight: 800; font-size: 2rem; line-height: 1; }
+.delta { display: inline-block; font-weight: 700; font-size: .8rem; padding: 2px 8px; border-radius: 99px; background: color-mix(in srgb, var(--good) 20%, transparent); color: var(--good); }
+
+/* --- summary --- */
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.stat .v { font-family: var(--font-display); font-size: 1.45rem; font-weight: 800; }
+.stat .l { font-size: .74rem; color: var(--muted); }
+.stat.in { animation: rise .5s cubic-bezier(.2,.9,.3,1.2) both; }
+@keyframes rise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+.badges-mini { display: flex; gap: 6px; flex-wrap: wrap; }
+.bm { font-size: .78rem; font-weight: 700; padding: 5px 10px; border-radius: 99px; background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent); }
+.bm.in { animation: pop .45s cubic-bezier(.3,.7,.4,1.6) both; }
+
+/* --- perfect day --- */
+.rings3 { display: grid; grid-template-columns: 130px 1fr; gap: 14px; align-items: center; }
+.rings3 svg { width: 130px; height: 130px; transform: rotate(-90deg); }
+.legend { display: grid; gap: 6px; font-size: .84rem; }
+.legend span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 7px; background: var(--c); }
+.perfect { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; opacity: 0; transform: scale(.8); transition: opacity .3s, transform .5s cubic-bezier(.3,.7,.4,1.6); }
+.perfect.show { opacity: 1; transform: scale(1); }
+
+/* --- recap --- */
+.recap { border-radius: 18px; padding: 18px; color: #1a0f0a; background: linear-gradient(140deg, var(--accent), var(--accent-2)); display: grid; gap: 12px; position: relative; overflow: hidden; }
+.board[data-palette="green"] .recap { color: #08140d; }
+.recap::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 35%, rgba(255,255,255,.4) 50%, transparent 65%); transform: translateX(-100%); animation: sheen 2.4s 1s ease-in-out infinite; }
+.recap .grid2 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.recap .v { font-family: var(--font-display); font-weight: 800; font-size: 1.35rem; }
+.recap .l { font-size: .72rem; opacity: .75; font-weight: 600; }
+
+/* --- badges --- */
+.badges { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.badge { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .7rem; font-weight: 600; cursor: pointer; background: none; border: 0; color: var(--text); font-family: inherit; padding: 0; }
+.medal { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; position: relative; overflow: hidden; background: conic-gradient(from 200deg, var(--accent), var(--accent-2), var(--accent)); box-shadow: 0 6px 16px -8px var(--glow); }
+.medal svg { width: 26px; height: 26px; color: #1a0f0a; position: relative; z-index: 1; }
+.board[data-palette="green"] .medal svg { color: #08140d; }
+.medal::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.6) 50%, transparent 65%); transform: translateX(-120%); }
+.badge:hover .medal::after, .badge:focus-visible .medal::after, .badge.tap .medal::after { animation: sheen .8s ease-out; }
+.badge.tap .medal { animation: pop .45s cubic-bezier(.3,.7,.4,1.6); }
+.badge.locked .medal { background: var(--surface-2); box-shadow: none; border: 1px dashed var(--line); }
+.badge.locked .medal svg { color: var(--muted); }
+.badge .prog { width: 48px; height: 4px; border-radius: 9px; background: var(--surface-2); overflow: hidden; }
+.badge .prog i { display: block; height: 100%; background: var(--muted); }
+
+/* --- strength level --- */
+.levels { position: relative; height: 12px; border-radius: 99px; background: linear-gradient(90deg, #4a3f45, var(--accent) 60%, var(--accent-2)); }
+.board[data-palette="green"] .levels { background: linear-gradient(90deg, #2b3a35, var(--accent) 60%, var(--accent-2)); }
+.marker { position: absolute; top: -6px; width: 24px; height: 24px; border-radius: 50%; background: var(--text); border: 4px solid var(--bg); left: 0; transform: translateX(-50%); transition: left 1.2s cubic-bezier(.2,.8,.2,1); box-shadow: 0 0 0 3px var(--glow); }
+.ticks { display: grid; grid-template-columns: repeat(5, 1fr); font-size: .68rem; color: var(--muted); }
+.ticks span:last-child { text-align: right; }
+
+/* --- streak --- */
+.flame { width: 54px; height: 64px; animation: flicker 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes flicker { 0%,100% { transform: scale(1) rotate(-1deg); } 50% { transform: scale(1.06, .97) rotate(1.5deg); } }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; font-size: .7rem; color: var(--muted); }
+.day { aspect-ratio: 1; border-radius: 10px; display: grid; place-items: center; font-weight: 700; font-size: .78rem; }
+.day.log { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent); }
+.day.rest { background: var(--surface-2); color: var(--muted); }
+.day.freeze { background: color-mix(in srgb, var(--water) 18%, transparent); color: var(--water); }
+.day.today { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* --- nav --- */
+.navbar { display: grid; grid-template-columns: repeat(6, 1fr); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 6px; position: relative; }
+.navbar button { background: none; border: 0; color: var(--muted); font: inherit; font-size: .64rem; font-weight: 600; display: grid; justify-items: center; gap: 3px; padding: 7px 0; cursor: pointer; position: relative; z-index: 1; transition: color .25s; }
+.navbar button[aria-current="true"] { color: var(--accent); }
+.navbar svg { width: 21px; height: 21px; }
+.navbar .pill { position: absolute; top: 6px; bottom: 6px; width: calc((100% - 12px) / 6); left: 6px; border-radius: 11px; background: color-mix(in srgb, var(--accent) 13%, transparent); transition: transform .35s cubic-bezier(.3,.7,.4,1.2); }
+.navbar.old { grid-template-columns: repeat(6, 1fr); }
+.navbar.old button { font-size: .64rem; }
+.navbar.old .e { font-size: 1.15rem; line-height: 1; }
+
+/* --- empty state + light --- */
+.empty { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 6px 0; }
+.empty svg { width: 120px; height: 90px; }
+.light { --bg: #f6f2ef; --surface: #ffffff; --surface-2: #f0e9e5; --line: #e4d9d3; --text: #1d1719; --muted: #786b67; color-scheme: light; background: var(--bg); color: var(--text); border-radius: 14px; padding: 14px; }
+.board[data-palette="green"] .light { --bg: #f2f6f4; --surface: #fff; --surface-2: #e8f0ec; --line: #d9e4de; --text: #121a16; --muted: #66746d; --accent: #1f9d5b; --accent-2: #67c98a; }
+.light .mini { display: grid; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+
+/* --- settings toggles --- */
+.toggle { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: .9rem; }
+.toggle:first-child { border-top: 0; }
+.switch { position: relative; width: 44px; height: 26px; flex: none; }
+.switch input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.switch span { position: absolute; inset: 0; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--line); transition: background .25s; pointer-events: none; }
+.switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); transition: transform .25s cubic-bezier(.3,.7,.4,1.4), background .25s; }
+.switch input:checked + span { background: var(--accent); }
+.switch input:checked + span::after { transform: translateX(18px); background: #fff; }
+.switch input:focus-visible + span { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+canvas#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+
+/* Calm mode = what users with "reduce motion" get: state changes stay, movement goes. */
+.board.calm *, .board.calm *::before, .board.calm *::after { animation: none !important; transition-duration: .01ms !important; }
+@media (prefers-reduced-motion: reduce) { .flame, .wave, .recap::after { animation: none; } }
+@media (max-width: 420px) { .ringwrap, .rings3 { grid-template-columns: 1fr; justify-items: center; } .badges { grid-template-columns: repeat(4, 1fr); } }
+</style>
+</head>
+<body>
+<div class="board" id="board" data-palette="ember">
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="wrap">
+
+  <header class="top">
+    <div class="tiny muted">Forge · design preview · nothing here is live in the app yet</div>
+    <h1>Motion &amp; polish moodboard</h1>
+    <p class="muted">Every card is a working preview of one proposed effect. Tap the buttons to play them. <strong>Round 1</strong> is the first build (feel-good feedback, celebrations, icons); <strong>Round 2</strong> follows (badges, levels, streaks, recap).</p>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Colour direction">
+        <button type="button" id="pal-ember" aria-pressed="true">Ember (suggested)</button>
+        <button type="button" id="pal-green" aria-pressed="false">Current green, polished</button>
+      </div>
+      <div class="swatches" aria-hidden="true"><span style="background:var(--bg)"></span><span style="background:var(--surface-2)"></span><span style="background:var(--accent)"></span><span style="background:var(--accent-2)"></span><span style="background:var(--good)"></span></div>
+      <div class="seg" role="group" aria-label="Motion">
+        <button type="button" id="mo-full" aria-pressed="true">Full motion</button>
+        <button type="button" id="mo-calm" aria-pressed="false">Reduced motion</button>
+      </div>
+    </div>
+    <p class="small muted" id="paldesc">Ember: warm ink background with a molten orange-to-gold accent, a nod to the name Forge. Gold is saved for celebrations, so PRs and perfect days feel special.</p>
+  </header>
+
+  <!-- ===================== 1. Feedback on every tap ===================== -->
+  <section>
+    <div class="sec-head"><h2>Feedback on every tap</h2><span class="muted small">small, quick, satisfying</span></div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="what"><h3>Ticking off a set</h3><span class="chip r1">Round 1</span></div>
+        <div class="stage">
+          <div class="set done"><span class="muted tiny">1</span><div class="cell num">80 kg</div><div class="cell num">6</div><button class="check on" style="animation:none" aria-label="Set 1 done" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></div>
+          <div class="set" id="set2"><span class="muted tiny">2</span><div class="cell num">80 kg</div><div class="cell num">6</div><button class="check" id="check2" aria-label="Complete set 2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button></div>
+          <div class="row between"><div class="rest" id="rest"><svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="25" fill="none" stroke="var(--surface-2)" stroke-width="6"/><circle id="restarc" cx="30" cy="30" r="25" fill="none" stroke="var(--accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="0"/></svg><div><div class="t num" id="restt">2:00</div><div class="tiny muted">rest timer</div></div></div><span class="bzz" id="bzz">● bzz</span></div>
+        </div>
+        <p class="note">The tick pops and ripples with a light vibration, then the rest timer runs down as a ring (sped up here). At zero: a double buzz.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>Logging food</h3><span class="chip r1">Round 1</span></div>
+        <div class="stage">
+          <div class="ringwrap">
+            <div class="ring" id="kring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="var(--surface-2)" stroke-width="11"/><circle class="arc" id="karc" cx="60" cy="60" r="50" fill="none" stroke="url(#kgrad)" stroke-width="11" stroke-linecap="round" stroke-dasharray="314.2" stroke-dashoffset="314.2"/><defs><linearGradient id="kgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent-2)"/></linearGradient></defs></svg><div class="lbl"><div><div class="big num" id="kleft">2,310</div><div class="tiny muted">kcal left</div></div></div></div>
+            <div class="bars">
+              <div><div class="row between tiny"><span>Protein</span><span class="num muted" id="pv">48 / 160 g</span></div><div class="bar"><i id="pb" style="background:var(--protein)"></i></div></div>
+              <div><div class="row between tiny"><span>Carbs</span><span class="num muted" id="cv">92 / 290 g</span></div><div class="bar"><i id="cb" style="background:var(--carbs)"></i></div></div>
+              <div><div class="row between tiny"><span>Fat</span><span class="num muted" id="fv">21 / 80 g</span></div><div class="bar"><i id="fb" style="background:var(--fat)"></i></div></div>
+            </div>
+          </div>
+          <button class="btn primary" id="addfood" type="button">+ Add chicken breast · 198 kcal</button>
+        </div>
+        <p class="note">Numbers count up instead of jumping and the ring sweeps to its new spot. When protein lands in the target zone, the ring gives a soft glow.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>Water</h3><span class="chip r1">Round 1</span></div>
+        <div class="stage">
+          <div class="water">
+            <svg class="glass" viewBox="0 0 90 120" aria-label="Water glass">
+              <defs><clipPath id="gclip"><path d="M10 6 H80 L72 112 Q71 116 66 116 H24 Q19 116 18 112 Z"/></clipPath></defs>
+              <g clip-path="url(#gclip)">
+                <rect x="0" y="0" width="90" height="120" fill="var(--surface)"/>
+                <g class="fill" id="wfill" style="transform:translateY(84px)">
+                  <path class="wave" d="M0 10 Q15 2 30 10 T60 10 T90 10 T120 10 T150 10 V130 H0 Z" fill="var(--water)" opacity=".85"/>
+                </g>
+              </g>
+              <path d="M10 6 H80 L72 112 Q71 116 66 116 H24 Q19 116 18 112 Z" fill="none" stroke="var(--line)" stroke-width="3"/>
+            </svg>
+            <div style="display:grid;gap:8px"><div><span class="num" id="wml" style="font-family:var(--font-display);font-weight:800;font-size:1.4rem">0.75</span> <span class="muted small">/ 3.0 L</span></div><button class="btn" id="addwater" type="button">+ 250 ml</button><span class="tiny muted" id="wnote">Tap to fill</span></div>
+          </div>
+        </div>
+        <p class="note">The glass fills with a gentle wave instead of a bar creeping along. A small sparkle when you reach the goal.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>How buttons feel</h3><span class="chip r1">Round 1</span></div>
+        <div class="stage">
+          <div class="press">
+            <div style="display:grid;gap:6px;text-align:center"><button class="btn flat" type="button">Save</button><span class="tiny muted">Today</span></div>
+            <div style="display:grid;gap:6px;text-align:center"><button class="btn primary after" id="pressafter" type="button">Save</button><span class="tiny muted">Proposed</span></div>
+          </div>
+        </div>
+        <p class="note">Press and hold both. The proposed button squishes slightly and sends a ripple from your finger, so every tap feels physical.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 2. Celebrations ===================== -->
+  <section>
+    <div class="sec-head"><h2>The big moments</h2><span class="muted small">where the dopamine comes from</span></div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="what"><h3>New personal record</h3><span class="chip r1">Round 1</span></div>
+        <div class="stage">
+          <div class="pr" id="prcard">
+            <div class="row between"><svg class="trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg><span class="delta">+2.5 kg</span></div>
+            <div class="tiny muted">New PR · Bench press</div>
+            <div class="kg num">82.5 kg × 6</div>
+            <div class="tiny muted">Estimated 1RM 99 kg · best ever</div>
+          </div>
+          <button class="btn primary" id="prbtn" type="button">Finish set: 82.5 kg × 6</button>
+        </div>
+        <p class="note">Confetti from the button, the gold card springs in with a shine and the phone gives a "success" buzz. Gold only appears for real achievements.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>Workout finished</h3><span class="chip r1">Round 1</span></div>
+        <div class="stage">
+          <div class="stats" id="sumstats">
+            <div class="stat"><div class="v num" data-to="58" data-suf=" min">58 min</div><div class="l">duration</div></div>
+            <div class="stat"><div class="v num" data-to="8420" data-suf=" kg">8,420 kg</div><div class="l">total lifted</div></div>
+            <div class="stat"><div class="v num" data-to="412" data-suf="">412</div><div class="l">≈ kcal burned</div></div>
+            <div class="stat"><div class="v num" data-to="8" data-suf="/10">8/10</div><div class="l">effort</div></div>
+          </div>
+          <div class="badges-mini" id="sumbadges"><span class="bm">🏆 2 new PRs</span><span class="bm">Volume +6% vs last Push</span></div>
+          <button class="btn primary" id="sumbtn" type="button">Finish workout</button>
+        </div>
+        <p class="note">Stats rise one by one and count up, then the badges pop in. A summary worth screenshotting.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>Perfect day</h3><span class="chip r1">Round 1</span></div>
+        <div class="stage">
+          <div class="rings3">
+            <svg viewBox="0 0 130 130" id="rings">
+              <circle cx="65" cy="65" r="56" fill="none" stroke="var(--surface-2)" stroke-width="11"/>
+              <circle cx="65" cy="65" r="42" fill="none" stroke="var(--surface-2)" stroke-width="11"/>
+              <circle cx="65" cy="65" r="28" fill="none" stroke="var(--surface-2)" stroke-width="11"/>
+              <circle class="arc" id="r1" cx="65" cy="65" r="56" fill="none" stroke="var(--accent)" stroke-width="11" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="98"/>
+              <circle class="arc" id="r2" cx="65" cy="65" r="42" fill="none" stroke="var(--protein)" stroke-width="11" stroke-linecap="round" stroke-dasharray="263.9" stroke-dashoffset="92"/>
+              <circle class="arc" id="r3" cx="65" cy="65" r="28" fill="none" stroke="var(--water)" stroke-width="11" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="26"/>
+            </svg>
+            <div style="display:grid;gap:10px">
+              <div class="legend"><span style="--c:var(--accent)">Calories in target zone</span><span style="--c:var(--protein)">Protein goal</span><span style="--c:var(--water)">Water goal</span></div>
+              <div class="perfect" id="perfect">Perfect day ✨</div>
+            </div>
+          </div>
+          <button class="btn primary" id="dinner" type="button">Log dinner</button>
+        </div>
+        <p class="note">Three rings close as you log. All three plus your check-in gives a Perfect day with a burst of confetti.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>Monday recap</h3><span class="chip">Round 2</span></div>
+        <div class="recap">
+          <div class="row between"><strong style="font-family:var(--font-display);font-size:1.15rem">Your week · Nov 2–8</strong><span class="tiny" style="font-weight:700">FORGE</span></div>
+          <div class="grid2">
+            <div><div class="v num">4</div><div class="l">workouts</div></div>
+            <div><div class="v num">31.2 t</div><div class="l">lifted</div></div>
+            <div><div class="v num">3</div><div class="l">new PRs</div></div>
+            <div><div class="v num">7.4</div><div class="l">avg effort</div></div>
+            <div><div class="v num">6/7</div><div class="l">days logged</div></div>
+            <div><div class="v num">−0.4</div><div class="l">kg trend</div></div>
+          </div>
+          <div class="tiny" style="font-weight:600">Best lift: Squat 120 kg × 5</div>
+        </div>
+        <button class="btn" type="button">Share with friends</button>
+        <p class="note">One shareable card every Monday. It shows effort and habits, and the weight trend appears only if you want it to.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 3. Progress over time ===================== -->
+  <section>
+    <div class="sec-head"><h2>Progress you can see</h2><span class="muted small">reasons to come back</span></div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="what"><h3>Badges</h3><span class="chip">Round 2</span></div>
+        <div class="stage">
+          <div class="badges" id="badges"></div>
+        </div>
+        <p class="note">Earned badges have a gold shine (tap one). Locked ones show how close you are.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>Strength level</h3><span class="chip">Round 2</span></div>
+        <div class="stage">
+          <div class="row between"><div><div class="tiny muted">Bench press · bodyweight 80 kg</div><div style="font-family:var(--font-display);font-weight:800;font-size:1.3rem">Intermediate</div></div><div class="num" style="font-weight:700">1.03× BW</div></div>
+          <div class="levels"><div class="marker" id="marker"></div></div>
+          <div class="ticks"><span>Beginner</span><span>Novice</span><span>Intermed.</span><span>Advanced</span><span>Elite</span></div>
+          <div class="small">Next level: <strong>Advanced at 120 kg</strong> <span class="muted">(+37.5 kg)</span></div>
+          <button class="btn" id="lvlbtn" type="button">Replay</button>
+        </div>
+        <p class="note">Your lift against strength standards for your body weight (example values). Every PR moves the marker a little.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>A forgiving streak</h3><span class="chip">Round 2</span></div>
+        <div class="stage">
+          <div class="row">
+            <svg class="flame" viewBox="0 0 54 64" aria-hidden="true"><defs><linearGradient id="fl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="var(--accent-2)"/></linearGradient></defs><path d="M27 62C13 62 4 52 4 39c0-11 7-17 11-25 2 6 5 9 8 10C23 14 27 6 35 2c-1 9 3 14 8 21 4 5 7 10 7 16 0 13-9 23-23 23z" fill="url(#fl)"/><path d="M27 58c-6 0-10-4-10-10 0-5 3-8 6-12 1 3 3 5 5 5 0-4 2-8 6-10 0 5 2 8 4 11 1 2 2 4 2 6 0 6-6 10-13 10z" fill="#fff3d6" opacity=".85"/></svg>
+            <div><div style="font-family:var(--font-display);font-weight:800;font-size:1.6rem" class="num">12 days</div><div class="small muted">logging streak · 2 freezes left</div></div>
+          </div>
+          <div class="week">
+            <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+            <div class="day log">✓</div><div class="day log">✓</div><div class="day rest">rest</div><div class="day log">✓</div><div class="day freeze">❄</div><div class="day log">✓</div><div class="day log today">✓</div>
+          </div>
+        </div>
+        <p class="note">Planned rest days count, and a missed day can use a "freeze". A streak should motivate you, never make you feel guilty.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 4. Visual polish ===================== -->
+  <section>
+    <div class="sec-head"><h2>Visual polish</h2><span class="muted small">look and consistency</span></div>
+    <div class="grid">
+
+      <div class="card">
+        <div class="what"><h3>Navigation icons</h3><span class="chip r1">Round 1</span></div>
+        <div class="stage" style="gap:14px">
+          <div class="tiny muted">Today (emoji)</div>
+          <div class="navbar old" aria-hidden="true">
+            <button tabindex="-1"><span class="e">◎</span>Today</button><button tabindex="-1"><span class="e">🍽</span>Diet</button><button tabindex="-1"><span class="e">🏋</span>Train</button><button tabindex="-1"><span class="e">💬</span>Coach</button><button tabindex="-1"><span class="e">📈</span>Progress</button><button tabindex="-1"><span class="e">👤</span>Profile</button>
+          </div>
+          <div class="tiny muted">Proposed (one icon style, sliding highlight: tap one)</div>
+          <div class="navbar" id="nav"><div class="pill" id="navpill"></div></div>
+        </div>
+        <p class="note">One consistent line-icon set instead of emojis, which look different on every phone. The highlight slides to the tab you tap.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>Friendly empty screens</h3><span class="chip">Round 2</span></div>
+        <div class="stage">
+          <div class="empty">
+            <svg viewBox="0 0 120 90" aria-hidden="true"><ellipse cx="60" cy="58" rx="44" ry="14" fill="var(--surface-2)"/><ellipse cx="60" cy="54" rx="34" ry="10" fill="var(--surface)" stroke="var(--line)" stroke-width="2"/><path d="M16 30v20M12 30v8a4 4 0 0 0 8 0v-8M104 30c-4 2-6 7-6 14h6v12" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"/><circle cx="52" cy="50" r="5" fill="var(--accent)"/><circle cx="66" cy="52" r="4" fill="var(--good)"/><circle cx="60" cy="46" r="3" fill="var(--accent-2)"/></svg>
+            <h3>No meals logged yet</h3>
+            <p class="small muted">Start with breakfast. Your recent foods are one tap away.</p>
+            <button class="btn primary" type="button">+ Add breakfast</button>
+          </div>
+        </div>
+        <p class="note">A small illustration and one clear next step instead of an empty list.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>Optional light mode</h3><span class="chip">Round 2</span></div>
+        <div class="light">
+          <div class="mini">
+            <div class="row between"><strong>Today</strong><span class="tiny" style="color:var(--muted)">Mon, Nov 9</span></div>
+            <div class="row between small"><span>Protein</span><span class="num" style="color:var(--muted)">112 / 160 g</span></div>
+            <div class="bar" style="background:var(--surface-2)"><i style="width:70%;background:var(--protein)"></i></div>
+            <div class="row between small"><span>Calories</span><span class="num" style="color:var(--muted)">1,640 / 2,500</span></div>
+            <div class="bar" style="background:var(--surface-2)"><i style="width:66%;background:var(--accent)"></i></div>
+            <button class="btn primary" type="button" style="justify-self:start">Start Pull</button>
+          </div>
+        </div>
+        <p class="note">Same layout and accent on a light background, following the phone's setting or chosen in Profile.</p>
+      </div>
+
+      <div class="card">
+        <div class="what"><h3>You stay in control</h3><span class="chip r1">Round 1</span></div>
+        <div class="stage" style="gap:0">
+          <label class="toggle" for="t1">Celebrations &amp; confetti <span class="switch"><input type="checkbox" id="t1" checked><span></span></span></label>
+          <label class="toggle" for="t2">Vibration <span class="switch"><input type="checkbox" id="t2" checked><span></span></span></label>
+          <label class="toggle" for="t3">Sounds <span class="switch"><input type="checkbox" id="t3"><span></span></span></label>
+          <label class="toggle" for="t4">Reduce motion <span class="tiny muted" style="margin-left:auto;margin-right:8px">follows phone</span><span class="switch"><input type="checkbox" id="t4"><span></span></span></label>
+        </div>
+        <p class="note">Settings in Profile. "Reduce motion" works like the switch at the top of this page: states still change, but nothing moves. Sounds are off by default.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="small muted" style="display:grid;gap:6px;border-top:1px solid var(--line);padding-top:16px">
+    <p><strong style="color:var(--text)">Guardrails built in:</strong> celebrations reward effort and habits (PRs, consistency, closed rings), never extreme calorie deficits or fast weight loss. Animations stay between 0.15 and 0.9 seconds and never block what you're doing.</p>
+    <p>Vibration needs one more manual install of the app file. Everything else arrives as a normal automatic update.</p>
+  </footer>
+</div>
+</div>
+
+<script>
+(() => {
+  const board = document.getElementById('board');
+  const $ = (id) => document.getElementById(id);
+  const calm = () => board.classList.contains('calm');
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) setMotion(true);
+
+  // ---------- controls ----------
+  function setPalette(p) {
+    board.dataset.palette = p;
+    $('pal-ember').setAttribute('aria-pressed', p === 'ember');
+    $('pal-green').setAttribute('aria-pressed', p === 'green');
+    $('paldesc').textContent = p === 'ember'
+      ? 'Ember: warm ink background with a molten orange-to-gold accent, a nod to the name Forge. Gold is saved for celebrations, so PRs and perfect days feel special.'
+      : 'Current green, polished: today’s colours kept, with a softer mint accent, a cooler ink background and a pale-green highlight for celebrations.';
+  }
+  function setMotion(isCalm) {
+    board.classList.toggle('calm', isCalm);
+    $('mo-full').setAttribute('aria-pressed', !isCalm);
+    $('mo-calm').setAttribute('aria-pressed', isCalm);
+    $('t4').checked = isCalm;
+  }
+  $('pal-ember').onclick = () => setPalette('ember');
+  $('pal-green').onclick = () => setPalette('green');
+  $('mo-full').onclick = () => setMotion(false);
+  $('mo-calm').onclick = () => setMotion(true);
+  $('t4').onchange = (e) => setMotion(e.target.checked);
+
+  const buzz = (pattern) => { if ($('t2').checked) { try { navigator.vibrate && navigator.vibrate(pattern); } catch (e) {} } };
+  const css = (name) => getComputedStyle(board).getPropertyValue(name).trim();
+  const fmt = (n) => Math.round(n).toLocaleString('en-US');
+
+  function countUp(el, from, to, ms, suffix = '', decimals = 0) {
+    if (calm()) { el.textContent = (decimals ? to.toFixed(decimals) : fmt(to)) + suffix; return; }
+    const t0 = performance.now();
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+      const v = from + (to - from) * e;
+      el.textContent = (decimals ? v.toFixed(decimals) : fmt(v)) + suffix;
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  // ---------- confetti ----------
+  const cv = $('confetti'), ctx = cv.getContext('2d');
+  let parts = [], running = false;
+  function resize() { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; }
+  addEventListener('resize', resize); resize();
+  function confetti(fromEl, count = 90) {
+    if (calm() || !$('t1').checked) return;
+    const r = fromEl.getBoundingClientRect();
+    const x = (r.left + r.width / 2) * devicePixelRatio, y = (r.top + r.height / 2) * devicePixelRatio;
+    const colors = [css('--accent'), css('--accent-2'), css('--good'), css('--protein'), '#ffffff'];
+    for (let i = 0; i < count; i++) {
+      const a = -Math.PI / 2 + (Math.random() - .5) * 1.9, sp = (6 + Math.random() * 9) * devicePixelRatio;
+      parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, g: .32 * devicePixelRatio, w: (5 + Math.random() * 6) * devicePixelRatio, h: (3 + Math.random() * 4) * devicePixelRatio, rot: Math.random() * 6, vr: (Math.random() - .5) * .4, c: colors[i % colors.length], life: 0 });
+    }
+    if (!running) { running = true; requestAnimationFrame(tick); }
+  }
+  function tick() {
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    parts = parts.filter((p) => p.life < 150 && p.y < cv.height + 40);
+    for (const p of parts) {
+      p.life++; p.vy += p.g; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.globalAlpha = Math.max(0, 1 - p.life / 150);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+    }
+    if (parts.length) requestAnimationFrame(tick); else { running = false; ctx.clearRect(0, 0, cv.width, cv.height); }
+  }
+
+  // ---------- set + rest timer ----------
+  let restTimer = null;
+  $('check2').onclick = () => {
+    const btn = $('check2');
+    if (btn.classList.contains('on')) { btn.classList.remove('on'); $('set2').classList.remove('done'); clearInterval(restTimer); $('rest').classList.remove('live'); $('restt').textContent = '2:00'; $('restarc').style.strokeDashoffset = 0; return; }
+    btn.classList.add('on'); $('set2').classList.add('done');
+    buzz(15); const b = $('bzz'); b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+    // 120 s rest, shown 12× faster
+    let left = 120; $('rest').classList.add('live'); clearInterval(restTimer);
+    const draw = () => { $('restt').textContent = Math.floor(left / 60) + ':' + String(left % 60).padStart(2, '0'); $('restarc').style.strokeDashoffset = 157 * (1 - left / 120); };
+    draw();
+    restTimer = setInterval(() => { left -= 1; draw(); if (left <= 0) { clearInterval(restTimer); buzz([120, 80, 120]); b.textContent = '● bzz bzz · rest over'; b.classList.remove('show'); void b.offsetWidth; b.classList.add('show'); } }, 1000 / 12);
+  };
+
+  // ---------- food ring ----------
+  const target = { kcal: 2900, p: 160, c: 290, f: 80 };
+  const day = { kcal: 590, p: 48, c: 92, f: 21 };
+  const foods = [
+    { label: 'chicken breast', kcal: 198, p: 37, c: 0, f: 4 },
+    { label: 'rice, 300 g', kcal: 390, p: 8, c: 85, f: 1 },
+    { label: 'skyr bowl', kcal: 250, p: 30, c: 26, f: 3 },
+    { label: 'salmon fillet', kcal: 309, p: 33, c: 0, f: 19 },
+  ];
+  let fi = 0;
+  function paintFood(animateFrom) {
+    $('karc').style.strokeDashoffset = 314.2 * (1 - Math.min(1, day.kcal / target.kcal));
+    $('pb').style.width = Math.min(100, (day.p / target.p) * 100) + '%';
+    $('cb').style.width = Math.min(100, (day.c / target.c) * 100) + '%';
+    $('fb').style.width = Math.min(100, (day.f / target.f) * 100) + '%';
+    $('pv').textContent = Math.round(day.p) + ' / ' + target.p + ' g';
+    $('cv').textContent = Math.round(day.c) + ' / ' + target.c + ' g';
+    $('fv').textContent = Math.round(day.f) + ' / ' + target.f + ' g';
+    const left = target.kcal - day.kcal;
+    countUp($('kleft'), animateFrom ?? left, left, 900);
+  }
+  requestAnimationFrame(() => paintFood());
+  $('addfood').onclick = () => {
+    const f = foods[fi % foods.length]; fi++;
+    const before = target.kcal - day.kcal;
+    if (day.kcal + f.kcal > target.kcal + 200) { Object.assign(day, { kcal: 590, p: 48, c: 92, f: 21 }); paintFood(before); }
+    else { const hadP = day.p >= target.p * .9; day.kcal += f.kcal; day.p += f.p; day.c += f.c; day.f += f.f; paintFood(before);
+      if (!hadP && day.p >= target.p * .9) { const r = $('kring'); r.classList.remove('hit'); void r.offsetWidth; r.classList.add('hit'); buzz(25); } }
+    const n = foods[fi % foods.length]; $('addfood').textContent = '+ Add ' + n.label + ' · ' + n.kcal + ' kcal';
+    buzz(10);
+  };
+
+  // ---------- water ----------
+  let ml = 750;
+  function paintWater() { $('wfill').style.transform = 'translateY(' + (112 - (ml / 3000) * 104) + 'px)'; }
+  paintWater();
+  $('addwater').onclick = () => {
+    const before = ml / 1000;
+    ml = ml >= 3000 ? 750 : ml + 250; paintWater(); buzz(10);
+    countUp($('wml'), before, ml / 1000, 700, '', 2);
+    $('wnote').textContent = ml >= 3000 ? 'Goal reached ✦' : (3000 - ml) + ' ml to go';
+    if (ml >= 3000) confetti($('addwater'), 30);
+  };
+
+  // ---------- press ripple ----------
+  $('pressafter').addEventListener('pointerdown', (e) => {
+    const b = e.currentTarget, r = b.getBoundingClientRect(), s = document.createElement('span');
+    const size = Math.max(r.width, r.height);
+    s.className = 'rip'; s.style.width = s.style.height = size + 'px';
+    s.style.left = (e.clientX - r.left - size / 2) + 'px'; s.style.top = (e.clientY - r.top - size / 2) + 'px';
+    b.appendChild(s); setTimeout(() => s.remove(), 600); buzz(8);
+  });
+
+  // ---------- PR ----------
+  $('prbtn').onclick = () => {
+    const c = $('prcard'); c.classList.remove('go'); void c.offsetWidth; c.classList.add('go');
+    confetti($('prbtn'), 110); buzz([30, 60, 30, 60, 90]);
+  };
+
+  // ---------- workout summary ----------
+  $('sumbtn').onclick = () => {
+    const stats = [...$('sumstats').children];
+    stats.forEach((s, i) => {
+      s.classList.remove('in'); void s.offsetWidth; s.style.animationDelay = (i * 0.12) + 's'; s.classList.add('in');
+      const v = s.querySelector('.v'); const to = +v.dataset.to; v.textContent = '0' + v.dataset.suf;
+      setTimeout(() => countUp(v, 0, to, 800, v.dataset.suf), calm() ? 0 : i * 120);
+    });
+    [...$('sumbadges').children].forEach((b, i) => { b.classList.remove('in'); void b.offsetWidth; b.style.animationDelay = (0.6 + i * 0.15) + 's'; b.classList.add('in'); });
+    buzz(20);
+  };
+
+  // ---------- perfect day ----------
+  let closed = false;
+  $('dinner').onclick = () => {
+    if (closed) { $('r1').style.strokeDashoffset = 98; $('r2').style.strokeDashoffset = 92; $('r3').style.strokeDashoffset = 26; $('perfect').classList.remove('show'); $('dinner').textContent = 'Log dinner'; closed = false; return; }
+    closed = true; $('dinner').textContent = 'Reset';
+    $('r1').style.strokeDashoffset = 0; setTimeout(() => { $('r2').style.strokeDashoffset = 0; }, calm() ? 0 : 250); setTimeout(() => { $('r3').style.strokeDashoffset = 0; }, calm() ? 0 : 500);
+    setTimeout(() => { $('perfect').classList.add('show'); confetti($('rings'), 70); buzz([20, 40, 60]); }, calm() ? 0 : 1300);
+  };
+
+  // ---------- badges ----------
+  const ICON = {
+    first: '<path d="M6 7v10M3 9v6M18 7v10M21 9v6M6 12h12"/>',
+    log: '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 1-3 3.5-3 7h3v11"/>',
+    leaf: '<path d="M5 19c8 0 14-6 14-14C11 5 5 11 5 19zM5 19l7-7"/>',
+    shield: '<path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    hundred: '<path d="M4 15V9l-1.5 1M9 9h0a2.5 3 0 0 1 0 6h0a2.5 3 0 0 1 0-6zM16.5 9h0a2.5 3 0 0 1 0 6h0a2.5 3 0 0 1 0-6z"/>',
+    star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    fifty: '<path d="M4 12a8 8 0 1 0 16 0 8 8 0 0 0-16 0zM12 8v4l3 2"/>',
+  };
+  const BADGES = [
+    { n: 'First workout', i: 'first', ok: true },
+    { n: '7 days logged', i: 'log', ok: true },
+    { n: 'Phase 1 done', i: 'shield', ok: true },
+    { n: 'Perfect week', i: 'star', ok: true },
+    { n: '100 kg club', i: 'hundred', ok: false, p: .925, t: '92.5 / 100 kg' },
+    { n: '30 plants', i: 'leaf', ok: false, p: .6, t: '18 / 30' },
+    { n: '50 workouts', i: 'fifty', ok: false, p: .46, t: '23 / 50' },
+    { n: 'Early bird', i: 'sun', ok: false, p: .3, t: '3 / 10' },
+  ];
+  $('badges').innerHTML = BADGES.map((b) => `<button type="button" class="badge${b.ok ? '' : ' locked'}" aria-label="${b.n}${b.ok ? ', earned' : ', ' + b.t}"><span class="medal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[b.i]}</svg></span><span>${b.n}</span>${b.ok ? '' : `<span class="prog"><i style="width:${b.p * 100}%"></i></span>`}</button>`).join('');
+  [...$('badges').children].forEach((el) => el.addEventListener('click', () => { if (el.classList.contains('locked')) return; el.classList.remove('tap'); void el.offsetWidth; el.classList.add('tap'); buzz(15); }));
+
+  // ---------- strength level ----------
+  const placeMarker = () => { $('marker').style.left = '0%'; requestAnimationFrame(() => requestAnimationFrame(() => { $('marker').style.left = '51.5%'; })); };
+  // 1.03×BW on a scale where Beginner 0.5, Novice 0.75, Intermediate 1.0, Advanced 1.5, Elite 2.0 (bench, illustrative)
+  placeMarker(); $('lvlbtn').onclick = placeMarker;
+
+  // ---------- nav ----------
+  const NAV = [
+    ['Today', '<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>'],
+    ['Diet', '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 1-3 3.5-3 7h3v11"/>'],
+    ['Train', '<path d="M6 7v10M3 9v6M18 7v10M21 9v6M6 12h12"/>'],
+    ['Coach', '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/>'],
+    ['Progress', '<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>'],
+    ['Profile', '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'],
+  ];
+  const nav = $('nav');
+  NAV.forEach(([label, path], i) => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${path}</svg>${label}`;
+    if (i === 0) b.setAttribute('aria-current', 'true');
+    b.onclick = () => { [...nav.querySelectorAll('button')].forEach((x) => x.removeAttribute('aria-current')); b.setAttribute('aria-current', 'true'); $('navpill').style.transform = `translateX(${i * 100}%)`; buzz(8); };
+    nav.appendChild(b);
+  });
+})();
+</script>
+</body>
+</html>
