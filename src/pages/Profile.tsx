@@ -4,6 +4,7 @@ import { defaultState, exportJson, mutate, replaceState, useAppState, useSyncSta
 import { IS_ARTIFACT } from '../lib/env';
 import { AppInfoCard } from '../components/AppInfo';
 import { SettingsCard } from '../components/SettingsCard';
+import { LegalCard } from '../components/Legal';
 import { ACTIVITY_FACTORS, bmr, dailyTargets, tdee } from '../lib/nutrition';
 import { fmt, today } from '../lib/util';
 import { NumField, Seg, Stat } from '../components/ui';
@@ -136,6 +137,7 @@ export function Profile() {
         <button className="btn danger block ghost" style={{ marginTop: 10 }} onClick={async () => (await askConfirm('Delete ALL your data? This cannot be undone.', 'Delete everything')) && replaceState(defaultState())}>Delete all data</button>
       </div>
       <SettingsCard />
+      <LegalCard />
       <AppInfoCard />
     </div>
   );

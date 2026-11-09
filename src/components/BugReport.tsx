@@ -31,6 +31,7 @@ export function BugReport({ open, onClose }: { open: boolean; onClose: () => voi
           <button className="btn" onClick={share}>Share…</button>
           <button className="btn" onClick={copy}>Copy report</button>
         </div>
+        <p className="tiny muted">GitHub issues are public, so don’t include personal health details there. Use Share or Copy for anything private.</p>
         <a className="btn primary block" style={{ textAlign: 'center', textDecoration: 'none' }} href={issueUrl(title(), report())} target="_blank" rel="noreferrer">Open as GitHub issue</a>
         {done && <p className="small" style={{ color: 'var(--accent)' }}>{done}</p>}
         <details><summary className="tiny muted" style={{ cursor: 'pointer' }}>Preview report</summary><pre className="tiny muted" style={{ whiteSpace: 'pre-wrap' }}>{report()}</pre></details>

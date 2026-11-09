@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GutLog, Severity } from '../types';
 import { getState, mutate, useAppState } from '../lib/storage';
 import { analyze, type Suggestion } from '../lib/coach';
@@ -8,6 +8,7 @@ import { fmt, prettyDate, today } from '../lib/util';
 import { Bar, Seg, Stat } from '../components/ui';
 import { askConfirm } from '../components/confirm';
 import { Reset } from './Reset';
+import { Md } from '../components/Markdown';
 
 type Sub = 'insights' | 'ask' | 'gut' | 'reset';
 
@@ -137,28 +138,6 @@ function Insights({ ask }: { ask: (q: string) => void }) {
 
 // ---------------- Ask Coach (AI) ----------------
 
-function inline(text: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) => (part.startsWith('**') && part.endsWith('**') ? <strong key={i}>{part.slice(2, -2)}</strong> : part));
-}
-
-/** Minimal, safe Markdown: paragraphs, "- " / "1. " lists, headings, **bold**. */
-export function Md({ text }: { text: string }) {
-  const out: ReactNode[] = [];
-  let list: ReactNode[] = [];
-  const flush = () => { if (list.length) { out.push(<ul key={out.length} style={{ margin: '4px 0', paddingLeft: 20 }}>{list}</ul>); list = []; } };
-  text.split('\n').forEach((raw, i) => {
-    const line = raw.trimEnd();
-    const li = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
-    if (li) { list.push(<li key={i}>{inline(li[1])}</li>); return; }
-    flush();
-    if (!line.trim()) return;
-    const h = line.match(/^#{1,4}\s+(.*)$/);
-    out.push(h ? <p key={i} style={{ marginTop: 8 }}><strong>{inline(h[1])}</strong></p> : <p key={i}>{inline(line)}</p>);
-  });
-  flush();
-  return <div className="md">{out}</div>;
-}
-
 const STARTERS = [
   'What should I eat after training?',
   'How do I hit my protein without shakes?',
@@ -211,7 +190,7 @@ function AskCoach({ draft, setDraft }: { draft: string; setDraft: (s: string) =>
       <div className="card" style={{ minHeight: 200 }}>
         {chat.length === 0 && !busy && (
           <div>
-            <p className="small">Hi{s.profile.name ? ` ${s.profile.name}` : ''}! I’m your coach for <strong>diet, training and gut health</strong>. I can see a summary of your logged food, weight trend, workouts and gut check-ins, so you can ask me things like:</p>
+            <p className="small">Hi{s.profile.name ? ` ${s.profile.name}` : ''}! I’m an <strong>AI coach</strong> for <strong>diet, training and gut health</strong>. I can see a summary of your logged food, weight trend, workouts and gut check-ins, so you can ask me things like:</p>
             <div className="stack" style={{ marginTop: 10 }}>{STARTERS.map((q) => <button key={q} className="btn sm block" style={{ textAlign: 'left', whiteSpace: 'normal' }} onClick={() => send(q)}>{q}</button>)}</div>
           </div>
         )}
@@ -237,7 +216,7 @@ function AskCoach({ draft, setDraft }: { draft: string; setDraft: (s: string) =>
         {busy ? <button type="button" className="btn" onClick={() => ctl.current?.abort()}>Stop</button> : <button className="btn primary" disabled={!draft.trim()}>Send</button>}
       </form>
       <div className="row between">
-        <span className="tiny muted">Not medical advice. Uses your Claude usage.</span>
+        <span className="tiny muted">You’re chatting with an AI. It can make mistakes, and it’s not medical advice. Uses your Claude usage.</span>
         {chat.length > 0 && <button className="btn sm ghost" onClick={async () => (await askConfirm('Clear this conversation?', 'Clear')) && mutate((st) => { st.chat = []; })}>New chat</button>}
       </div>
     </>

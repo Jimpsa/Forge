@@ -152,6 +152,7 @@ export interface AppState {
   chat?: ChatMessage[];
   periodStarts?: string[]; // first day of each period (YYYY-MM-DD)
   settings?: Settings;
+  consent?: Consent;
   program?: SavedProgram;
   mealPlan?: SavedMealPlan;
   celebrated?: Celebrated;
@@ -217,3 +218,6 @@ export interface MealItem { foodId: string; name: string; grams: number }
 export interface PlannedMeal { slot: string; title: string; items: MealItem[] }
 export interface PlannedDay { weekday: string; training: boolean; meals: PlannedMeal[] }
 export interface SavedMealPlan { id: string; style: string; createdAt: string; days: PlannedDay[]; notes: string[] }
+
+/** Record of what the user agreed to (GDPR: consent must be demonstrable). */
+export interface Consent { version: string; date: string; age16: boolean; terms: boolean; health: boolean }

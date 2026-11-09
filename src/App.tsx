@@ -5,6 +5,8 @@ import { applySettings, settingsOf } from './lib/settings';
 import { newlyEarned, perfectDay } from './lib/achievements';
 import { celebrate } from './lib/fx';
 import { ToastHost, toast } from './components/Toast';
+import { ConsentScreen } from './components/Legal';
+import { LEGAL_VERSION } from './data/legal';
 import { Icon } from './components/Icon';
 import { today } from './lib/util';
 import { ConfirmHost } from './components/confirm';
@@ -65,6 +67,8 @@ export default function App() {
   useEffect(() => { if (sync.status === 'cloud' && s.active) setTab('train'); }, [sync.status === 'cloud']); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (sync.status === 'loading') return <div className="app"><div className="empty" style={{ marginTop: '30vh' }}>Loading your data…</div></div>;
+
+  if (!s.consent || s.consent.version !== LEGAL_VERSION) return <><ConsentScreen /><ConfirmHost /></>;
 
   if (!s.onboarded) {
     return (
