@@ -7,8 +7,9 @@ import { lookupBarcode, searchOff } from '../lib/off';
 import { fmt, uid } from '../lib/util';
 import { NumField, Seg, Sheet } from './ui';
 import { IS_ARTIFACT } from '../lib/env';
+import { CUTS, SPECIES, buildMeatFood, looksLikeMeat, type Species } from '../data/meats';
 
-type Tab = 'search' | 'scan' | 'create' | 'recipe';
+type Tab = 'search' | 'meat' | 'scan' | 'create' | 'recipe';
 
 export function FoodPicker({ open, onClose, date, meal: initialMeal }: { open: boolean; onClose: () => void; date: string; meal: Meal }) {
   const [tab, setTab] = useState<Tab>('search');
@@ -18,7 +19,7 @@ export function FoodPicker({ open, onClose, date, meal: initialMeal }: { open: b
 
   const choose = (f: Food) => {
     // Persist foods that came from the online DB so they work offline and show up in "recent".
-    if (f.source === 'off' && !getState().foods.some((x) => x.id === f.id)) mutate((s) => { s.foods.unshift(f); });
+    if ((f.source === 'off' || f.id.startsWith('m-')) && !getState().foods.some((x) => x.id === f.id)) mutate((s) => { s.foods.unshift(f); });
     setPicked(f);
   };
 
@@ -32,9 +33,10 @@ export function FoodPicker({ open, onClose, date, meal: initialMeal }: { open: b
           }} />
       ) : (
         <>
-          <Seg value={tab} onChange={setTab} options={[{ value: 'search' as Tab, label: 'Search' }, ...(IS_ARTIFACT ? [] : [{ value: 'scan' as Tab, label: 'Scan' }]), { value: 'create', label: 'New food' }, { value: 'recipe', label: 'Recipe' }]} />
+          <Seg value={tab} onChange={setTab} options={[{ value: 'search' as Tab, label: 'Search' }, { value: 'meat' as Tab, label: 'Meat' }, ...(IS_ARTIFACT ? [] : [{ value: 'scan' as Tab, label: 'Scan' }]), { value: 'create', label: 'New' }, { value: 'recipe', label: 'Recipe' }]} />
           <div style={{ marginTop: 14 }}>
-            {tab === 'search' && <SearchTab onPick={choose} />}
+            {tab === 'search' && <SearchTab onPick={choose} onMeat={() => setTab('meat')} />}
+            {tab === 'meat' && <MeatTab onPick={choose} />}
             {tab === 'scan' && <ScanTab onPick={choose} />}
             {tab === 'create' && <CreateFood onCreated={choose} />}
             {tab === 'recipe' && <RecipeBuilder onCreated={choose} />}
@@ -58,7 +60,7 @@ function FoodRow({ f, onPick }: { f: Food; onPick: (f: Food) => void }) {
   );
 }
 
-function SearchTab({ onPick }: { onPick: (f: Food) => void }) {
+function SearchTab({ onPick, onMeat }: { onPick: (f: Food) => void; onMeat: () => void }) {
   const s = useAppState();
   const [q, setQ] = useState('');
   const [online, setOnline] = useState<Food[]>([]);
@@ -73,7 +75,7 @@ function SearchTab({ onPick }: { onPick: (f: Food) => void }) {
       return [...favs, ...recent];
     }
     const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
-    return all.filter((f) => terms.every((t) => `${f.name} ${f.brand ?? ''}`.toLowerCase().includes(t))).slice(0, 40);
+    return all.filter((f) => terms.every((t) => `${f.name} ${f.brand ?? ''} ${f.keywords ?? ''}`.toLowerCase().includes(t))).slice(0, 40);
   }, [s, q]);
 
   const ctrl = useRef<AbortController | null>(null);
@@ -95,6 +97,12 @@ function SearchTab({ onPick }: { onPick: (f: Food) => void }) {
       <div style={{ marginTop: 8 }}>
         {!q.trim() && <div className="tiny muted" style={{ margin: '6px 0' }}>{local.length ? 'Favorites & recent' : 'Type to search the built-in database and your foods.'}</div>}
         {local.map((f) => <FoodRow key={f.id} f={f} onPick={onPick} />)}
+        {q.trim() && looksLikeMeat(q) && (
+          <div className="list-item click" onClick={onMeat} style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '10px 12px', marginTop: 6 }}>
+            <div className="grow"><div>🥩 Build the exact cut & fat %</div><div className="tiny muted">Choose cut, set fat % (e.g. mince 5–20%) and raw or cooked weight</div></div>
+            <span className="muted">›</span>
+          </div>
+        )}
         {q.trim() && !IS_ARTIFACT && (
           <div style={{ marginTop: 10 }}>
             <button className="btn block" onClick={goOnline} disabled={status === 'loading'}>
@@ -110,6 +118,46 @@ function SearchTab({ onPick }: { onPick: (f: Food) => void }) {
 }
 
 declare global { interface Window { BarcodeDetector?: any } } // eslint-disable-line @typescript-eslint/no-explicit-any
+
+function MeatTab({ onPick }: { onPick: (f: Food) => void }) {
+  const [species, setSpecies] = useState<Species>('beef');
+  const [cutKey, setCutKey] = useState(CUTS.beef[0].key);
+  const cut = CUTS[species].find((c) => c.key === cutKey) ?? CUTS[species][0];
+  const [fat, setFat] = useState(cut.fat);
+  const [cooked, setCooked] = useState<'raw' | 'cooked'>('raw');
+  const pickSpecies = (sp: Species) => { setSpecies(sp); setCutKey(CUTS[sp][0].key); setFat(CUTS[sp][0].fat); };
+  const pickCut = (key: string) => { setCutKey(key); setFat(CUTS[species].find((c) => c.key === key)!.fat); };
+  const food = buildMeatFood(species, cut, fat, cooked === 'cooked');
+  const isLiver = cut.key === 'liver';
+  return (
+    <div className="stack">
+      <div className="row wrap" style={{ gap: 6 }}>
+        {(Object.keys(SPECIES) as Species[]).map((sp) => (
+          <button key={sp} className={'btn sm' + (sp === species ? ' primary' : '')} onClick={() => pickSpecies(sp)}>{SPECIES[sp].label.replace(' (moose, deer, reindeer)', '')}</button>
+        ))}
+      </div>
+      <label className="field"><span>Cut</span>
+        <select value={cut.key} onChange={(e) => pickCut(e.target.value)}>{CUTS[species].map((c) => <option key={c.key} value={c.key}>{c.name}</option>)}</select>
+      </label>
+      {!isLiver && (
+        <div>
+          <div className="row between small"><span>Fat content{cut.mince ? ' (as on the pack)' : ''}</span><strong className="num">{fat}%</strong></div>
+          <input type="range" min={cut.min} max={cut.max} step={1} value={fat} onChange={(e) => setFat(+e.target.value)} style={{ padding: 0 }} aria-label="Fat percent" />
+          <div className="row between tiny muted"><span>{cut.min}% lean</span><span>typical {cut.fat}%</span><span>{cut.max}%</span></div>
+        </div>
+      )}
+      <div>
+        <div className="small" style={{ marginBottom: 4 }}>I’m weighing it…</div>
+        <Seg value={cooked} onChange={setCooked} options={[{ value: 'raw', label: 'Raw' }, { value: 'cooked', label: 'Cooked' }]} />
+        <p className="tiny muted" style={{ marginTop: 4 }}>{cooked === 'raw' ? 'Most accurate: weigh before cooking.' : `Cooked weight (fried/grilled without added fat${cut.mince ? ', fat drained' : ''}). Log oil or butter separately.`}</p>
+      </div>
+      <div className="small muted">Per 100 g:</div>
+      <NutrientTable n={food.per100} />
+      <button className="btn primary block" onClick={() => onPick(food)}>Continue with {food.name.toLowerCase()}</button>
+      <p className="tiny muted">Estimated from reference values (USDA): protein falls ~0.28 g for every 1% more fat. Pack labels beat estimates — for a specific product, scan it or add it under “New”.</p>
+    </div>
+  );
+}
 
 function ScanTab({ onPick }: { onPick: (f: Food) => void }) {
   const video = useRef<HTMLVideoElement>(null);

@@ -36,6 +36,7 @@ export interface Food {
   barcode?: string;
   ingredients?: { foodId: string; grams: number }[]; // recipes only
   favorite?: boolean;
+  keywords?: string; // extra search terms (e.g. Swedish names)
 }
 
 export type Meal = 'breakfast' | 'lunch' | 'dinner' | 'snacks';

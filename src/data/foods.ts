@@ -3,7 +3,8 @@ import type { Food, Nutrients, Serving } from '../types';
 // Starter database. Values are per 100 g and approximate (typical USDA-style figures).
 // Columns: kcal, protein, carbs, fat, fiber, sugar, satFat, sodium, potassium, calcium, iron,
 //          magnesium, zinc, vitA, vitC, vitD, vitB12, cholesterol
-type Row = [string, number[], Serving[]?];
+// Columns as above; short rows list only kcal…sodium (first 8). Optional 4th element: extra nutrients; 5th: search keywords.
+type Row = [string, number[], Serving[]?, Nutrients?, string?];
 
 const S = (label: string, grams: number): Serving => ({ label, grams });
 
@@ -97,6 +98,156 @@ const rows: Row[] = [
   ['Lettuce', [15, 1.4, 2.9, 0.2, 1.3, 0.8, 0, 28, 194, 36, 0.9, 13, 0.2, 370, 9.2, 0, 0, 0], [S('1 bowl', 50)]],
   ['Kiwi', [61, 1.1, 14.7, 0.5, 3, 9, 0, 3, 312, 34, 0.3, 17, 0.1, 4, 92.7, 0, 0, 0], [S('1 kiwi', 75)]],
   ['Papaya', [43, 0.5, 10.8, 0.3, 1.7, 7.8, 0.1, 8, 182, 20, 0.3, 21, 0.1, 47, 60.9, 0, 0, 0], [S('1 cup', 145)]],
+  // ---- More basics (approximate reference values per 100 g; short rows = kcal, P, C, F, fiber, sugar, satFat, sodium) ----
+  // Dairy & alternatives
+  ['Milk, 0.5% fat (skim)', [35, 3.5, 4.8, 0.5, 0, 4.8, 0.3, 40, 150, 120], [S('1 glass', 250)], undefined, 'minimjölk mellanmjölk lättmjölk'],
+  ['Milk, 3% fat (whole)', [60, 3.4, 4.7, 3, 0, 4.7, 1.9, 40, 150, 120], [S('1 glass', 250)], undefined, 'standardmjölk helmjölk'],
+  ['Oat drink, fortified', [45, 1, 6.5, 1.5, 0.8, 4, 0.2, 40, 50, 120], [S('1 glass', 250)], { vitD: 0.75, vitB12: 0.38 }, 'havredryck oatly oat milk'],
+  ['Soy drink, fortified', [40, 3.3, 2.5, 1.8, 0.5, 2.5, 0.3, 40, 120, 120], [S('1 glass', 250)], { vitD: 0.75, vitB12: 0.38 }, 'sojadryck soy milk'],
+  ['Natural yogurt 3%', [60, 3.5, 4.5, 3, 0, 4.5, 2, 45, 150, 120], [S('1 bowl', 200)], undefined, 'yoghurt naturell'],
+  ['Turkish / Greek yogurt 10%', [125, 4, 4, 10, 0, 4, 6.5, 40, 140, 110], [S('1 bowl', 150)], undefined, 'turkisk yoghurt grekisk'],
+  ['Flavoured yogurt (sweetened)', [90, 3.3, 13, 2.8, 0, 12.5, 1.8, 50, 150, 115], [S('1 bowl', 200)], undefined, 'fruktyoghurt vaniljyoghurt'],
+  ['Filmjölk 3% (soured milk)', [60, 3.3, 4.2, 3, 0, 4.2, 2, 40, 150, 120], [S('1 bowl', 200)], undefined, 'fil filmjölk'],
+  ['Hard cheese 28% (Gouda-type)', [350, 25, 0, 28, 0, 0, 18, 700, 90, 750], [S('1 slice', 10)], undefined, 'hushållsost präst herrgård gouda edam ost'],
+  ['Light cheese 17%', [270, 29, 0, 17, 0, 0, 11, 700, 90, 850], [S('1 slice', 10)], undefined, 'lättost ost'],
+  ['Mozzarella', [280, 22, 2.2, 20, 0, 1, 13, 630, 76, 505], [S('1 ball', 125)]],
+  ['Parmesan', [392, 36, 3.2, 26, 0, 0.8, 16, 1500, 92, 1180], [S('1 tbsp grated', 5)]],
+  ['Feta cheese', [264, 14, 4, 21, 0, 4, 15, 1100, 62, 490], [S('1 portion', 30)], undefined, 'fetaost'],
+  ['Halloumi', [320, 21, 2, 25, 0, 2, 17, 1200, 80, 700], [S('1 slice', 30)]],
+  ['Cream cheese', [342, 6, 4, 34, 0, 3, 20, 320], [S('1 tbsp', 15)], undefined, 'färskost philadelphia'],
+  ['Sour cream / crème fraîche 12%', [136, 2.9, 3.6, 12, 0, 3.6, 7.6, 40], [S('1 tbsp', 15)], undefined, 'gräddfil creme fraiche'],
+  ['Crème fraîche 34%', [330, 2.2, 3, 34, 0, 3, 22, 30], [S('1 tbsp', 15)]],
+  ['Cooking cream 15%', [150, 3, 4, 15, 0, 4, 9.5, 40], [S('1 dl', 100)], undefined, 'matlagningsgrädde'],
+  ['Whipping cream 36–40%', [345, 2, 3, 36, 0, 3, 23, 30], [S('1 dl', 100)], undefined, 'vispgrädde grädde'],
+  ['Butter spread 60–75%', [600, 0.5, 0.5, 66, 0, 0.5, 23, 560], [S('1 tsp', 5)], undefined, 'bregott margarin smör'],
+  ['Ice cream, vanilla', [207, 3.5, 24, 11, 0.7, 21, 6.8, 80], [S('1 scoop', 65)], undefined, 'glass'],
+  ['Casein / protein powder (mixed)', [370, 78, 8, 3, 1, 4, 1.5, 250], [S('1 scoop', 30)], undefined, 'kasein proteinpulver'],
+  // Fish & seafood
+  ['Salmon, raw', [208, 20, 0, 13, 0, 0, 3.1, 59, 363, 9], [S('1 fillet', 125)], { vitD: 11, vitB12: 3.2, iron: 0.3, magnesium: 27 }, 'lax laxfilé'],
+  ['Cod, raw', [82, 18, 0, 0.7, 0, 0, 0.1, 54, 413, 16], [S('1 fillet', 125)], { vitD: 0.9, vitB12: 0.9 }, 'torsk torskfilé'],
+  ['Pollock / Alaska pollock, raw', [92, 19.4, 0, 1, 0, 0, 0.1, 99], [S('1 fillet', 125)], { vitD: 1, vitB12: 3 }, 'alaska pollock sej'],
+  ['Tuna steak, raw', [109, 24, 0, 0.5, 0, 0, 0.2, 45], [S('1 steak', 150)], { vitD: 1.7, vitB12: 2.1 }, 'tonfisk'],
+  ['Mackerel, raw', [205, 19, 0, 14, 0, 0, 3.3, 90], [S('1 fillet', 100)], { vitD: 16, vitB12: 8.7 }, 'makrill'],
+  ['Mackerel in tomato sauce (canned)', [190, 14, 4, 13, 0.3, 3, 3, 400], [S('1 can', 125)], { vitD: 6 }, 'makrill i tomatsås'],
+  ['Herring, pickled', [262, 14, 9.6, 18, 0, 8.7, 2.4, 870], [S('1 portion', 50)], { vitD: 7 }, 'sill inlagd sill'],
+  ['Rainbow trout, raw', [141, 20, 0, 6.2, 0, 0, 1.7, 51], [S('1 fillet', 125)], { vitD: 10, vitB12: 4.5 }, 'regnbåge öring'],
+  ['Smoked salmon', [117, 18, 0, 4.3, 0, 0, 0.9, 670], [S('1 slice', 20)], { vitD: 9 }, 'rökt lax gravad lax'],
+  ['Sardines in oil, drained', [208, 24.6, 0, 11.5, 0, 0, 1.5, 307, 397, 382], [S('1 can', 90)], { vitD: 4.8, vitB12: 8.9 }, 'sardiner'],
+  ['Shrimp / prawns, raw', [85, 20, 0, 0.5, 0, 0, 0.1, 119], [S('1 portion', 100)], undefined, 'räkor'],
+  ['Mussels, cooked', [172, 24, 7.4, 4.5, 0, 0, 0.9, 369], [S('1 portion', 100)], { iron: 6.7, vitB12: 24 }, 'musslor blåmusslor'],
+  ['Fish fingers', [220, 13, 20, 10, 1, 1, 1, 400], [S('1 piece', 25)], undefined, 'fiskpinnar'],
+  // Processed meat & ready meals
+  ['Bacon, raw', [400, 13, 1, 39, 0, 0, 13, 830], [S('1 slice', 15)], undefined, 'bacon'],
+  ['Bacon, cooked (crispy)', [541, 37, 1.4, 42, 0, 0, 14, 1700], [S('1 slice', 8)]],
+  ['Ham, sliced (deli)', [107, 18, 1.5, 3, 0, 1, 1, 1050], [S('1 slice', 15)], undefined, 'skinka pålägg kokt skinka'],
+  ['Sausage / frankfurter', [270, 11, 4, 23, 0, 1.5, 8.5, 850], [S('1 sausage', 60)], undefined, 'korv falukorv grillkorv varmkorv'],
+  ['Chorizo', [455, 24, 2, 38, 0, 1, 14, 1235], [S('1 slice', 10)]],
+  ['Salami', [407, 22, 1.2, 34, 0, 1, 12, 1740], [S('1 slice', 8)]],
+  ['Meatballs (beef/pork), cooked', [230, 15, 8, 15, 0.5, 1, 5.5, 450], [S('5 meatballs', 100)], undefined, 'köttbullar'],
+  ['Pizza, margherita', [250, 11, 30, 9.5, 2, 3.5, 4.5, 600], [S('1 slice', 110), S('whole pizza', 400)]],
+  ['Hamburger (fast food)', [254, 13, 30, 9, 1.5, 6, 3.5, 500], [S('1 burger', 110)]],
+  ['Lasagne', [135, 8, 13, 5.5, 1, 2.5, 2.6, 330], [S('1 portion', 350)]],
+  ['Sushi, mixed', [150, 6, 28, 1.5, 0.6, 5, 0.4, 450], [S('1 piece', 30)]],
+  // Grains, bread & cereals
+  ['White rice, dry', [360, 7, 79, 0.6, 1.3, 0.1, 0.2, 5], [S('1 portion dry', 75)], undefined, 'ris jasminris basmati okokt'],
+  ['Pasta, dry', [371, 13, 75, 1.5, 3.2, 2.7, 0.3, 6], [S('1 portion dry', 90)], undefined, 'pasta spagetti makaroner okokt'],
+  ['Wholegrain pasta, cooked', [149, 6, 30, 1.7, 4, 0.8, 0.3, 4], [S('1 cup', 140)], undefined, 'fullkornspasta'],
+  ['Bulgur, cooked', [83, 3.1, 18.6, 0.2, 4.5, 0.1, 0, 5], [S('1 cup', 180)]],
+  ['Couscous, cooked', [112, 3.8, 23, 0.2, 1.4, 0.1, 0, 5], [S('1 cup', 160)]],
+  ['Oatmeal porridge (with water)', [68, 2.4, 12, 1.4, 1.7, 0.3, 0.3, 4], [S('1 bowl', 250)], undefined, 'havregrynsgröt gröt'],
+  ['Muesli, unsweetened', [360, 10, 62, 6, 8, 15, 1, 10], [S('1 portion', 50)], undefined, 'müsli'],
+  ['Cornflakes', [357, 7.5, 84, 0.4, 3.3, 8, 0.1, 700], [S('1 bowl', 30)]],
+  ['Crispbread, rye', [340, 9, 62, 2, 17, 1.5, 0.3, 400], [S('1 slice', 13)], undefined, 'knäckebröd knäcke'],
+  ['Rye bread', [259, 8.5, 48, 3.3, 5.8, 3.9, 0.6, 600], [S('1 slice', 35)], undefined, 'rågbröd'],
+  ['Sourdough bread', [250, 9, 49, 1.5, 2.5, 2, 0.3, 500], [S('1 slice', 40)], undefined, 'surdegsbröd'],
+  ['Tortilla wrap (wheat)', [310, 8, 52, 7, 3, 3, 2.5, 600], [S('1 wrap', 60)], undefined, 'tortilla'],
+  ['Bagel', [257, 10, 50, 1.6, 2.2, 5, 0.5, 450], [S('1 bagel', 90)]],
+  ['Pancakes (plain)', [227, 6.4, 28, 9.7, 1, 5, 2.2, 440], [S('1 pancake', 50)], undefined, 'pannkakor'],
+  ['Potato, raw', [77, 2, 17, 0.1, 2.2, 0.8, 0, 6, 425], [S('1 medium', 170)], undefined, 'potatis'],
+  ['Mashed potatoes (milk & butter)', [113, 2, 16, 4.2, 1.5, 1.5, 2.5, 330], [S('1 portion', 200)], undefined, 'potatismos'],
+  ['Oven fries', [170, 2.8, 27, 5, 2.5, 0.3, 0.8, 300], [S('1 portion', 150)], undefined, 'pommes ugnspommes'],
+  ['French fries (deep-fried)', [312, 3.4, 41, 15, 3.8, 0.3, 2.3, 210], [S('1 portion', 120)], undefined, 'pommes frites'],
+  // Legumes, nuts & seeds
+  ['Kidney beans, cooked', [127, 8.7, 22.8, 0.5, 6.4, 0.3, 0.1, 2], [S('1 cup', 175)], undefined, 'kidneybönor bönor'],
+  ['Edamame', [121, 12, 8.9, 5, 5.2, 2.2, 0.6, 6], [S('1 cup', 155)], undefined, 'sojabönor'],
+  ['Green peas (frozen, cooked)', [78, 5.2, 14.3, 0.2, 5.5, 5.9, 0, 3], [S('1 cup', 160)], undefined, 'gröna ärter ärtor'],
+  ['Peanuts', [567, 25.8, 16, 49, 8.5, 4, 6.3, 18], [S('1 handful', 28)], undefined, 'jordnötter'],
+  ['Cashews', [553, 18, 30, 44, 3.3, 5.9, 7.8, 12], [S('1 handful', 28)], undefined, 'cashewnötter'],
+  ['Hazelnuts', [628, 15, 17, 61, 9.7, 4.3, 4.5, 0], [S('1 handful', 28)], undefined, 'hasselnötter'],
+  ['Pumpkin seeds', [559, 30, 10.7, 49, 6, 1.4, 8.7, 7], [S('1 tbsp', 10)], { iron: 8.8, magnesium: 592, zinc: 7.8 }, 'pumpafrön'],
+  ['Sunflower seeds', [584, 21, 20, 51, 8.6, 2.6, 4.5, 9], [S('1 tbsp', 10)], undefined, 'solrosfrön'],
+  ['Chia seeds', [486, 17, 42, 31, 34, 0, 3.3, 16], [S('1 tbsp', 12)], { calcium: 631 }, 'chiafrön'],
+  ['Flaxseed', [534, 18, 29, 42, 27, 1.6, 3.7, 30], [S('1 tbsp', 10)], undefined, 'linfrön'],
+  // Oils & fats
+  ['Rapeseed / canola oil', [884, 0, 0, 100, 0, 0, 7.4, 0], [S('1 tbsp', 13.5)], undefined, 'rapsolja'],
+  ['Coconut oil', [892, 0, 0, 99, 0, 0, 82, 0], [S('1 tbsp', 13.5)], undefined, 'kokosolja'],
+  ['Coconut milk (canned)', [197, 2, 2.8, 21, 0, 2, 18.9, 13], [S('1/2 can', 200)], undefined, 'kokosmjölk'],
+  // Vegetables
+  ['Onion', [40, 1.1, 9.3, 0.1, 1.7, 4.2, 0, 4], [S('1 medium', 110)], undefined, 'lök gul lök rödlök'],
+  ['Garlic', [149, 6.4, 33, 0.5, 2.1, 1, 0.1, 17], [S('1 clove', 3)], undefined, 'vitlök'],
+  ['Mushrooms', [22, 3.1, 3.3, 0.3, 1, 2, 0, 5], [S('1 cup', 70)], { vitD: 0.2 }, 'champinjoner svamp'],
+  ['Cauliflower', [25, 1.9, 5, 0.3, 2, 1.9, 0.1, 30], [S('1 cup', 100)], { vitC: 48 }, 'blomkål'],
+  ['Kale', [35, 2.9, 4.4, 1.5, 4.1, 1, 0.2, 53], [S('1 cup', 30)], { vitC: 93, calcium: 254, vitA: 241 }, 'grönkål'],
+  ['White cabbage', [25, 1.3, 5.8, 0.1, 2.5, 3.2, 0, 18], [S('1 cup', 90)], { vitC: 36 }, 'vitkål kål'],
+  ['Brussels sprouts', [43, 3.4, 9, 0.3, 3.8, 2.2, 0.1, 25], [S('1 cup', 90)], { vitC: 85 }, 'brysselkål'],
+  ['Asparagus', [20, 2.2, 3.9, 0.1, 2.1, 1.9, 0, 2], [S('5 spears', 80)], undefined, 'sparris'],
+  ['Sweet corn (canned)', [81, 2.6, 18, 1.2, 2, 4.5, 0.2, 200], [S('1/2 can', 140)], undefined, 'majs'],
+  ['Aubergine / eggplant', [25, 1, 5.9, 0.2, 3, 3.5, 0, 2], [S('1/2', 150)], undefined, 'aubergine'],
+  ['Beetroot, cooked', [44, 1.7, 10, 0.2, 2, 8, 0, 77], [S('1 beet', 80)], undefined, 'rödbetor'],
+  ['Celery', [16, 0.7, 3, 0.2, 1.6, 1.3, 0, 80], [S('1 stalk', 40)], undefined, 'selleri blekselleri'],
+  ['Leek', [61, 1.5, 14, 0.3, 1.8, 3.9, 0, 20], [S('1/2 leek', 90)], undefined, 'purjolök'],
+  ['Rocket / arugula', [25, 2.6, 3.7, 0.7, 1.6, 2, 0.1, 27], [S('1 handful', 20)], undefined, 'ruccola'],
+  ['Green bell pepper', [20, 0.9, 4.6, 0.2, 1.7, 2.4, 0, 3], [S('1 pepper', 120)], { vitC: 80 }, 'grön paprika'],
+  ['Zucchini, raw', [17, 1.2, 3.1, 0.3, 1, 2.5, 0.1, 8], [S('1 medium', 200)], undefined, 'zucchini squash'],
+  ['Crushed tomatoes (canned)', [32, 1.6, 7, 0.3, 1.9, 4.4, 0, 130], [S('1 can', 400)], undefined, 'krossade tomater'],
+  ['Mixed vegetables (frozen)', [64, 3, 13, 0.2, 4, 3.5, 0, 45], [S('1 cup', 135)], undefined, 'grönsaksblandning wokgrönsaker'],
+  // Fruit & berries
+  ['Pear', [57, 0.4, 15, 0.1, 3.1, 9.8, 0, 1], [S('1 medium', 180)], undefined, 'päron'],
+  ['Grapes', [69, 0.7, 18, 0.2, 0.9, 15.5, 0.1, 2], [S('1 cup', 150)], undefined, 'vindruvor'],
+  ['Mango', [60, 0.8, 15, 0.4, 1.6, 13.7, 0.1, 1], [S('1 cup', 165)], { vitC: 36 }],
+  ['Pineapple', [50, 0.5, 13, 0.1, 1.4, 9.9, 0, 1], [S('1 cup', 165)], { vitC: 48 }, 'ananas'],
+  ['Raspberries', [52, 1.2, 12, 0.7, 6.5, 4.4, 0, 1], [S('1 cup', 125)], { vitC: 26 }, 'hallon'],
+  ['Watermelon', [30, 0.6, 7.6, 0.2, 0.4, 6.2, 0, 1], [S('1 slice', 280)], undefined, 'vattenmelon'],
+  ['Melon (cantaloupe)', [34, 0.8, 8.2, 0.2, 0.9, 7.9, 0, 16], [S('1 slice', 150)], undefined, 'melon'],
+  ['Peach / nectarine', [39, 0.9, 9.5, 0.3, 1.5, 8.4, 0, 0], [S('1 medium', 150)], undefined, 'persika nektarin'],
+  ['Plum', [46, 0.7, 11.4, 0.3, 1.4, 9.9, 0, 0], [S('1 plum', 65)], undefined, 'plommon'],
+  ['Mandarin / clementine', [53, 0.8, 13.3, 0.3, 1.8, 10.6, 0, 2], [S('1 fruit', 75)], { vitC: 27 }, 'mandarin clementin'],
+  ['Cherries', [63, 1.1, 16, 0.2, 2.1, 12.8, 0, 0], [S('1 cup', 140)], undefined, 'körsbär'],
+  ['Lingonberries', [50, 0.7, 10.5, 0.7, 3.5, 6, 0, 1], [S('1 dl', 60)], undefined, 'lingon'],
+  ['Dates, dried', [282, 2.5, 75, 0.4, 8, 63, 0, 2], [S('1 date', 8)], undefined, 'dadlar'],
+  ['Raisins', [299, 3.1, 79, 0.5, 3.7, 59, 0.1, 11], [S('1 tbsp', 10)], undefined, 'russin'],
+  // Sauces, spreads & sugar
+  ['Ketchup', [101, 1, 27, 0.1, 0.3, 22, 0, 907], [S('1 tbsp', 15)]],
+  ['Mayonnaise', [680, 1, 0.6, 75, 0, 0.6, 11.7, 635], [S('1 tbsp', 14)], undefined, 'majonnäs'],
+  ['Mustard', [66, 4.4, 5.8, 4, 3.3, 0.9, 0.2, 1135], [S('1 tsp', 5)], undefined, 'senap'],
+  ['Soy sauce', [53, 8.1, 4.9, 0.6, 0.8, 0.4, 0.1, 5493], [S('1 tbsp', 16)], undefined, 'soja sojasås'],
+  ['Pesto', [418, 5, 6, 42, 1.5, 1, 6, 800], [S('1 tbsp', 15)]],
+  ['Salsa', [36, 1.5, 7, 0.2, 1.8, 4, 0, 700], [S('2 tbsp', 30)]],
+  ['Pasta / tomato sauce', [50, 1.5, 8, 1.5, 1.5, 6, 0.2, 450], [S('1 portion', 125)], undefined, 'tomatsås pastasås'],
+  ['Jam', [250, 0.4, 62, 0.1, 1, 49, 0, 30], [S('1 tbsp', 20)], undefined, 'sylt marmelad'],
+  ['Maple syrup', [260, 0, 67, 0.1, 0, 60, 0, 12], [S('1 tbsp', 20)], undefined, 'lönnsirap'],
+  ['Sugar', [387, 0, 100, 0, 0, 100, 0, 1], [S('1 tsp', 4)], undefined, 'socker'],
+  ['Salt', [0, 0, 0, 0, 0, 0, 0, 38758], [S('1 pinch', 0.5), S('1 tsp', 6)], undefined, 'salt'],
+  // Snacks & sweets
+  ['Potato chips / crisps', [536, 7, 53, 35, 4.4, 0.3, 3.1, 525], [S('1 bag (small)', 40)], undefined, 'chips'],
+  ['Popcorn (air-popped)', [387, 13, 78, 4.5, 15, 0.9, 0.6, 8], [S('1 bowl', 25)]],
+  ['Milk chocolate', [535, 7.6, 59, 30, 3.4, 52, 18.5, 79], [S('1 row', 20)], undefined, 'mjölkchoklad choklad'],
+  ['Sweets / gummies', [330, 6.5, 77, 0, 0, 47, 0, 40], [S('1 handful', 30)], undefined, 'godis lösgodis'],
+  ['Cookies (chocolate chip)', [488, 5.4, 64, 24, 2.4, 33, 8, 330], [S('1 cookie', 15)], undefined, 'kakor kex'],
+  ['Cinnamon bun', [330, 6.5, 48, 13, 1.8, 15, 5, 300], [S('1 bun', 80)], undefined, 'kanelbulle bulle'],
+  ['Croissant', [406, 8.2, 46, 21, 2.6, 11, 12, 467], [S('1 croissant', 60)]],
+  // Drinks
+  ['Cola (regular)', [42, 0, 10.6, 0, 0, 10.6, 0, 4], [S('1 can', 330)], undefined, 'läsk coca-cola pepsi'],
+  ['Cola zero / diet soda', [0.4, 0, 0.1, 0, 0, 0, 0, 10], [S('1 can', 330)], undefined, 'läsk light zero'],
+  ['Apple juice', [46, 0.1, 11.3, 0.1, 0.2, 9.6, 0, 4], [S('1 glass', 250)], undefined, 'äppeljuice'],
+  ['Red wine', [85, 0.1, 2.6, 0, 0, 0.6, 0, 4], [S('1 glass', 150)], undefined, 'rödvin vin'],
+  ['White wine', [82, 0.1, 2.6, 0, 0, 1, 0, 5], [S('1 glass', 150)], undefined, 'vitt vin vin'],
+  ['Spirits (40%)', [231, 0, 0, 0, 0, 0, 0, 1], [S('1 shot', 40)], undefined, 'sprit vodka whisky gin'],
+  ['Caffe latte (1.5% milk)', [41, 2.7, 4, 1.5, 0, 4, 1, 40], [S('1 cup', 300)], undefined, 'latte kaffe'],
+  ['Energy drink', [45, 0, 11, 0, 0, 11, 0, 80], [S('1 can', 250)], undefined, 'energidryck'],
+  ['Sports drink', [26, 0, 6.4, 0, 0, 5.6, 0, 40], [S('1 bottle', 500)], undefined, 'sportdryck'],
+  ['Tea', [1, 0, 0.2, 0, 0, 0, 0, 1], [S('1 cup', 240)], undefined, 'te'],
+  ['Water', [0, 0, 0, 0, 0, 0, 0, 2], [S('1 glass', 250)], undefined, 'vatten'],
   // Drinks
   ['Orange juice', [45, 0.7, 10.4, 0.2, 0.2, 8.4, 0, 1, 200, 11, 0.2, 11, 0.1, 10, 50, 0, 0, 0], [S('1 glass', 250)]],
   ['Coffee, black', [1, 0.1, 0, 0, 0, 0, 0, 2, 49, 2, 0, 3, 0, 0, 0, 0, 0, 0], [S('1 cup', 240)]],
@@ -108,8 +259,20 @@ const KEYS = ['kcal', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'satFat', 'so
 
 const slug = (s: string) => 'b-' + s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '');
 
-export const BUILTIN_FOODS: Food[] = rows.map(([name, vals, servings]) => {
+// Swedish/alternative names for some of the original rows.
+const ALIASES: Record<string, string> = {
+  'Chicken breast, cooked': 'kyckling kycklingfilé', 'Chicken thigh, cooked, skinless': 'kyckling lårfilé', 'Ground beef 10% fat, cooked': 'nötfärs färs mince',
+  'Pork tenderloin, cooked': 'fläskfilé', 'Salmon, cooked': 'lax', 'Cod, cooked': 'torsk', 'Tuna, canned in water': 'tonfisk', 'Egg, whole': 'ägg', 'Egg whites': 'äggvita',
+  'Oats, rolled (dry)': 'havregryn', 'White rice, cooked': 'ris', 'Pasta, cooked': 'pasta spagetti', 'Potato, boiled': 'potatis', 'Whole wheat bread': 'fullkornsbröd bröd',
+  'White bread': 'vitt bröd bröd', 'Banana': 'banan', 'Apple': 'äpple', 'Orange': 'apelsin', 'Blueberries': 'blåbär', 'Strawberries': 'jordgubbar', 'Broccoli': 'broccoli',
+  'Carrot': 'morot morötter', 'Tomato': 'tomat', 'Cucumber': 'gurka', 'Butter': 'smör', 'Olive oil': 'olivolja', 'Milk, 1.5% fat': 'mellanmjölk mjölk', 'Cheddar cheese': 'ost',
+  'Coffee, black': 'kaffe', 'Beer, lager': 'öl', 'Lentils, cooked': 'linser', 'Chickpeas, cooked': 'kikärtor', 'Almonds': 'mandlar', 'Walnuts': 'valnötter',
+};
+
+export const BUILTIN_FOODS: Food[] = rows.map(([name, vals, servings, extra, keywords]) => {
   const per100: Nutrients = {};
-  KEYS.forEach((k, i) => (per100[k] = vals[i]));
-  return { id: slug(name), name, per100, servings: servings ?? [], source: 'builtin' };
+  KEYS.forEach((k, i) => { if (vals[i] !== undefined) per100[k] = vals[i]; });
+  if (extra) Object.assign(per100, extra);
+  const kw = [keywords, ALIASES[name]].filter(Boolean).join(' ');
+  return { id: slug(name), name, per100, servings: servings ?? [], source: 'builtin', ...(kw ? { keywords: kw } : {}) };
 });
