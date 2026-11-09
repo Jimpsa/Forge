@@ -3,6 +3,7 @@ import type { Profile as P } from '../types';
 import { defaultState, exportJson, mutate, replaceState, useAppState, useSyncStatus } from '../lib/storage';
 import { IS_ARTIFACT } from '../lib/env';
 import { AppInfoCard } from '../components/AppInfo';
+import { SettingsCard } from '../components/SettingsCard';
 import { ACTIVITY_FACTORS, bmr, dailyTargets, tdee } from '../lib/nutrition';
 import { fmt, today } from '../lib/util';
 import { NumField, Seg, Stat } from '../components/ui';
@@ -134,6 +135,7 @@ export function Profile() {
         <input ref={file} type="file" accept="application/json" hidden onChange={(e) => e.target.files?.[0] && importFile(e.target.files[0])} />
         <button className="btn danger block ghost" style={{ marginTop: 10 }} onClick={async () => (await askConfirm('Delete ALL your data? This cannot be undone.', 'Delete everything')) && replaceState(defaultState())}>Delete all data</button>
       </div>
+      <SettingsCard />
       <AppInfoCard />
     </div>
   );

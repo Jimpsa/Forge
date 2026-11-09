@@ -41,17 +41,21 @@ export function Bar({ value, max, color = 'var(--accent)', limit }: { value: num
   return <div className="bar"><div style={{ width: `${pct}%`, background: over ? (limit ? 'var(--danger)' : 'var(--warn)') : color }} /></div>;
 }
 
-export function Ring({ value, max, size = 132, label, sub }: { value: number; max: number; size?: number; label: string; sub: string }) {
+let ringId = 0;
+/** Progress ring: gradient stroke that sweeps smoothly to its new value. */
+export function Ring({ value, max, size = 132, label, sub, warnOver = true }: { value: number; max: number; size?: number; label: string; sub: string; warnOver?: boolean }) {
+  const [gid] = useState(() => `ring-g-${++ringId}`);
   const r = size / 2 - 10, c = 2 * Math.PI * r;
   const pct = max > 0 ? clamp(value / max, 0, 1) : 0;
-  const over = value > max * 1.05;
+  const over = warnOver && value > max * 1.05;
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${label} ${sub}`}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-2)" strokeWidth="10" />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={over ? 'var(--warn)' : 'var(--accent)'} strokeWidth="10"
-        strokeDasharray={`${c * pct} ${c}`} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} />
-      <text x="50%" y="47%" textAnchor="middle" fill="var(--text)" fontSize={size / 6} fontWeight="700">{label}</text>
-      <text x="50%" y="62%" textAnchor="middle" fill="var(--muted)" fontSize={size / 12}>{sub}</text>
+      <defs><linearGradient id={gid} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--accent)" /><stop offset="1" stopColor="var(--accent-2)" /></linearGradient></defs>
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-2)" strokeWidth="11" />
+      <circle className="arc" cx={size / 2} cy={size / 2} r={r} fill="none" stroke={over ? 'var(--warn)' : `url(#${gid})`} strokeWidth="11"
+        strokeDasharray={c} strokeDashoffset={c * (1 - pct)} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+      <text x="50%" y="48%" textAnchor="middle" fill="var(--text)" fontSize={size / 6} fontWeight="800" style={{ fontFamily: 'var(--font-display)' }}>{label}</text>
+      <text x="50%" y="63%" textAnchor="middle" fill="var(--muted)" fontSize={size / 12}>{sub}</text>
     </svg>
   );
 }
@@ -94,3 +98,32 @@ export const chartTheme = {
   axis: { stroke: '#8b93a7', fontSize: 11, tickLine: false, axisLine: false } as const,
   tooltip: { contentStyle: { background: '#20242d', border: '1px solid #2a2f3a', borderRadius: 10, color: '#e8eaf0' }, labelStyle: { color: '#8b93a7' } },
 };
+
+/** Friendly empty screen: small illustration + one clear next step. */
+export function EmptyState({ kind, title, text, action }: { kind: 'plate' | 'dumbbell' | 'chart'; title: string; text: string; action?: ReactNode }) {
+  return (
+    <div className="empty-state">
+      <svg className="illu" viewBox="0 0 120 90" aria-hidden="true">
+        <ellipse cx="60" cy="74" rx="46" ry="8" fill="var(--surface-2)" />
+        {kind === 'plate' && <>
+          <ellipse cx="60" cy="58" rx="40" ry="13" fill="var(--surface-2)" /><ellipse cx="60" cy="54" rx="31" ry="9" fill="var(--surface)" stroke="var(--border)" strokeWidth="2" />
+          <path d="M14 26v22M10 26v8a4 4 0 0 0 8 0v-8M106 26c-4 2-6 7-6 14h6v12" fill="none" stroke="var(--muted)" strokeWidth="2.5" strokeLinecap="round" />
+          <circle cx="52" cy="50" r="5" fill="var(--accent)" /><circle cx="66" cy="52" r="4" fill="var(--good)" /><circle cx="60" cy="46" r="3" fill="var(--accent-2)" />
+        </>}
+        {kind === 'dumbbell' && <>
+          <rect x="22" y="38" width="10" height="28" rx="3" fill="var(--accent)" /><rect x="88" y="38" width="10" height="28" rx="3" fill="var(--accent)" />
+          <rect x="14" y="44" width="8" height="16" rx="3" fill="var(--accent-2)" /><rect x="98" y="44" width="8" height="16" rx="3" fill="var(--accent-2)" />
+          <rect x="32" y="49" width="56" height="6" rx="3" fill="var(--muted)" />
+        </>}
+        {kind === 'chart' && <>
+          <rect x="24" y="50" width="12" height="18" rx="3" fill="var(--surface-2)" /><rect x="42" y="40" width="12" height="28" rx="3" fill="var(--surface-2)" />
+          <rect x="60" y="30" width="12" height="38" rx="3" fill="var(--accent)" /><rect x="78" y="18" width="12" height="50" rx="3" fill="var(--accent-2)" />
+          <path d="M22 42l20-10 18 6 32-22" fill="none" stroke="var(--good)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        </>}
+      </svg>
+      <h3 style={{ margin: 0 }}>{title}</h3>
+      <p className="small muted" style={{ maxWidth: 300 }}>{text}</p>
+      {action}
+    </div>
+  );
+}

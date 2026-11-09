@@ -7,6 +7,7 @@ import { lookupBarcode, searchOff } from '../lib/off';
 import { fmt, uid } from '../lib/util';
 import { NumField, Seg, Sheet } from './ui';
 import { IS_ARTIFACT } from '../lib/env';
+import { haptic, sound } from '../lib/fx';
 import { CUTS, SPECIES, buildMeatFood, looksLikeMeat, type Species } from '../data/meats';
 
 type Tab = 'search' | 'meat' | 'scan' | 'create' | 'recipe';
@@ -29,6 +30,7 @@ export function FoodPicker({ open, onClose, date, meal: initialMeal }: { open: b
         <AmountStep food={picked} meal={meal} setMeal={setMeal} onBack={() => setPicked(null)}
           onAdd={(grams) => {
             mutate((s) => { s.entries.push({ id: uid(), date, meal, foodId: picked.id, name: picked.name, grams, nutrients: scale(picked.per100, grams) }); });
+            haptic('tick'); sound('tick');
             onClose();
           }} />
       ) : (

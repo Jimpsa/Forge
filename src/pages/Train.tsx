@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CardioActivity, CardioLog, MuscleGroup, Session, Template } from '../types';
 import { mutate, useAppState, getState } from '../lib/storage';
-import { allExercises, detectPRs, exerciseHistory, exerciseName, loadRatio, pace, RPE_LABELS, sessionKcal, sessionKind, sessionLoad, sessionSets, sessionVolume, weeklySummaries } from '../lib/training';
+import { e1rm, workingSets, allExercises, detectPRs, exerciseHistory, exerciseName, loadRatio, pace, RPE_LABELS, sessionKcal, sessionKind, sessionLoad, sessionSets, sessionVolume, weeklySummaries } from '../lib/training';
 import { CARDIO } from '../data/exercises';
 import { fmt, fmtDuration, fmtPace, prettyDate, today, uid } from '../lib/util';
-import { NumField, Sheet, Stat } from "../components/ui";
+import { EmptyState, NumField, Sheet, Stat } from "../components/ui";
 import { askConfirm } from '../components/confirm';
+import { celebrate, confetti, haptic, sound, useCountUp } from '../lib/fx';
+import { Trophy } from 'lucide-react';
 import { progression, readiness } from '../lib/readiness';
 import { ReadinessCard } from '../components/Readiness';
 
@@ -76,7 +78,7 @@ export function Train() {
 
       <div className="card">
         <h2>History</h2>
-        {sessions.length === 0 && <div className="empty">No sessions yet. Start one above.</div>}
+        {sessions.length === 0 && <EmptyState kind="dumbbell" title="No workouts yet" text="Start a template above. Your history, PRs and effort will build up here." />}
         {sessions.slice(0, 50).map((x) => (
           <div key={x.id} className="list-item click" onClick={() => setDetail(x)}>
             <div className="grow">
@@ -119,7 +121,7 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
 
   useEffect(() => {
     if (a.restEndsAt && restLeft <= 0) {
-      navigator.vibrate?.([200, 100, 200]);
+      haptic('double'); sound('done');
       mutate((st) => { if (st.active) st.active.restEndsAt = undefined; });
     }
   }, [restLeft, a.restEndsAt]);
@@ -144,9 +146,12 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
 
       {restLeft > 0 && (
         <div className="rest-banner">
-          <span>Rest {Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</span>
+          <span className="row" style={{ gap: 10 }}>
+            <svg className="rest-ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(0,0,0,.18)" strokeWidth="5" /><circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeDasharray="100.5" strokeDashoffset={100.5 * (1 - restLeft / (a.restTotal ?? Math.max(restLeft, 1)))} /></svg>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem' }}>Rest {Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</span>
+          </span>
           <span className="row">
-            <button className="btn sm" onClick={() => upd((w) => { w.restEndsAt = (w.restEndsAt ?? Date.now()) + 30000; })}>+30s</button>
+            <button className="btn sm" onClick={() => upd((w) => { w.restEndsAt = (w.restEndsAt ?? Date.now()) + 30000; w.restTotal = (w.restTotal ?? 0) + 30; })}>+30s</button>
             <button className="btn sm" onClick={() => upd((w) => { w.restEndsAt = undefined; })}>Skip</button>
           </span>
         </div>
@@ -173,8 +178,9 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
                 <button className={'check' + (set.done ? ' on' : '')} aria-label="Complete set" onClick={() => upd((w) => {
                   const st = w.exercises[ei].sets[si];
                   st.done = !st.done;
-                  if (st.done && !st.warmup) w.restEndsAt = Date.now() + (ex.restSec ?? w.restSec) * 1000;
-                })}>✓</button>
+                  if (st.done && !st.warmup) { const sec = ex.restSec ?? w.restSec; w.restEndsAt = Date.now() + sec * 1000; w.restTotal = sec; }
+                  if (st.done) { haptic('tick'); sound('tick'); }
+                })}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg></button>
               </div>
             ))}
             <div className="row" style={{ marginTop: 10 }}>
@@ -255,21 +261,51 @@ function RpePicker({ value, onChange }: { value: number; onChange: (v: number) =
 
 type Summary = { prs: ReturnType<typeof detectPRs>; session: Session };
 
+function CountStat({ value, suffix = '', label, delay }: { value: number; suffix?: string; label: string; delay: number }) {
+  const [go, setGo] = useState(false);
+  useEffect(() => { const id = setTimeout(() => setGo(true), delay); return () => clearTimeout(id); }, [delay]);
+  const v = useCountUp(go ? value : 0, 800, 0);
+  return <div className="stat rise" style={{ animationDelay: `${delay}ms` }}><div className="v num">{fmt(v)}{suffix}</div><div className="l">{label}</div></div>;
+}
+
 function SavedSummary({ summary, onClose }: { summary: Summary; onClose: () => void }) {
   const s = useAppState();
+  const goldRef = useRef<HTMLDivElement>(null);
+  const x = summary.session;
+  const vol = sessionVolume(x);
+  const prev = [...s.sessions].filter((y) => y.name === x.name && y.id !== x.id && y.startedAt < x.startedAt).sort((a, b) => b.startedAt - a.startedAt)[0];
+  const volDelta = prev && sessionVolume(prev) > 0 && vol > 0 ? Math.round(((vol - sessionVolume(prev)) / sessionVolume(prev)) * 100) : undefined;
+  const prs = summary.prs.map((p) => {
+    const before = exerciseHistory(s, p.exerciseId).filter((h) => h.sessionId !== x.id);
+    const prevBest = Math.max(0, ...before.map((h) => (p.kind === 'e1RM' ? h.e1rm : h.topWeight)));
+    const best = workingSets(x.exercises.find((e) => e.exerciseId === p.exerciseId)?.sets ?? []).sort((a, b) => e1rm(b.weight, b.reps) - e1rm(a.weight, a.reps))[0];
+    return { ...p, name: exerciseName(s, p.exerciseId), delta: p.value - prevBest, set: best };
+  });
+  useEffect(() => {
+    const id = setTimeout(() => (prs.length ? celebrate(goldRef.current, 120) : (confetti(null, 50), haptic('success'))), 250);
+    return () => clearTimeout(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <Sheet open onClose={onClose} title="Workout saved 💪">
-      <div className="grid3">
-        <Stat v={fmtDuration(summary.session.durationMin)} l="duration" />
-        <Stat v={fmt(sessionVolume(summary.session))} l="kg volume" />
-        <Stat v={fmt(sessionKcal(summary.session, s.profile.weightKg))} l="≈ kcal burned" />
+    <Sheet open onClose={onClose} title="Workout done 💪">
+      <div className="grid2">
+        <CountStat value={x.durationMin} suffix=" min" label="duration" delay={0} />
+        <CountStat value={vol} suffix=" kg" label="total lifted" delay={120} />
+        <CountStat value={sessionKcal(x, s.profile.weightKg)} label="≈ kcal burned" delay={240} />
+        <CountStat value={x.rpe} suffix="/10" label="effort" delay={360} />
       </div>
-      {summary.prs.length > 0 && (
-        <div style={{ marginTop: 14 }}>
-          <h3>🏆 New personal records</h3>
-          {summary.prs.map((p, i) => <div key={i} className="small">{exerciseName(s, p.exerciseId)} — {p.kind} {fmt(p.value, 1)} kg</div>)}
+      <div className="row wrap" style={{ gap: 6, marginTop: 10 }}>
+        {prs.length > 0 && <span className="pill accent pop" style={{ animationDelay: '.6s' }}>🏆 {prs.length} new PR{prs.length > 1 ? 's' : ''}</span>}
+        {volDelta !== undefined && <span className={'pill pop ' + (volDelta >= 0 ? 'accent' : '')} style={{ animationDelay: '.75s' }}>Volume {volDelta >= 0 ? '+' : ''}{volDelta}% vs last {x.name}</span>}
+        <span className="pill pop" style={{ animationDelay: '.9s' }}>{sessionSets(x)} set{sessionSets(x) === 1 ? '' : 's'}</span>
+      </div>
+      {prs.map((p, i) => (
+        <div key={i} ref={i === 0 ? goldRef : undefined} className="gold-card go" style={{ marginTop: 12, animationDelay: `${0.3 + i * 0.15}s` }}>
+          <div className="row between"><Trophy size={30} color="var(--accent-2)" aria-hidden="true" />{p.delta > 0 && <span className="delta">+{fmt(p.delta, 1)} kg</span>}</div>
+          <div className="tiny muted" style={{ marginTop: 6 }}>New PR · {p.name}</div>
+          <div className="num" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.7rem', lineHeight: 1.1 }}>{p.set ? `${fmt(p.set.weight, 1)} kg × ${p.set.reps}` : `${fmt(p.value, 1)} kg`}</div>
+          <div className="tiny muted">{p.kind === 'e1RM' ? `Estimated 1RM ${fmt(p.value, 1)} kg · best ever` : `Heaviest ever: ${fmt(p.value, 1)} kg`}</div>
         </div>
-      )}
+      ))}
       <button className="btn primary block" style={{ marginTop: 16 }} onClick={onClose}>Done</button>
     </Sheet>
   );

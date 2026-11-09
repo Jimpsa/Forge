@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { confetti, haptic, replay, sound, useCountUp } from '../lib/fx';
 import type { FoodEntry, Meal } from '../types';
 import { MEALS, NUTRIENTS } from '../types';
 import { mutate, useAppState } from '../lib/storage';
 import { dailyTargets, entriesFor, findFood, isTrainingDay, microTargets, scale, sum } from '../lib/nutrition';
 import { addDays, fmt, prettyDate, today, uid } from '../lib/util';
-import { Bar, NumField, Ring, Seg, Sheet } from '../components/ui';
+import { Bar, EmptyState, NumField, Ring, Seg, Sheet } from '../components/ui';
 import { FoodPicker, NutrientTable } from '../components/FoodPicker';
 import { askConfirm } from '../components/confirm';
 
@@ -23,6 +24,15 @@ export function MacroSummary({ date }: { date: string }) {
   const t = dailyTargets(s.profile, isTrainingDay(s, date));
   const n = sum(entriesFor(s, date).map((e) => e.nutrients));
   const left = t.kcal - (n.kcal ?? 0);
+  const shownLeft = useCountUp(left);
+  const ringRef = useRef<HTMLDivElement>(null);
+  // Soft glow + tick when protein crosses into the target zone (not on first render or date change).
+  const prevP = useRef<{ date: string; hit: boolean } | null>(null);
+  const hitP = (n.protein ?? 0) >= t.protein * 0.9;
+  useEffect(() => {
+    if (prevP.current && prevP.current.date === date && !prevP.current.hit && hitP) { replay(ringRef.current, 'glow-hit'); haptic('tap'); sound('done'); }
+    prevP.current = { date, hit: hitP };
+  }, [hitP, date]);
   const macros = [
     { k: 'protein' as const, label: 'Protein', color: 'var(--protein)', target: t.protein },
     { k: 'carbs' as const, label: 'Carbs', color: 'var(--carbs)', target: t.carbs },
@@ -30,7 +40,7 @@ export function MacroSummary({ date }: { date: string }) {
   ];
   return (
     <div className="row" style={{ gap: 18, alignItems: 'center' }}>
-      <Ring value={n.kcal ?? 0} max={t.kcal} label={fmt(Math.abs(left))} sub={left >= 0 ? 'kcal left' : 'kcal over'} />
+      <div ref={ringRef} style={{ borderRadius: '50%', flex: 'none' }}><Ring value={n.kcal ?? 0} max={t.kcal} label={fmt(Math.abs(shownLeft))} sub={left >= 0 ? 'kcal left' : 'kcal over'} /></div>
       <div className="grow stack">
         {macros.map((m) => (
           <div key={m.k}>
@@ -47,12 +57,35 @@ export function MacroSummary({ date }: { date: string }) {
 export function WaterCard({ date }: { date: string }) {
   const s = useAppState();
   const ml = s.water[date] ?? 0;
-  const add = (d: number) => mutate((st) => { st.water[date] = Math.max(0, (st.water[date] ?? 0) + d); });
+  const goal = s.profile.waterGoalMl;
+  const shown = useCountUp(ml / 1000, 700);
+  const btns = useRef<HTMLDivElement>(null);
+  const add = (d: number) => {
+    const before = ml;
+    mutate((st) => { st.water[date] = Math.max(0, (st.water[date] ?? 0) + d); });
+    haptic('tick');
+    if (before < goal && before + d >= goal) { confetti(btns.current, 40); haptic('success'); }
+  };
+  const level = Math.min(1, ml / goal);
   return (
     <div className="card">
-      <div className="row between"><h2 style={{ margin: 0 }}>💧 Water</h2><span className="num muted small">{fmt(ml / 1000, 2)} / {fmt(s.profile.waterGoalMl / 1000, 1)} L</span></div>
-      <div style={{ margin: '10px 0' }}><Bar value={ml} max={s.profile.waterGoalMl} color="var(--protein)" /></div>
-      <div className="row wrap">
+      <div className="row" style={{ gap: 16, alignItems: 'center' }}>
+        <svg width="70" height="94" viewBox="0 0 90 120" role="img" aria-label={`Water ${fmt(ml / 1000, 2)} of ${fmt(goal / 1000, 1)} litres`} style={{ flex: 'none' }}>
+          <defs><clipPath id={`glass-${date}`}><path d="M10 6 H80 L72 112 Q71 116 66 116 H24 Q19 116 18 112 Z" /></clipPath></defs>
+          <g clipPath={`url(#glass-${date})`}>
+            <rect x="0" y="0" width="90" height="120" fill="var(--surface-2)" />
+            <g className="glass-fill" style={{ transform: `translateY(${112 - level * 104}px)` }}>
+              <path className="glass-wave" d="M0 10 Q15 2 30 10 T60 10 T90 10 T120 10 T150 10 V130 H0 Z" fill="var(--water)" opacity=".85" />
+            </g>
+          </g>
+          <path d="M10 6 H80 L72 112 Q71 116 66 116 H24 Q19 116 18 112 Z" fill="none" stroke="var(--border)" strokeWidth="3" />
+        </svg>
+        <div className="grow">
+          <div className="row between"><h2 style={{ margin: 0 }}>Water</h2>{ml >= goal && <span className="pill accent">Goal reached ✦</span>}</div>
+          <div style={{ margin: '4px 0 10px' }}><span className="num" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.4rem' }}>{shown.toFixed(2)}</span> <span className="muted small">/ {fmt(goal / 1000, 1)} L</span></div>
+        </div>
+      </div>
+      <div className="row wrap" ref={btns} style={{ marginTop: 10 }}>
         <button className="btn sm" onClick={() => add(250)}>+250 ml</button>
         <button className="btn sm" onClick={() => add(500)}>+500 ml</button>
         <button className="btn sm" onClick={() => add(750)}>+750 ml</button>
@@ -87,6 +120,9 @@ export function Diet() {
 
       {view === 'log' ? (
         <>
+          {entries.length === 0 && (
+            <div className="card"><EmptyState kind="plate" title="No meals logged yet" text={yesterday.length ? 'Start with breakfast, or copy the day before in one tap.' : 'Start with breakfast. Your recent foods are one tap away.'} action={<button className="btn primary" onClick={() => setPicker('breakfast')}>+ Add breakfast</button>} /></div>
+          )}
           {entries.length === 0 && yesterday.length > 0 && (
             <button className="btn block" style={{ marginBottom: 14 }} onClick={copyYesterday}>Copy {yesterday.length} items from the day before</button>
           )}

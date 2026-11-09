@@ -1,5 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useAppState, useSyncStatus } from './lib/storage';
+import { useEffect, useMemo, useState } from 'react';
+import { Dumbbell, House, MessageCircle, TrendingUp, User, Utensils, type LucideIcon } from 'lucide-react';
+import { mutate, useAppState, useSyncStatus } from './lib/storage';
+import { applySettings, settingsOf } from './lib/settings';
+import { newlyEarned, perfectDay } from './lib/achievements';
+import { celebrate } from './lib/fx';
+import { ToastHost, toast } from './components/Toast';
+import { Icon } from './components/Icon';
+import { today } from './lib/util';
 import { ConfirmHost } from './components/confirm';
 import { UpdateBanner } from './components/AppInfo';
 import { setScreen } from './lib/bugreport';
@@ -11,19 +18,49 @@ import { Profile, ProfileForm } from './pages/Profile';
 import { Coach } from './pages/Coach';
 
 export type Tab = 'today' | 'diet' | 'train' | 'coach' | 'progress' | 'profile';
-const TABS: { key: Tab; label: string; ico: string }[] = [
-  { key: 'today', label: 'Today', ico: '◎' },
-  { key: 'diet', label: 'Diet', ico: '🍽' },
-  { key: 'train', label: 'Train', ico: '🏋' },
-  { key: 'coach', label: 'Coach', ico: '💬' },
-  { key: 'progress', label: 'Progress', ico: '📈' },
-  { key: 'profile', label: 'Profile', ico: '👤' },
+const TABS: { key: Tab; label: string; Ico: LucideIcon }[] = [
+  { key: 'today', label: 'Today', Ico: House },
+  { key: 'diet', label: 'Diet', Ico: Utensils },
+  { key: 'train', label: 'Train', Ico: Dumbbell },
+  { key: 'coach', label: 'Coach', Ico: MessageCircle },
+  { key: 'progress', label: 'Progress', Ico: TrendingUp },
+  { key: 'profile', label: 'Profile', Ico: User },
 ];
+
+/** Watches state for newly earned badges and perfect days, and celebrates each exactly once. */
+function useCelebrations() {
+  const s = useAppState();
+  const earned = useMemo(() => (s.onboarded ? newlyEarned(s) : undefined), [s]);
+  const pd = useMemo(() => (s.onboarded ? perfectDay(s) : undefined), [s]);
+  useEffect(() => {
+    if (!earned) return;
+    if (earned.firstRun) { mutate((st) => { st.celebrated = { ...st.celebrated, badges: Object.fromEntries(earned.all.map((b) => [b.id, today()])) }; }); return; }
+    if (!earned.fresh.length) return;
+    mutate((st) => { st.celebrated = { ...st.celebrated, badges: { ...st.celebrated?.badges, ...Object.fromEntries(earned.fresh.map((b) => [b.id, today()])) } }; });
+    earned.fresh.forEach((b, i) => setTimeout(() => { toast({ icon: <Icon name={b.icon} size={20} />, title: `Badge earned: ${b.name}`, sub: b.desc }); if (i === 0) celebrate(null, 80); }, i * 600));
+  }, [earned]);
+  useEffect(() => {
+    if (!pd?.perfect || s.celebrated?.perfectDays?.includes(today())) return;
+    mutate((st) => { st.celebrated = { ...st.celebrated, perfectDays: [...(st.celebrated?.perfectDays ?? []), today()].slice(-120) }; });
+    toast({ title: 'Perfect day ✨', sub: 'Calories, protein, water and check-in all done.' });
+    celebrate(null, 120);
+  }, [pd?.perfect]); // eslint-disable-line react-hooks/exhaustive-deps
+}
 
 export default function App() {
   const s = useAppState();
   const [tab, setTab] = useState<Tab>(s.active ? 'train' : 'today');
   const sync = useSyncStatus();
+  const settings = settingsOf(s);
+  useEffect(() => {
+    applySettings(settings);
+    const mq = [matchMedia('(prefers-color-scheme: light)'), matchMedia('(prefers-reduced-motion: reduce)')];
+    const on = () => applySettings(settings);
+    mq.forEach((m) => m.addEventListener('change', on));
+    return () => mq.forEach((m) => m.removeEventListener('change', on));
+  }, [settings.palette, settings.mode, settings.motion]); // eslint-disable-line react-hooks/exhaustive-deps
+  useCelebrations();
+  const tabIndex = TABS.findIndex((x) => x.key === tab);
   useEffect(() => { window.scrollTo(0, 0); setScreen(tab); }, [tab]);
   useEffect(() => { if (sync.status === 'cloud' && s.active) setTab('train'); }, [sync.status === 'cloud']); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -53,14 +90,16 @@ export default function App() {
       </main>
       <div className="tabs">
         <nav>
+          <div className="tab-pill" style={{ width: `calc(100% / ${TABS.length})`, transform: `translateX(${tabIndex * 100}%)` }} />
           {TABS.map((t) => (
-            <button key={t.key} className={tab === t.key ? 'on' : ''} onClick={() => setTab(t.key)}>
-              <span className="ico">{t.ico}</span>{t.label}{t.key === 'train' && s.active ? ' •' : ''}
+            <button key={t.key} className={tab === t.key ? 'on' : ''} aria-current={tab === t.key ? 'page' : undefined} onClick={() => setTab(t.key)}>
+              <span className="ico"><t.Ico /></span>{t.label}{t.key === 'train' && s.active ? ' •' : ''}
             </button>
           ))}
         </nav>
       </div>
       <ConfirmHost />
+      <ToastHost />
     </>
   );
 }

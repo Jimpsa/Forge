@@ -6,6 +6,7 @@ import { startWorkout } from './Train';
 import { Stat } from '../components/ui';
 import { ReadinessCard } from '../components/Readiness';
 import { CycleCard } from '../components/Cycle';
+import { RecapCard, RingsCard, StreakCard } from '../components/Rewards';
 import type { Tab } from '../App';
 
 export function Today({ go }: { go: (t: Tab) => void }) {
@@ -52,6 +53,9 @@ export function Today({ go }: { go: (t: Tab) => void }) {
       </div>
 
       {!todays.length && <ReadinessCard compact />}
+      <RingsCard onOpen={() => go('diet')} />
+      <RecapCard dismissible />
+      <StreakCard />
       <CycleCard />
 
       <div className="card" onClick={() => go('progress')} style={{ cursor: 'pointer' }}>

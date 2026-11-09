@@ -105,6 +105,7 @@ export interface ActiveWorkout {
   exercises: ExerciseLog[];
   cardio: CardioLog[];
   restEndsAt?: number;
+  restTotal?: number; // seconds, for the countdown ring
   restSec: number;
 }
 
@@ -150,6 +151,8 @@ export interface AppState {
   protocol?: Protocol;
   chat?: ChatMessage[];
   periodStarts?: string[]; // first day of each period (YYYY-MM-DD)
+  settings?: Settings;
+  celebrated?: Celebrated;
 }
 
 export type Severity = 0 | 1 | 2 | 3; // none, mild, moderate, severe
@@ -178,4 +181,20 @@ export interface CycleSettings {
   track: boolean;
   contraception: 'none' | 'hormonal'; // hormonal = pill, implant, hormonal IUD, ring …
   typicalLength: number; // days, used until there is enough logged data
+}
+
+export interface Settings {
+  palette: 'ember' | 'green';
+  mode: 'system' | 'dark' | 'light';
+  celebrations: boolean;
+  vibration: boolean;
+  sounds: boolean;
+  motion: 'system' | 'reduce' | 'full';
+}
+
+/** Remembers which one-off celebrations were already shown, so they never repeat. */
+export interface Celebrated {
+  perfectDays?: string[]; // dates
+  badges?: Record<string, string>; // badge id -> date earned
+  recapSeen?: string; // week start of the last recap opened
 }

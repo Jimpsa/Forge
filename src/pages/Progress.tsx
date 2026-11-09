@@ -4,17 +4,19 @@ import { mutate, useAppState } from '../lib/storage';
 import { dailyTargets, isTrainingDay, totalsFor } from '../lib/nutrition';
 import { allExercises, exerciseHistory, weeklySummaries } from '../lib/training';
 import { addDays, fmt, shortDate, today } from '../lib/util';
-import { chartTheme, NumField, Seg, Stat } from '../components/ui';
+import { chartTheme, EmptyState, NumField, Seg, Stat } from '../components/ui';
 import { CyclePattern } from '../components/Cycle';
+import { BadgesGrid, RecapCard, StreakCard, StrengthLevels } from '../components/Rewards';
 
 export function Progress() {
-  const [tab, setTab] = useState<'body' | 'strength' | 'effort' | 'diet'>('body');
+  const [tab, setTab] = useState<'awards' | 'body' | 'strength' | 'effort' | 'diet'>('awards');
   return (
     <div>
       <div className="page-head"><h1>Progress</h1></div>
       <div style={{ marginBottom: 14 }}>
-        <Seg value={tab} onChange={setTab} options={[{ value: 'body', label: 'Body' }, { value: 'strength', label: 'Strength' }, { value: 'effort', label: 'Effort' }, { value: 'diet', label: 'Diet' }]} />
+        <Seg value={tab} onChange={setTab} options={[{ value: 'awards', label: 'Awards' }, { value: 'body', label: 'Body' }, { value: 'strength', label: 'Strength' }, { value: 'effort', label: 'Effort' }, { value: 'diet', label: 'Diet' }]} />
       </div>
+      {tab === 'awards' && <><BadgesGrid /><StrengthLevels /><StreakCard /><RecapCard /></>}
       {tab === 'body' && <BodyTab />}
       {tab === 'strength' && <StrengthTab />}
       {tab === 'effort' && <EffortTab />}
@@ -87,7 +89,7 @@ function StrengthTab() {
   const trained = useMemo(() => allExercises(s).filter((e) => s.sessions.some((x) => x.exercises.some((y) => y.exerciseId === e.id))), [s]);
   const [ex, setEx] = useState<string>('');
   const id = ex || trained[0]?.id;
-  if (!trained.length) return <div className="card empty">Finish a strength workout to see your progress here.</div>;
+  if (!trained.length) return <div className="card"><EmptyState kind="chart" title="No strength data yet" text="Finish a strength workout and your estimated max, best sets and volume show up here." /></div>;
   const hist = exerciseHistory(s, id);
   const data = hist.map((h) => ({ date: shortDate(h.date), e1rm: +h.e1rm.toFixed(1), top: h.topWeight, volume: h.volume }));
   const best = Math.max(...hist.map((h) => h.e1rm));

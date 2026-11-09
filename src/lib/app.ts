@@ -15,6 +15,6 @@ export const REPO_URL = 'https://github.com/jimpsa/Forge';
  * Capacitor upgrade). Phones on an older APK are then told to install the new app instead of
  * receiving an over-the-air bundle that would need native code they don't have.
  */
-export const MIN_NATIVE_BUILD = 4; // build 4: updater now sends the required checksum
+export const MIN_NATIVE_BUILD = 7; // build 7: adds the Haptics plugin (vibration)
 export const RELEASES_URL = `https://github.com/jimpsa/Forge/releases/latest`;
 export const UPDATE_BASE = 'https://jimpsa.github.io/Forge/ota';
