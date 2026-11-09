@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAppState, useSyncStatus } from './lib/storage';
 import { ConfirmHost } from './components/confirm';
+import { UpdateBanner } from './components/AppInfo';
+import { setScreen } from './lib/bugreport';
 import { Today } from './pages/Today';
 import { Diet } from './pages/Diet';
 import { Train } from './pages/Train';
@@ -22,7 +24,7 @@ export default function App() {
   const s = useAppState();
   const [tab, setTab] = useState<Tab>(s.active ? 'train' : 'today');
   const sync = useSyncStatus();
-  useEffect(() => { window.scrollTo(0, 0); }, [tab]);
+  useEffect(() => { window.scrollTo(0, 0); setScreen(tab); }, [tab]);
   useEffect(() => { if (sync.status === 'cloud' && s.active) setTab('train'); }, [sync.status === 'cloud']); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (sync.status === 'loading') return <div className="app"><div className="empty" style={{ marginTop: '30vh' }}>Loading your data…</div></div>;
@@ -40,6 +42,7 @@ export default function App() {
   return (
     <>
       <main className="app">
+        <UpdateBanner />
         {sync.status === 'error' && <div className="card flat small" style={{ borderColor: 'var(--warn)' }}>⚠️ {sync.message}</div>}
         {tab === 'today' && <Today go={setTab} />}
         {tab === 'diet' && <Diet />}

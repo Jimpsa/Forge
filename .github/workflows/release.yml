@@ -1,0 +1,102 @@
+name: Build & release
+
+# Every push to main:
+#  1. builds the web app and publishes it to GitHub Pages, together with an over-the-air (OTA)
+#     update bundle that installed Android apps download automatically;
+#  2. builds an installable Android APK and attaches it to a GitHub Release.
+# Version = 0.2.<run number>; the same number is used for the web bundle and the APK.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  FORGE_VERSION: 0.2.${{ github.run_number }}
+  FORGE_BUILD_NUMBER: ${{ github.run_number }}
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Package OTA update bundle
+        run: |
+          mkdir -p ota
+          (cd dist && zip -qr ../ota/bundle-${FORGE_BUILD_NUMBER}.zip .)
+          MIN_NATIVE=$(grep -oP 'MIN_NATIVE_BUILD = \K[0-9]+' src/lib/app.ts)
+          NOTES=$(git log -1 --pretty=%s | head -c 140 | sed 's/"/\\"/g')
+          BASE="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}"
+          cat > ota/version.json <<JSON
+          {"version":"${FORGE_VERSION}","build":${FORGE_BUILD_NUMBER},"minNativeBuild":${MIN_NATIVE},"url":"${BASE}/ota/bundle-${FORGE_BUILD_NUMBER}.zip","notes":"${NOTES}"}
+          JSON
+          mv ota dist/ota
+          cat dist/ota/version.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy-pages:
+    needs: web
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+      - name: Build APK
+        working-directory: android
+        run: ./gradlew assembleRelease --no-daemon
+      - name: Rename APK
+        run: |
+          mkdir -p out
+          cp android/app/build/outputs/apk/release/app-release.apk out/forge-${FORGE_VERSION}.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: forge-android-${{ env.FORGE_VERSION }}
+          path: out/*.apk
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.FORGE_VERSION }}
+          name: Forge ${{ env.FORGE_VERSION }}
+          make_latest: true
+          files: out/*.apk
+          body: |
+            **Install on Android:** download `forge-${{ env.FORGE_VERSION }}.apk` below on your phone and open it.
+            (First time: allow your browser to "install unknown apps".) Installing over an older version keeps your data.
+
+            Changes: ${{ github.event.head_commit.message }}
