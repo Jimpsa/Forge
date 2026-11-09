@@ -7,6 +7,7 @@ import { Stat } from '../components/ui';
 import { ReadinessCard } from '../components/Readiness';
 import { CycleCard } from '../components/Cycle';
 import { RecapCard, RingsCard, StreakCard } from '../components/Rewards';
+import { programInfo } from '../lib/program';
 import type { Tab } from '../App';
 
 export function Today({ go }: { go: (t: Tab) => void }) {
@@ -19,7 +20,8 @@ export function Today({ go }: { go: (t: Tab) => void }) {
   const greet = hour < 5 ? 'Late night' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const burned = todays.reduce((a, x) => a + sessionKcal(x, s.profile.weightKg), 0);
   // Suggest the template that was used least recently.
-  const next = [...s.templates].sort((a, b) => {
+  // With a program: its next day. Otherwise: the template used least recently.
+  const next = programInfo(s)?.next ?? [...s.templates].sort((a, b) => {
     const last = (n: string) => Math.max(0, ...s.sessions.filter((x) => x.name === n).map((x) => x.startedAt));
     return last(a.name) - last(b.name);
   })[0];
@@ -46,7 +48,7 @@ export function Today({ go }: { go: (t: Tab) => void }) {
           </>
         ) : (
           <div className="grid2">
-            {next && <button className="btn primary" onClick={() => { startWorkout(next); go('train'); }}>Start {next.name}</button>}
+            {next && <button className="btn primary" onClick={() => { startWorkout(next); go('train'); }}>Start {next.name.split(' · ')[0]}</button>}
             <button className="btn" onClick={() => go('train')}>Other workout</button>
           </div>
         )}

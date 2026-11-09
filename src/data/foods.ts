@@ -122,6 +122,10 @@ const rows: Row[] = [
   ['Butter spread 60–75%', [600, 0.5, 0.5, 66, 0, 0.5, 23, 560], [S('1 tsp', 5)], undefined, 'bregott margarin smör'],
   ['Ice cream, vanilla', [207, 3.5, 24, 11, 0.7, 21, 6.8, 80], [S('1 scoop', 65)], undefined, 'glass'],
   ['Casein / protein powder (mixed)', [370, 78, 8, 3, 1, 4, 1.5, 250], [S('1 scoop', 30)], undefined, 'kasein proteinpulver'],
+  ['Tempeh', [192, 20.3, 7.6, 10.8, 5, 0, 2.2, 9, 412, 111, 2.7, 81, 1.1], [S('1 portion', 100)], undefined, 'tempeh'],
+  ['Seitan', [141, 25, 6, 1.9, 1, 0, 0.3, 300], [S('1 portion', 100)], { iron: 2 }, 'seitan vetegluten'],
+  ['Pea protein powder', [380, 80, 5, 6, 1, 0, 1, 900], [S('1 scoop', 30)], { iron: 20 }, 'ärtprotein vegan protein powder'],
+  ['Soy yogurt, plain (fortified)', [50, 3.5, 2.5, 2.8, 0.6, 1, 0.4, 40, 150, 120], [S('1 bowl', 200)], { vitB12: 0.4, vitD: 0.75 }, 'sojayoghurt vegan yoghurt'],
   // Fish & seafood
   ['Salmon, raw', [208, 20, 0, 13, 0, 0, 3.1, 59, 363, 9], [S('1 fillet', 125)], { vitD: 11, vitB12: 3.2, iron: 0.3, magnesium: 27 }, 'lax laxfilé'],
   ['Cod, raw', [82, 18, 0, 0.7, 0, 0, 0.1, 54, 413, 16], [S('1 fillet', 125)], { vitD: 0.9, vitB12: 0.9 }, 'torsk torskfilé'],

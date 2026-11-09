@@ -1,7 +1,7 @@
 import type { AppState, Food, FoodEntry, NutrientKey, Nutrients, Profile } from '../types';
 import { NUTRIENTS } from '../types';
 import { BUILTIN_FOODS } from '../data/foods';
-import { today } from './util';
+import { parseDate, today } from './util';
 
 export const ACTIVITY_FACTORS: Record<Profile['activity'], { f: number; label: string }> = {
   sedentary: { f: 1.2, label: 'Sedentary (desk job, little movement)' },
@@ -75,7 +75,12 @@ export const allFoods = (s: AppState): Food[] => {
 export const findFood = (s: AppState, id: string) => allFoods(s).find((f) => f.id === id);
 export const entriesFor = (s: AppState, date: string): FoodEntry[] => s.entries.filter((e) => e.date === date);
 export const totalsFor = (s: AppState, date: string) => sum(entriesFor(s, date).map((e) => e.nutrients));
-export const isTrainingDay = (s: AppState, date: string) => s.sessions.some((x) => x.date === date) || (!!s.active && date === today());
+/** Training day = a workout was logged that day, a workout is in progress today, or (today/future) your program plans one. */
+export const isTrainingDay = (s: AppState, date: string) => {
+  if (s.sessions.some((x) => x.date === date) || (!!s.active && date === today())) return true;
+  if (s.program && date >= today()) return s.program.weekdays.includes(['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][parseDate(date).getDay()]);
+  return false;
+};
 
 /** Per-100g nutrients of a recipe built from ingredients. */
 export function recipePer100(s: AppState, ingredients: { foodId: string; grams: number }[]): Nutrients {

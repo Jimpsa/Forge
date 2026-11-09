@@ -8,6 +8,7 @@ import { addDays, fmt, prettyDate, today, uid } from '../lib/util';
 import { Bar, EmptyState, NumField, Ring, Seg, Sheet } from '../components/ui';
 import { FoodPicker, NutrientTable } from '../components/FoodPicker';
 import { askConfirm } from '../components/confirm';
+import { MealPlanCard, MealPlanner } from './MealPlanner';
 
 export function DateNav({ date, setDate }: { date: string; setDate: (d: string) => void }) {
   return (
@@ -102,6 +103,7 @@ export function Diet() {
   const [editing, setEditing] = useState<FoodEntry | null>(null);
   const [view, setView] = useState<'log' | 'nutrients'>('log');
   const [myFoods, setMyFoods] = useState(false);
+  const [planner, setPlanner] = useState(false);
   const entries = entriesFor(s, date);
   const yesterday = entriesFor(s, addDays(date, -1));
   const totals = sum(entries.map((e) => e.nutrients));
@@ -114,6 +116,8 @@ export function Diet() {
     <div>
       <div className="page-head"><h1>Diet</h1><DateNav date={date} setDate={setDate} /></div>
       <div className="card"><MacroSummary date={date} /></div>
+      {date === today() && <MealPlanCard onBuild={() => setPlanner(true)} />}
+      <MealPlanner open={planner} onClose={() => setPlanner(false)} />
       <div style={{ marginBottom: 14 }}>
         <Seg value={view} onChange={setView} options={[{ value: 'log', label: 'Food log' }, { value: 'nutrients', label: 'Vitamins & minerals' }]} />
       </div>

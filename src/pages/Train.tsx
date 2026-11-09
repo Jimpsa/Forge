@@ -10,6 +10,7 @@ import { celebrate, confetti, haptic, sound, useCountUp } from '../lib/fx';
 import { Trophy } from 'lucide-react';
 import { progression, readiness } from '../lib/readiness';
 import { ReadinessCard } from '../components/Readiness';
+import { ProgramBuilder, ProgramCard } from './ProgramBuilder';
 
 const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Legs', 'Glutes', 'Core', 'Full body'];
 
@@ -33,6 +34,7 @@ export function Train() {
   const [detail, setDetail] = useState<Session | null>(null);
   const [tplEdit, setTplEdit] = useState<Template | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [builder, setBuilder] = useState(false);
   const summarySheet = summary && <SavedSummary summary={summary} onClose={() => setSummary(null)} />;
   if (s.active) return <><ActiveWorkoutView onSaved={setSummary} />{summarySheet}</>;
   const week = weeklySummaries(s, 1)[0];
@@ -42,6 +44,8 @@ export function Train() {
   return (
     <div>
       <div className="page-head"><h1>Training</h1></div>
+      <ProgramCard onBuild={() => setBuilder(true)} />
+      <ProgramBuilder open={builder} onClose={() => setBuilder(false)} />
       <div className="card">
         <h2>Start</h2>
         <div className="grid2">

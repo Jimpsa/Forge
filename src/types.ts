@@ -152,6 +152,8 @@ export interface AppState {
   chat?: ChatMessage[];
   periodStarts?: string[]; // first day of each period (YYYY-MM-DD)
   settings?: Settings;
+  program?: SavedProgram;
+  mealPlan?: SavedMealPlan;
   celebrated?: Celebrated;
 }
 
@@ -198,3 +200,20 @@ export interface Celebrated {
   badges?: Record<string, string>; // badge id -> date earned
   recapSeen?: string; // week start of the last recap opened
 }
+
+export interface SavedProgram {
+  id: string;
+  name: string;
+  summary: string;
+  createdAt: string; // date
+  inputs: unknown; // ProgramInputs (kept loose to avoid a type cycle)
+  templateIds: string[];
+  weekdays: string[];
+  notes: string[];
+  weekly: Record<string, number>;
+}
+
+export interface MealItem { foodId: string; name: string; grams: number }
+export interface PlannedMeal { slot: string; title: string; items: MealItem[] }
+export interface PlannedDay { weekday: string; training: boolean; meals: PlannedMeal[] }
+export interface SavedMealPlan { id: string; style: string; createdAt: string; days: PlannedDay[]; notes: string[] }

@@ -43,6 +43,8 @@ TRAINING PROGRESSION: The app suggests weights from the user's logged reps and R
 
 MENSTRUAL CYCLE: Research shows cycle-phase effects on strength are small and individual (e.g. McNulty 2020 meta-analysis), so advise based on the user's symptoms and their own data, never fixed 'phase X = lift lighter' rules. Hormonal contraception largely suppresses natural phases. Heavy bleeding, missed periods (especially with low energy intake or high training load — possible low energy availability/RED-S), or severe pain → suggest seeing a doctor.
 
+PLANS: The app builds training programs and meal plans for the user (shown in the data). When asked to change them, suggest concrete swaps that keep the same targets, and remind them they can rebuild the plan in the app (Train → program, Diet → meal plan).
+
 PROTOCOLS: If the data shows the user is on a gut reset protocol, respect it: suggest meals and swaps only from foods allowed in their current phase, follow its one-food-at-a-time rule, and help them interpret reactions. Give honest, brief safety facts when relevant (e.g. raw-food infection risk, high-histamine foods, nutrient gaps in a restrictive phase, when to see a doctor or dietitian), without lecturing or repeating them every message.
 
 STYLE: Reply in the user's language. Be friendly and direct. Keep answers short and skimmable (under ~200 words unless they ask for more), using short paragraphs and "- " bullet lists. Use **bold** sparingly. No tables.`;
@@ -77,6 +79,8 @@ export function buildContext(s: AppState): string {
   const c = cycleInfo(s);
   if (c) lines.push(`Menstrual cycle: day ${c.day} of ~${c.length}${c.hormonal ? ', hormonal contraception' : `, phase ${c.label}`}.`);
   if (lifts.length) lines.push(`Next-session suggestions: ${lifts.slice(0, 6).map((id) => `${exerciseName(s, id)}: ${progression(s, id, undefined, r).text}`).join('; ')}.`);
+  if (s.program) lines.push(`Training program: "${s.program.name}" (${s.program.summary}; ${s.program.weekdays.join(', ')}). Days: ${s.program.templateIds.map((id) => s.templates.find((t) => t.id === id)).filter(Boolean).map((t) => `${t!.name}: ${t!.exercises.map((e) => `${exerciseName(s, e.exerciseId)} ${e.sets}x${e.reps}`).join(', ')}`).join(' | ')}.`);
+  if (s.mealPlan) lines.push(`Meal plan: ${s.mealPlan.style} diet, ${s.mealPlan.days[0]?.meals.length ?? 0} meals/day. Today's planned meals: ${(s.mealPlan.days.find((d) => d.weekday === ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()])?.meals ?? []).map((m) => `${m.slot}: ${m.items.map((x) => `${x.name} ${x.grams} g`).join(', ')}`).join(' | ')}.`);
   const pc = protocolContext(s);
   if (pc) lines.push(pc);
   return lines.join('\n');
