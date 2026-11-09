@@ -31,16 +31,19 @@ export async function checkForUpdate(silent = false) {
   try {
     const res = await fetch(`${UPDATE_BASE}/version.json?t=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const info: { version: string; build: number; url: string; notes?: string; minNativeBuild?: number } = await res.json();
+    const info: { version: string; build: number; url: string; checksum: string; notes?: string; minNativeBuild?: number } = await res.json();
     if (!(info.build > APP_BUILD)) { setState({ status: silent ? 'idle' : 'latest' }); return; }
     const nativeBuild = Number((await App.getInfo()).build) || 0;
     if (info.minNativeBuild && nativeBuild < info.minNativeBuild) { setState({ status: 'native-required', version: info.version }); return; }
     setState({ status: 'downloading', version: info.version });
-    const bundle = await CapacitorUpdater.download({ url: info.url, version: info.version });
+    // checksum = SHA-256 of the zip; the plugin verifies it and rejects downloads without one.
+    const bundle = await CapacitorUpdater.download({ url: info.url, version: info.version, checksum: info.checksum });
     await CapacitorUpdater.next({ id: bundle.id }); // applied automatically on next app start
     setState({ status: 'ready', version: info.version, id: bundle.id, notes: info.notes });
   } catch (e) {
-    setState(silent ? { status: 'idle' } : { status: 'error', message: (e as Error).message || 'Update check failed' });
+    const msg = (e as { message?: string; errorMessage?: string })?.message || 'Update check failed';
+    console.error('Update failed: ' + msg); // ends up in bug reports
+    setState(silent ? { status: 'idle' } : { status: 'error', message: msg.replace(/ from: https?:\/\/\S+/, '') });
   }
 }
 

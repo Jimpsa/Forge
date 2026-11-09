@@ -39,11 +39,13 @@ jobs:
         run: |
           mkdir -p ota
           (cd dist && zip -qr ../ota/bundle-${FORGE_BUILD_NUMBER}.zip .)
+          # The updater plugin refuses bundles without a SHA-256 checksum (protects against corrupt/tampered downloads).
+          CHECKSUM=$(sha256sum ota/bundle-${FORGE_BUILD_NUMBER}.zip | cut -d' ' -f1)
           MIN_NATIVE=$(grep -oP 'MIN_NATIVE_BUILD = \K[0-9]+' src/lib/app.ts)
           NOTES=$(git log -1 --pretty=%s | head -c 140 | sed 's/"/\\"/g')
           BASE="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}"
           cat > ota/version.json <<JSON
-          {"version":"${FORGE_VERSION}","build":${FORGE_BUILD_NUMBER},"minNativeBuild":${MIN_NATIVE},"url":"${BASE}/ota/bundle-${FORGE_BUILD_NUMBER}.zip","notes":"${NOTES}"}
+          {"version":"${FORGE_VERSION}","build":${FORGE_BUILD_NUMBER},"minNativeBuild":${MIN_NATIVE},"url":"${BASE}/ota/bundle-${FORGE_BUILD_NUMBER}.zip","checksum":"${CHECKSUM}","notes":"${NOTES}"}
           JSON
           mv ota dist/ota
           cat dist/ota/version.json
