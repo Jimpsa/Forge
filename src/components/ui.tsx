@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { clamp } from '../lib/util';
 
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode }) {
@@ -56,12 +56,31 @@ export function Ring({ value, max, size = 132, label, sub }: { value: number; ma
   );
 }
 
-export function NumField({ label, value, onChange, step = 1, min, suffix }: { label: string; value: number | undefined; onChange: (v: number | undefined) => void; step?: number; min?: number; suffix?: string }) {
+/**
+ * Number input that keeps what the user types (so clearing a field and typing "75" gives 75, not "075").
+ * `required`: an emptied field doesn't report "no value" — it keeps the last valid number and shows it again on blur.
+ */
+export function NumField({ label, value, onChange, step = 1, min, suffix, required }: { label: string; value: number | undefined; onChange: (v: number | undefined) => void; step?: number; min?: number; suffix?: string; required?: boolean }) {
+  const [text, setText] = useState(value === undefined ? '' : String(value));
+  const focused = useRef(false);
+  useEffect(() => {
+    // Sync from outside changes only (e.g. a reset), never while the user is mid-edit.
+    const parsed = text.trim() === '' ? undefined : Number(text.replace(',', '.'));
+    if (parsed !== value && !(focused.current && text.trim() === '')) setText(value === undefined ? '' : String(value));
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <label className="field">
       <span>{label}{suffix ? ` (${suffix})` : ''}</span>
-      <input type="number" inputMode="decimal" step={step} min={min} value={value ?? ''}
-        onChange={(e) => onChange(e.target.value === '' ? undefined : Number(e.target.value))} />
+      <input type="text" inputMode="decimal" data-step={step} data-min={min} value={text}
+        onFocus={() => { focused.current = true; }}
+        onBlur={() => { focused.current = false; if (text.trim() === '' && required && value !== undefined) setText(String(value)); }}
+        onChange={(e) => {
+          const raw = e.target.value.replace(/[^0-9.,-]/g, '');
+          setText(raw);
+          if (raw.trim() === '') { if (!required) onChange(undefined); return; }
+          const n = Number(raw.replace(',', '.'));
+          if (!isNaN(n) && !/[.,]$/.test(raw)) onChange(n);
+        }} />
     </label>
   );
 }

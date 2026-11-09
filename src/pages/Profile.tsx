@@ -31,9 +31,9 @@ export function ProfileForm({ onboarding }: { onboarding?: boolean }) {
         <label className="field"><span>Name</span><input value={p.name} onChange={(e) => set('name', e.target.value)} /></label>
         <Seg value={p.sex} onChange={(v) => set('sex', v)} options={[{ value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }]} />
         <div className="grid3">
-          <NumField label="Birth year" value={p.birthYear} onChange={(v) => set('birthYear', v ?? 1990)} />
-          <NumField label="Height" suffix="cm" value={p.heightCm} onChange={(v) => set('heightCm', v ?? 0)} />
-          <NumField label="Weight" suffix="kg" value={p.weightKg} onChange={(v) => set('weightKg', v ?? 0)} step={0.1} />
+          <NumField required label="Birth year" value={p.birthYear} onChange={(v) => set('birthYear', v ?? 1990)} />
+          <NumField required label="Height" suffix="cm" value={p.heightCm} onChange={(v) => set('heightCm', v ?? 0)} />
+          <NumField required label="Weight" suffix="kg" value={p.weightKg} onChange={(v) => set('weightKg', v ?? 0)} step={0.1} />
         </div>
         {p.sex === 'female' && (
           <div className="stack" style={{ padding: 12, borderRadius: 12, background: 'var(--surface-2)' }}>
@@ -49,7 +49,7 @@ export function ProfileForm({ onboarding }: { onboarding?: boolean }) {
                     <option value="hormonal">Hormonal (pill, implant, hormonal IUD…)</option>
                   </select>
                 </label>
-                <NumField label="Typical cycle length" suffix="days" value={p.cycle.typicalLength} onChange={(v) => set('cycle', { ...p.cycle!, typicalLength: v ?? 28 })} />
+                <NumField required label="Typical cycle length" suffix="days" value={p.cycle.typicalLength} onChange={(v) => set('cycle', { ...p.cycle!, typicalLength: v ?? 28 })} />
               </div>
             )}
             <p className="tiny muted">Private to you. Cycle data is only used for your own training advice.</p>
@@ -73,10 +73,10 @@ export function ProfileForm({ onboarding }: { onboarding?: boolean }) {
         <details>
           <summary className="small muted" style={{ cursor: 'pointer' }}>Advanced targets</summary>
           <div className="grid2" style={{ marginTop: 10 }}>
-            <NumField label="Protein" suffix="g per kg" value={p.proteinPerKg} onChange={(v) => set('proteinPerKg', v ?? 2)} step={0.1} />
-            <NumField label="Fat" suffix="% of kcal" value={p.fatPct} onChange={(v) => set('fatPct', v ?? 27)} />
-            <NumField label="Extra on training days" suffix="kcal" value={p.trainingDayKcal} onChange={(v) => set('trainingDayKcal', v ?? 0)} step={50} />
-            <NumField label="Water goal" suffix="ml" value={p.waterGoalMl} onChange={(v) => set('waterGoalMl', v ?? 3000)} step={250} />
+            <NumField required label="Protein" suffix="g per kg" value={p.proteinPerKg} onChange={(v) => set('proteinPerKg', v ?? 2)} step={0.1} />
+            <NumField required label="Fat" suffix="% of kcal" value={p.fatPct} onChange={(v) => set('fatPct', v ?? 27)} />
+            <NumField required label="Extra on training days" suffix="kcal" value={p.trainingDayKcal} onChange={(v) => set('trainingDayKcal', v ?? 0)} step={50} />
+            <NumField required label="Water goal" suffix="ml" value={p.waterGoalMl} onChange={(v) => set('waterGoalMl', v ?? 3000)} step={250} />
             <NumField label="Max heart rate" suffix="bpm" value={p.maxHr} onChange={(v) => set('maxHr', v)} />
             <NumField label="Fixed calorie target" suffix="kcal, optional" value={p.kcalOverride} onChange={(v) => set('kcalOverride', v)} step={50} />
           </div>
