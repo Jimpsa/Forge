@@ -9,6 +9,7 @@ import { Bar, Seg, Stat } from '../components/ui';
 import { askConfirm } from '../components/confirm';
 import { Reset } from './Reset';
 import { Md } from '../components/Markdown';
+import { HistamineCard, HistSymptomChips } from '../components/Histamine';
 
 type Sub = 'insights' | 'ask' | 'gut' | 'reset';
 
@@ -238,6 +239,7 @@ function SevPicker({ label, value, onChange }: { label: string; value: Severity;
 
 function Gut({ ask }: { ask: (q: string) => void }) {
   const s = useAppState();
+  const histOn = !!s.settings?.histamine;
   const existingAny = (s.gut ?? []).find((x) => x.date === today());
   const existing = existingAny?.wellnessOnly ? undefined : existingAny;
   const [g, setG] = useState<GutLog>(existingAny ?? { date: today(), bloating: 0, pain: 0, reflux: 0 });
@@ -258,6 +260,7 @@ function Gut({ ask }: { ask: (q: string) => void }) {
         <SevPicker label="Stomach pain / cramps" value={g.pain} onChange={(v) => setG({ ...g, pain: v })} />
         <SevPicker label="Reflux / heartburn" value={g.reflux} onChange={(v) => setG({ ...g, reflux: v })} />
         <SevPicker label="Skin / eczema (itch, flare)" value={g.skin ?? 0} onChange={(v) => setG({ ...g, skin: v })} />
+        {histOn && <HistSymptomChips value={g.hist ?? []} onChange={(v) => setG({ ...g, hist: v.length ? v : undefined })} />}
         <div className="grid4">
           {(['energy', 'sleep', 'mood', 'soreness'] as const).map((k) => (
             <label key={k} className="field"><span>{k[0].toUpperCase() + k.slice(1)}</span>
@@ -277,6 +280,8 @@ function Gut({ ask }: { ask: (q: string) => void }) {
         <button className="btn primary block" onClick={save}>{saved ? 'Saved ✓' : existing ? 'Update check-in' : 'Save check-in'}</button>
         <p className="tiny muted">Takes 10 seconds. Together with your food log, this shows which foods line up with bad days.</p>
       </div>
+
+      <HistamineCard ask={ask} />
 
       <div className="card">
         <h2>Patterns</h2>

@@ -1,6 +1,6 @@
 import type { AppState, Settings } from '../types';
 
-export const DEFAULT_SETTINGS: Settings = { palette: 'ember', mode: 'dark', celebrations: true, vibration: true, sounds: false, motion: 'system' };
+export const DEFAULT_SETTINGS: Settings = { palette: 'ember', mode: 'dark', celebrations: true, vibration: true, sounds: false, motion: 'system', histamine: false };
 export const settingsOf = (s: AppState): Settings => ({ ...DEFAULT_SETTINGS, ...s.settings });
 
 /** Apply theme + motion preferences to <html> so CSS can react. */

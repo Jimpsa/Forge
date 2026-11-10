@@ -47,6 +47,10 @@ export const ITEMS: ProtocolItem[] = [
   { key: 'kimchi', ...same('Kimchi'), step: '3F', re: /kimchi/i, histamine: true, tip: 'Start with 1–2 teaspoons. Usually contains garlic and onion.' },
 ];
 
+import { getState } from './storage';
+import { settingsOf } from './settings';
+export const histamineMode = () => !!settingsOf(getState()).histamine;
+
 export const itemLabel = (p: Protocol, it: ProtocolItem) => (p.raw ? it.raw : it.cooked);
 export const itemByKey = (key: string) => ITEMS.find((i) => i.key === key);
 
@@ -100,7 +104,7 @@ export function offProtocol(s: AppState) {
 }
 
 /** Symptom score used to judge reactions: gut symptoms + skin (eczema). 0–13. */
-export const reactionScore = (g: GutLog) => symptomScore(g) + (g.skin ?? 0);
+export const reactionScore = (g: GutLog) => symptomScore(g) + (g.skin ?? 0) + Math.min(3, (g.hist ?? []).length);
 
 const avgScore = (logs: GutLog[]) => (logs.length ? logs.reduce((a, g) => a + reactionScore(g), 0) / logs.length : undefined);
 
@@ -120,7 +124,10 @@ export const activeTest = (p: Protocol) => p.tests.find((t) => t.result === 'tes
 export function upcoming(p: Protocol) {
   const steps = p.phase === 2 ? ['2A', '2B'] : p.phase === 3 ? ['3', '3F'] : [];
   const tested = new Set(p.tests.map((t) => t.food)); // reactions are retried from the Results list
-  return ITEMS.filter((i) => steps.includes(i.step) && !tested.has(i.key));
+  const list = ITEMS.filter((i) => steps.includes(i.step) && !tested.has(i.key));
+  // Histamine-aware mode: histamine-heavy foods move to the end of each step, so they are tested last.
+  if (!histamineMode()) return list;
+  return [...list].sort((a, b) => (a.step === b.step ? Number(!!a.histamine) - Number(!!b.histamine) : 0));
 }
 
 export const reactions = (p: Protocol) => {
@@ -134,7 +141,9 @@ export function yogurtToday(p: Protocol) {
   if (!p.yogurt) return undefined;
   const day = dayOf(p.yogurt.start);
   const cap = p.yogurt.cap ?? YOGURT_CAP;
-  return { day, tbsp: Math.min(cap, day), cap, holding: day >= cap };
+  // Histamine-aware mode ramps half as fast (+1 tbsp every 2 days): long-fermented yogurt is high in histamine.
+  const tbsp = Math.min(cap, histamineMode() ? Math.ceil(day / 2) : day);
+  return { day, tbsp, cap, holding: tbsp >= cap, slow: histamineMode() };
 }
 
 /** Average reaction score and skin score per protocol week. */

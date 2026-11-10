@@ -166,6 +166,7 @@ export interface GutLog {
   soreness?: Severity; // muscle soreness, 0 none … 3 severe
   period?: boolean; // menstruating today
   cycleSymptoms?: Severity; // cramps, PMS, headache …
+  hist?: string[]; // histamine-type symptoms today (flush, itch, headache, nose, heart, dizzy)
   wellnessOnly?: boolean; // created by the readiness questions — gut fields not answered yet
 }
 
@@ -193,6 +194,7 @@ export interface Settings {
   vibration: boolean;
   sounds: boolean;
   motion: 'system' | 'reduce' | 'full';
+  histamine?: boolean; // histamine-aware mode (off by default)
 }
 
 /** Remembers which one-off celebrations were already shown, so they never repeat. */

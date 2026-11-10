@@ -11,6 +11,7 @@ import { BUILTIN_FOODS } from '../data/foods';
 import { dailyTargets, microTargets, scale, sum } from './nutrition';
 import { activeTest, allowedNow, itemByKey, itemFood, yogurtToday } from './protocol';
 import { SCHEDULE } from '../data/programs';
+import { avoidInElimination } from '../data/histamine';
 import { ITEM_FOODS } from './protocol';
 const ITEM_TEST_GRAMS = (key: string) => ITEM_FOODS[key]?.testGrams ?? 30;
 
@@ -137,7 +138,8 @@ function solveMeal(parts: { role: 'protein' | 'carb' | 'fat' | 'veg' | 'fruit'; 
 
 export function buildMealPlan(s: AppState, inp: PlanInputs): { days: PlannedDay[]; notes: string[] } {
   const style = inp.style;
-  const ok = (name: string) => !!food(name) && fits(style, name, s);
+  const histOn = !!s.settings?.histamine;
+  const ok = (name: string) => !!food(name) && fits(style, name, s) && !(histOn && avoidInElimination(name));
   const pool = (names: string[]) => names.filter(ok);
   const pick = <T,>(arr: T[], i: number) => arr[((i % arr.length) + arr.length) % arr.length];
   const keto = style === 'keto', carni = style === 'carnivore';
@@ -279,7 +281,8 @@ function dietNotes(style: DietStyle, s: AppState, phase: number, days: PlannedDa
     carnivore: ['Animal foods only, so fiber and vitamin C are close to zero and calcium can be low. Fresh meat provides a little vitamin C; liver or eggs add vitamin A. There is little long-term research on this diet.', 'Consider blood work (lipids, kidney values) if you stay on it for long. Keep salt and water up.'],
     protocol: [`Built from your gut-reset protocol (phase ${phase}): only the foods your phase allows, in their protocol preparation. The plan updates itself when your phase changes, a test ends or a food is tolerated.`, 'The food you are currently testing appears once a day as a small 🧪 test portion. Log how you feel in the daily check-in.', phase === 1 ? 'Phase 1 is meat, eggs, animal fats, fresh white rice and peeled potatoes, so fiber, vitamin C and calcium are low by design for a few weeks.' : 'Keep testing one new food at a time. Reintroduced foods appear in rebuilt plans automatically.'],
   };
-  return [...common, ...specific[style]];
+  const hist = s.settings?.histamine ? ['Histamine-aware: high-histamine foods, liberators and DAO blockers are left out. Eat meat and fish fresh, and freeze leftovers right away instead of keeping them in the fridge.'] : [];
+  return [...common, ...specific[style], ...hist];
 }
 
 /** Total grams per food for the week (shopping list). */

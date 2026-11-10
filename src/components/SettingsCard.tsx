@@ -30,6 +30,13 @@ export function SettingsCard() {
         <Toggle k="vibration" label="Vibration" hint="Light ticks and success buzzes" />
         <Toggle k="sounds" label="Sounds" hint="Short, quiet chimes" />
       </div>
+      <h3 style={{ marginTop: 12 }}>Health modes</h3>
+      <div>
+        <label className="setting-row" htmlFor="set-histamine">
+          <span><span>Histamine-aware mode</span><span className="tiny muted" style={{ display: 'block' }}>Histamine ratings on foods, low-histamine meal plans, histamine symptoms in the check-in. Off if you have no histamine issues.</span></span>
+          <span className="switch"><input id="set-histamine" type="checkbox" checked={!!st.histamine} onChange={(e) => set({ histamine: e.target.checked })} /><span /></span>
+        </label>
+      </div>
       <button className="btn sm ghost" style={{ marginTop: 6 }} onClick={(e) => celebrate(e.currentTarget, 60)}>Try a celebration 🎉</button>
     </div>
   );

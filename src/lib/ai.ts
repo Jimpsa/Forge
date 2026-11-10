@@ -7,6 +7,7 @@ import { age, dailyTargets } from './nutrition';
 import { weeklySummaries, exerciseName, exerciseHistory } from './training';
 import { addDays, today } from './util';
 import { protocolContext } from './protocol';
+import { HISTAMINE_GUIDE, histamineBucket } from '../data/histamine';
 import { readiness, progression } from './readiness';
 import { cycleInfo } from './cycle';
 
@@ -81,6 +82,7 @@ export function buildContext(s: AppState): string {
   if (lifts.length) lines.push(`Next-session suggestions: ${lifts.slice(0, 6).map((id) => `${exerciseName(s, id)}: ${progression(s, id, undefined, r).text}`).join('; ')}.`);
   if (s.program) lines.push(`Training program: "${s.program.name}" (${s.program.summary}; ${s.program.weekdays.join(', ')}). Days: ${s.program.templateIds.map((id) => s.templates.find((t) => t.id === id)).filter(Boolean).map((t) => `${t!.name}: ${t!.exercises.map((e) => `${exerciseName(s, e.exerciseId)} ${e.sets}x${e.reps}`).join(', ')}`).join(' | ')}.`);
   if (s.mealPlan) lines.push(`Meal plan: ${s.mealPlan.style} diet, ${s.mealPlan.days[0]?.meals.length ?? 0} meals/day. Today's planned meals: ${(s.mealPlan.days.find((d) => d.weekday === ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()])?.meals ?? []).map((m) => `${m.slot}: ${m.items.map((x) => `${x.name} ${x.grams} g`).join(', ')}`).join(' | ')}.`);
+  if (s.settings?.histamine) { const hb = histamineBucket(s, 14); lines.push(`Histamine-aware mode ON. Daily histamine load (points; 14 d): ${hb.rows.map((r) => r.logged ? r.load : '-').join(', ')}. ${hb.threshold !== undefined ? `Estimated personal threshold ≈ ${hb.threshold}.` : 'Threshold not estimated yet.'} Recent histamine-type symptoms: ${(s.gut ?? []).filter((g) => g.hist?.length).slice(-5).map((g) => `${g.date}: ${g.hist!.join('/')}`).join('; ') || 'none logged'}.`); }
   const pc = protocolContext(s);
   if (pc) lines.push(pc);
   return lines.join('\n');
@@ -89,7 +91,12 @@ export function buildContext(s: AppState): string {
 export async function askCoach(s: AppState, history: ChatMessage[], onText: (t: string) => void, signal: AbortSignal) {
   const sample = await getSample();
   if (!sample) throw { code: 'not_granted' };
-  const intro = `${RULES}\n\nUSER DATA (from the app, refreshed every message):\n${buildContext(s)}\n\nThe conversation follows.`;
+  const lastQ = [...history].reverse().find((m) => m.role === 'user')?.content ?? '';
+  const histOn = !!s.settings?.histamine;
+  const kb = histOn || /histamin|dao\b|mast cell|flush|hives|antihistamin/i.test(lastQ)
+    ? `\n\nHISTAMINE KNOWLEDGE BASE (use it for histamine questions; keep its evidence labels — say clearly when something is [Functional] or [Emerging] rather than established; never present functional-medicine ideas as settled science):\n${HISTAMINE_GUIDE}`
+    : '';
+  const intro = `${RULES}${kb}\n\nUSER DATA (from the app, refreshed every message):\n${buildContext(s)}\n\nThe conversation follows.`;
   const turns = history.slice(-16).map((m) => ({ role: m.role, content: m.content }));
   while (turns.length && turns[0].role === 'assistant') turns.shift();
   const res = await sample([{ role: 'user', content: intro }, ...turns], { cache: false, signal, onText: ({ text }: { text: string }) => onText(text) });

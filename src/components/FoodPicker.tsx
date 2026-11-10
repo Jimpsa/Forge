@@ -8,6 +8,7 @@ import { fmt, uid } from '../lib/util';
 import { NumField, Seg, Sheet } from './ui';
 import { IS_ARTIFACT } from '../lib/env';
 import { haptic, sound } from '../lib/fx';
+import { HistBadge, HistNote } from './Histamine';
 import { CUTS, SPECIES, buildMeatFood, looksLikeMeat, type Species } from '../data/meats';
 
 type Tab = 'search' | 'meat' | 'scan' | 'create' | 'recipe';
@@ -54,7 +55,7 @@ function FoodRow({ f, onPick }: { f: Food; onPick: (f: Food) => void }) {
   return (
     <div className="list-item click" onClick={() => onPick(f)}>
       <div className="grow">
-        <div>{f.name} {f.source === 'recipe' && <span className="pill accent">recipe</span>}{f.favorite && ' ★'}</div>
+        <div>{f.name} {f.source === 'recipe' && <span className="pill accent">recipe</span>}{f.favorite && ' ★'} <HistBadge name={f.name} /></div>
         <div className="tiny muted">{f.brand ? f.brand + ' · ' : ''}{fmt(p.kcal)} kcal · P {fmt(p.protein, 1)} · C {fmt(p.carbs, 1)} · F {fmt(p.fat, 1)} per 100 g</div>
       </div>
       <span className="muted">›</span>
@@ -240,6 +241,7 @@ function AmountStep({ food, meal, setMeal, onAdd, onBack }: { food: Food; meal: 
       <label className="field"><span>Meal</span>
         <select value={meal} onChange={(e) => setMeal(e.target.value as Meal)}>{MEALS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}</select>
       </label>
+      <HistNote name={food.name} />
       <NutrientTable n={n} />
       <div className="row">
         <button className="btn" onClick={onBack}>Back</button>

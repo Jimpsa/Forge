@@ -267,7 +267,7 @@ function PhaseThree() {
           <>
             <div className="row between"><span className="small">Day {y.day}</span><span style={{ fontSize: '1.4rem', fontWeight: 700 }}>{y.tbsp} tbsp today</span></div>
             <div style={{ margin: '8px 0' }}><Bar value={y.tbsp} max={YOGURT_CAP} /></div>
-            <p className="tiny muted">{y.holding ? `Holding at ${y.cap} tbsp/day.` : `Tomorrow: ${Math.min(y.cap, y.tbsp + 1)} tbsp.`} Log it in the Diet tab as “L. reuteri yogurt”.</p>
+            <p className="tiny muted">{y.holding ? `Holding at ${y.cap} tbsp/day.` : y.slow ? `Histamine-aware: +1 tbsp every 2 days.` : `Tomorrow: ${Math.min(y.cap, y.tbsp + 1)} tbsp.`} Log it in the Diet tab as “L. reuteri yogurt”.</p>
             <div className="grid2" style={{ marginTop: 10 }}>
               <button className="btn" onClick={() => upd((x) => { x.yogurt!.cap = Math.max(1, y.tbsp - 1); })}>Symptoms — drop back</button>
               <button className="btn" disabled={y.holding} onClick={() => upd((x) => { x.yogurt!.cap = y.tbsp; })}>Feels right — hold here</button>

@@ -9,6 +9,7 @@ import { Bar, EmptyState, NumField, Ring, Seg, Sheet } from '../components/ui';
 import { FoodPicker, NutrientTable } from '../components/FoodPicker';
 import { askConfirm } from '../components/confirm';
 import { MealPlanCard, MealPlanner } from './MealPlanner';
+import { HistBadge } from '../components/Histamine';
 
 export function DateNav({ date, setDate }: { date: string; setDate: (d: string) => void }) {
   return (
@@ -143,7 +144,7 @@ export function Diet() {
                   {list.map((e) => (
                     <div key={e.id} className="list-item click" onClick={() => setEditing(e)}>
                       <div className="grow">
-                        <div className="small">{e.name}</div>
+                        <div className="small">{e.name} <HistBadge name={e.name} /></div>
                         <div className="tiny muted">{fmt(e.grams)} g · P {fmt(e.nutrients.protein)} · C {fmt(e.nutrients.carbs)} · F {fmt(e.nutrients.fat)}</div>
                       </div>
                       <span className="num small">{fmt(e.nutrients.kcal)}</span>

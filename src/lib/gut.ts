@@ -17,7 +17,7 @@ export const BRISTOL: { type: number; label: string; meaning: string }[] = [
 
 export const symptomScore = (g: GutLog) => g.bloating + g.pain + g.reflux + (g.stool && (g.stool <= 2 || g.stool >= 6) ? 1 : 0);
 /** Gut symptoms + skin (eczema), used for food-pattern detection. */
-export const totalScore = (g: GutLog) => symptomScore(g) + (g.skin ?? 0);
+export const totalScore = (g: GutLog) => symptomScore(g) + (g.skin ?? 0) + Math.min(3, (g.hist ?? []).length);
 
 // Common trigger groups, matched on logged food names (English + some Swedish words).
 const TRIGGERS: { key: string; label: string; re: RegExp; why: string }[] = [
