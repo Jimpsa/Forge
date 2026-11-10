@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CardioActivity, CardioLog, MuscleGroup, Session, Template } from '../types';
 import { mutate, useAppState, getState } from '../lib/storage';
@@ -57,8 +58,8 @@ export function Train() {
         {s.templates.map((t) => (
           <div key={t.id} className="list-item">
             <div className="grow click" style={{ cursor: 'pointer' }} onClick={() => startWorkout(t)}>
-              <div>{t.name}</div>
-              <div className="tiny muted">{t.exercises.map((e) => exerciseName(s, e.exerciseId)).join(' · ')}</div>
+              <div>{trs(t.name)}</div>
+              <div className="tiny muted">{trs(t.exercises.map((e) => exerciseName(s, e.exerciseId)).join(' · '))}</div>
             </div>
             <button className="btn sm ghost" onClick={() => setTplEdit(t)}>{tr("Edit")}</button>
             <button className="btn sm" onClick={() => startWorkout(t)}>{tr("Start")}</button>
@@ -76,8 +77,8 @@ export function Train() {
           <Stat v={fmtDuration(week.minutes)} l="time trained" />
         </div>
         <p className="small" style={{ marginTop: 10 }}>
-          <span className={'pill ' + (ratio.ratio && ratio.ratio > 1.3 ? 'warn' : 'accent')}>{ratio.ratio ? `${fmt(ratio.ratio, 2)}×` : '—'}</span>{' '}
-          {ratio.status} <span className="muted tiny">{tr("(last 7 days vs 4-week average)")}</span>
+          <span className={'pill ' + (ratio.ratio && ratio.ratio > 1.3 ? 'warn' : 'accent')}>{trs(ratio.ratio ? `${fmt(ratio.ratio, 2)}×` : '—')}</span>{' '}
+          {trs(ratio.status)} <span className="muted tiny">{tr("(last 7 days vs 4-week average)")}</span>
         </p>
       </div>
 
@@ -87,10 +88,10 @@ export function Train() {
         {sessions.slice(0, 50).map((x) => (
           <div key={x.id} className="list-item click" onClick={() => setDetail(x)}>
             <div className="grow">
-              <div>{x.name} <span className="pill">{sessionKind(x)}</span></div>
+              <div>{trs(x.name)} <span className="pill">{trs(sessionKind(x))}</span></div>
               <div className="tiny muted">{prettyDate(x.date)} · {fmtDuration(x.durationMin)}{' '}{tr("· effort")}{' '}{x.rpe}/10
-                {x.exercises.length > 0 && tr(" · {v0} sets · {v1} kg", { v0: sessionSets(x), v1: fmt(sessionVolume(x)) })}
-                {x.cardio.map((c, i) => <span key={i}> · {CARDIO.find((a) => a.key === c.activity)?.label}{c.distanceKm ? tr(" {v0} km", { v0: fmt(c.distanceKm, 2) }) : ''}</span>)}
+                {trs(x.exercises.length > 0 && tr(" · {v0} sets · {v1} kg", { v0: sessionSets(x), v1: fmt(sessionVolume(x)) }))}
+                {x.cardio.map((c, i) => <span key={i}> · {trs(CARDIO.find((a) => a.key === c.activity)?.label)}{trs(c.distanceKm ? tr(" {v0} km", { v0: fmt(c.distanceKm, 2) }) : '')}</span>)}
               </div>
             </div>
             <span className="num small muted">{fmt(sessionLoad(x))}</span>
@@ -137,7 +138,7 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
     <div>
       <div className="page-head">
         <input value={a.name} onChange={(e) => upd((w) => { w.name = e.target.value; })} style={{ fontSize: '1.2rem', fontWeight: 700, maxWidth: 260 }} />
-        <span className="num muted">{Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')}</span>
+        <span className="num muted">{Math.floor(elapsed / 60)}:{trs(String(elapsed % 60).padStart(2, '0'))}</span>
       </div>
 
       <ReadinessCard compact onApply={() => upd((w) => {
@@ -153,7 +154,7 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
         <div className="rest-banner">
           <span className="row" style={{ gap: 10 }}>
             <svg className="rest-ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(0,0,0,.18)" strokeWidth="5" /><circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeDasharray="100.5" strokeDashoffset={100.5 * (1 - restLeft / (a.restTotal ?? Math.max(restLeft, 1)))} /></svg>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem' }}>{tr("Rest")}{' '}{Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem' }}>{tr("Rest")}{' '}{Math.floor(restLeft / 60)}:{trs(String(restLeft % 60).padStart(2, '0'))}</span>
           </span>
           <span className="row">
             <button className="btn sm" onClick={() => upd((w) => { w.restEndsAt = (w.restEndsAt ?? Date.now()) + 30000; w.restTotal = (w.restTotal ?? 0) + 30; })}>+30s</button>
@@ -168,11 +169,11 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
         return (
           <div className="card" key={ei}>
             <div className="row between">
-              <h2 style={{ margin: 0 }}>{exerciseName(s, ex.exerciseId)}</h2>
+              <h2 style={{ margin: 0 }}>{trs(exerciseName(s, ex.exerciseId))}</h2>
               <button className="icon-btn" title={tr("Remove exercise")} onClick={async () => (await askConfirm(tr("Remove this exercise?"), tr("Remove"))) && upd((w) => { w.exercises.splice(ei, 1); })}>✕</button>
             </div>
             <Suggestion exerciseId={ex.exerciseId} targetReps={ex.targetReps} onApply={(wgt, reps) => upd((w) => { for (const set of w.exercises[ei].sets) if (!set.done && !set.warmup) { set.weight = wgt; set.reps = reps; } })} />
-            {last && <div className="tiny muted">{tr("Last time (")}{prettyDate(last.date)}): {last.sets.map((x) => `${fmt(x.weight, 1)}×${x.reps}`).join(', ')}{' '}{tr("· best e1RM")}{' '}{fmt(Math.max(...hist.map((h) => h.e1rm)), 1)}{' '}{tr("kg")}</div>}
+            {last && <div className="tiny muted">{tr("Last time (")}{prettyDate(last.date)}): {trs(last.sets.map((x) => `${fmt(x.weight, 1)}×${x.reps}`).join(', '))}{' '}{tr("· best e1RM")}{' '}{fmt(Math.max(...hist.map((h) => h.e1rm)), 1)}{' '}{tr("kg")}</div>}
             <div className="set-row tiny muted" style={{ marginTop: 10 }}><span>{tr("Set")}</span><span>{tr("kg")}</span><span>{tr("Reps")}</span><span>{tr("RPE")}</span><span /></div>
             {ex.sets.map((set, si) => (
               <div key={si} className={'set-row' + (set.done ? ' done' : '')}>
@@ -194,7 +195,7 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
               <span className="grow" />
               <label className="tiny muted row" style={{ gap: 4 }}>{tr("Rest")}
                 <select style={{ width: 80, padding: '4px 6px' }} value={ex.restSec ?? a.restSec} onChange={(e) => upd((w) => { w.exercises[ei].restSec = +e.target.value; })}>
-                  {[30, 60, 90, 120, 150, 180, 240, 300].map((x) => <option key={x} value={x}>{x < 60 ? `${x}s` : `${x / 60}m`}</option>)}
+                  {[30, 60, 90, 120, 150, 180, 240, 300].map((x) => <option key={x} value={x}>{trs(x < 60 ? `${x}s` : `${x / 60}m`)}</option>)}
                 </select>
               </label>
             </div>
@@ -205,10 +206,10 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
       {a.cardio.map((c, ci) => (
         <div className="card" key={'c' + ci}>
           <div className="row between">
-            <h2 style={{ margin: 0 }}>{CARDIO.find((x) => x.key === c.activity)?.label}</h2>
+            <h2 style={{ margin: 0 }}>{trs(CARDIO.find((x) => x.key === c.activity)?.label)}</h2>
             <button className="icon-btn" onClick={() => upd((w) => { w.cardio.splice(ci, 1); })}>✕</button>
           </div>
-          <div className="small muted">{fmtDuration(c.durationMin)}{c.distanceKm ? tr(" · {v0} km · {v1}", { v0: fmt(c.distanceKm, 2), v1: fmtPace(pace(c)!) }) : ''}{c.avgHr ? tr(" · {v0} bpm", { v0: c.avgHr }) : ''}</div>
+          <div className="small muted">{fmtDuration(c.durationMin)}{trs(c.distanceKm ? tr(" · {v0} km · {v1}", { v0: fmt(c.distanceKm, 2), v1: fmtPace(pace(c)!) }) : '')}{trs(c.avgHr ? tr(" · {v0} bpm", { v0: c.avgHr }) : '')}</div>
         </div>
       ))}
 
@@ -245,10 +246,10 @@ function Suggestion({ exerciseId, targetReps, onApply }: { exerciseId: string; t
   return (
     <div style={{ margin: '6px 0', padding: '8px 10px', borderRadius: 10, background: 'var(--surface-2)', borderLeft: `3px solid ${color}` }}>
       <div className="row between">
-        <strong className="small">{ico} {p.text}</strong>
+        <strong className="small">{trs(ico)} {trs(p.text)}</strong>
         {p.kind !== 'first' && sets.length > 0 && (applied ? <span className="tiny muted">{tr("applied")}</span> : <button className="btn sm" onClick={() => onApply(p.weight, p.reps)}>{tr("Apply")}</button>)}
       </div>
-      <div className="tiny muted" style={{ marginTop: 2 }}>{p.why}</div>
+      <div className="tiny muted" style={{ marginTop: 2 }}>{trs(p.why)}</div>
     </div>
   );
 }
@@ -259,7 +260,7 @@ function RpePicker({ value, onChange }: { value: number; onChange: (v: number) =
       <div className="rpe-grid">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => <button key={n} className={n === value ? 'on' : ''} onClick={() => onChange(n)} type="button">{n}</button>)}
       </div>
-      <p className="small muted" style={{ textAlign: 'center' }}>{RPE_LABELS[value]}</p>
+      <p className="small muted" style={{ textAlign: 'center' }}>{trs(RPE_LABELS[value])}</p>
     </div>
   );
 }
@@ -270,7 +271,7 @@ function CountStat({ value, suffix = '', label, delay }: { value: number; suffix
   const [go, setGo] = useState(false);
   useEffect(() => { const id = setTimeout(() => setGo(true), delay); return () => clearTimeout(id); }, [delay]);
   const v = useCountUp(go ? value : 0, 800, 0);
-  return <div className="stat rise" style={{ animationDelay: `${delay}ms` }}><div className="v num">{fmt(v)}{suffix}</div><div className="l">{label}</div></div>;
+  return <div className="stat rise" style={{ animationDelay: `${delay}ms` }}><div className="v num">{fmt(v)}{trs(suffix)}</div><div className="l">{trs(label)}</div></div>;
 }
 
 function SavedSummary({ summary, onClose }: { summary: Summary; onClose: () => void }) {
@@ -299,16 +300,16 @@ function SavedSummary({ summary, onClose }: { summary: Summary; onClose: () => v
         <CountStat value={x.rpe} suffix="/10" label={tr("effort")} delay={360} />
       </div>
       <div className="row wrap" style={{ gap: 6, marginTop: 10 }}>
-        {prs.length > 0 && <span className="pill accent pop" style={{ animationDelay: '.6s' }}>🏆 {prs.length}{' '}{tr("new PR")}{prs.length > 1 ? 's' : ''}</span>}
-        {volDelta !== undefined && <span className={'pill pop ' + (volDelta >= 0 ? 'accent' : '')} style={{ animationDelay: '.75s' }}>{tr("Volume")}{' '}{volDelta >= 0 ? '+' : ''}{volDelta}{tr("% vs last")}{' '}{x.name}</span>}
-        <span className="pill pop" style={{ animationDelay: '.9s' }}>{sessionSets(x)}{' '}{tr("set")}{sessionSets(x) === 1 ? '' : 's'}</span>
+        {prs.length > 0 && <span className="pill accent pop" style={{ animationDelay: '.6s' }}>🏆 {prs.length}{' '}{tr("new PR")}{trs(prs.length > 1 ? 's' : '')}</span>}
+        {volDelta !== undefined && <span className={'pill pop ' + (volDelta >= 0 ? 'accent' : '')} style={{ animationDelay: '.75s' }}>{tr("Volume")}{' '}{trs(volDelta >= 0 ? '+' : '')}{volDelta}{tr("% vs last")}{' '}{trs(x.name)}</span>}
+        <span className="pill pop" style={{ animationDelay: '.9s' }}>{sessionSets(x)}{' '}{tr("set")}{trs(sessionSets(x) === 1 ? '' : 's')}</span>
       </div>
       {prs.map((p, i) => (
         <div key={i} ref={i === 0 ? goldRef : undefined} className="gold-card go" style={{ marginTop: 12, animationDelay: `${0.3 + i * 0.15}s` }}>
           <div className="row between"><Trophy size={30} color="var(--accent-2)" aria-hidden="true" />{p.delta > 0 && <span className="delta">+{fmt(p.delta, 1)}{' '}{tr("kg")}</span>}</div>
-          <div className="tiny muted" style={{ marginTop: 6 }}>{tr("New PR ·")}{' '}{p.name}</div>
-          <div className="num" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.7rem', lineHeight: 1.1 }}>{p.set ? tr("{v0} kg × {v1}", { v0: fmt(p.set.weight, 1), v1: p.set.reps }) : tr("{v0} kg", { v0: fmt(p.value, 1) })}</div>
-          <div className="tiny muted">{p.kind === 'e1RM' ? tr("Estimated 1RM {v0} kg · best ever", { v0: fmt(p.value, 1) }) : tr("Heaviest ever: {v0} kg", { v0: fmt(p.value, 1) })}</div>
+          <div className="tiny muted" style={{ marginTop: 6 }}>{tr("New PR ·")}{' '}{trs(p.name)}</div>
+          <div className="num" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.7rem', lineHeight: 1.1 }}>{trs(p.set ? tr("{v0} kg × {v1}", { v0: fmt(p.set.weight, 1), v1: p.set.reps }) : tr("{v0} kg", { v0: fmt(p.value, 1) }))}</div>
+          <div className="tiny muted">{trs(p.kind === 'e1RM' ? tr("Estimated 1RM {v0} kg · best ever", { v0: fmt(p.value, 1) }) : tr("Heaviest ever: {v0} kg", { v0: fmt(p.value, 1) }))}</div>
         </div>
       ))}
       <button className="btn primary block" style={{ marginTop: 16 }} onClick={onClose}>{tr("Done")}</button>
@@ -361,7 +362,7 @@ function CardioForm({ open, onClose, onSave, withRpe }: { open: boolean; onClose
   const def = CARDIO.find((c) => c.key === activity)!;
   const p = dist && dur ? dur / dist : undefined;
   return (
-    <Sheet open={open} onClose={onClose} title={withRpe ? tr("Log run / cardio") : tr("Add cardio block")}>
+    <Sheet open={open} onClose={onClose} title={trs(withRpe ? tr("Log run / cardio") : tr("Add cardio block"))}>
       <div className="stack">
         <label className="field"><span>{tr("Activity")}</span>
           <select value={activity} onChange={(e) => setActivity(e.target.value as CardioActivity)}>{CARDIO.map((c) => <option key={c.key} value={c.key}>{tr(c.label)}</option>)}</select>
@@ -372,7 +373,7 @@ function CardioForm({ open, onClose, onSave, withRpe }: { open: boolean; onClose
           <NumField label={tr("Avg heart rate")} suffix="bpm" value={hr} onChange={setHr} />
           {def.distance && <NumField label={tr("Elevation gain")} suffix="m" value={elev} onChange={setElev} />}
         </div>
-        {p && activity === 'run' && <p className="small muted">{tr("Pace")}{' '}{fmtPace(p)} · {fmt(60 / p, 1)}{' '}{tr("km/h")}</p>}
+        {p && activity === 'run' && <p className="small muted">{tr("Pace")}{' '}{trs(fmtPace(p))} · {fmt(60 / p, 1)}{' '}{tr("km/h")}</p>}
         {withRpe && (
           <>
             <div><h3>{tr("Effort (RPE)")}</h3><RpePicker value={rpe} onChange={setRpe} /></div>
@@ -403,7 +404,7 @@ function ExercisePicker({ open, onClose, onPick }: { open: boolean; onClose: () 
   const s = useAppState();
   const [q, setQ] = useState('');
   const [muscle, setMuscle] = useState<MuscleGroup | ''>('');
-  const list = useMemo(() => allExercises(s).filter((e) => (!muscle || e.muscle === muscle) && e.name.toLowerCase().includes(q.toLowerCase())), [s, q, muscle]);
+  const list = useMemo(() => allExercises(s).filter((e) => (!muscle || e.muscle === muscle) && `${e.name} ${trs(e.name)}`.toLowerCase().includes(q.toLowerCase())), [s, q, muscle]);
   const create = () => {
     const id = 'cx-' + uid();
     mutate((st) => { st.exercises.push({ id, name: q.trim(), muscle: muscle || 'Full body', equipment: 'Other', custom: true }); });
@@ -414,16 +415,16 @@ function ExercisePicker({ open, onClose, onPick }: { open: boolean; onClose: () 
       <div className="stack">
         <input autoFocus placeholder={tr("Search exercises")} value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="row wrap" style={{ gap: 6 }}>
-          {MUSCLES.map((m) => <button key={m} className={'btn sm' + (muscle === m ? ' primary' : '')} onClick={() => setMuscle(muscle === m ? '' : m)}>{m}</button>)}
+          {MUSCLES.map((m) => <button key={m} className={'btn sm' + (muscle === m ? ' primary' : '')} onClick={() => setMuscle(muscle === m ? '' : m)}>{trs(m)}</button>)}
         </div>
         <div>
           {list.map((e) => (
             <div key={e.id} className="list-item click" onClick={() => { onPick(e.id); setQ(''); }}>
-              <span className="grow">{e.name}</span><span className="tiny muted">{e.muscle} · {e.equipment}</span>
+              <span className="grow">{trs(e.name)}</span><span className="tiny muted">{trs(e.muscle)} · {trs(e.equipment)}</span>
             </div>
           ))}
-          {q.trim() && !list.some((e) => e.name.toLowerCase() === q.trim().toLowerCase()) && (
-            <button className="btn block" style={{ marginTop: 8 }} onClick={create}>{tr("Create “")}{q.trim()}”{muscle ? ` (${muscle})` : ''}</button>
+          {q.trim() && !list.some((e) => [e.name, trs(e.name)].some((n) => n.toLowerCase() === q.trim().toLowerCase())) && (
+            <button className="btn block" style={{ marginTop: 8 }} onClick={create}>{tr("Create “")}{trs(q.trim())}”{trs(muscle ? ` (${muscle})` : '')}</button>
           )}
         </div>
       </div>
@@ -436,8 +437,8 @@ function SessionDetail({ session, onClose }: { session: Session | null; onClose:
   if (!session) return null;
   const x = session;
   return (
-    <Sheet open onClose={onClose} title={x.name}>
-      <p className="small muted">{prettyDate(x.date)} · {sessionKind(x)}{' '}{tr("· effort")}{' '}{x.rpe}/10 ({RPE_LABELS[x.rpe]})</p>
+    <Sheet open onClose={onClose} title={trs(x.name)}>
+      <p className="small muted">{prettyDate(x.date)} · {trs(sessionKind(x))}{' '}{tr("· effort")}{' '}{x.rpe}/10 ({trs(RPE_LABELS[x.rpe])})</p>
       <div className="grid3" style={{ margin: '12px 0' }}>
         <Stat v={fmtDuration(x.durationMin)} l="duration" />
         <Stat v={fmt(sessionLoad(x))} l="training load" />
@@ -445,17 +446,17 @@ function SessionDetail({ session, onClose }: { session: Session | null; onClose:
       </div>
       {x.exercises.map((e, i) => (
         <div key={i} className="list-item" style={{ display: 'block' }}>
-          <div className="small"><strong>{exerciseName(s, e.exerciseId)}</strong></div>
-          <div className="tiny muted">{e.sets.map((set) => `${set.warmup ? 'W ' : ''}${fmt(set.weight, 1)}kg×${set.reps}${set.rpe ? ` @${set.rpe}` : ''}`).join(' · ')}</div>
+          <div className="small"><strong>{trs(exerciseName(s, e.exerciseId))}</strong></div>
+          <div className="tiny muted">{trs(e.sets.map((set) => `${set.warmup ? 'W ' : ''}${fmt(set.weight, 1)}kg×${set.reps}${set.rpe ? ` @${set.rpe}` : ''}`).join(' · '))}</div>
         </div>
       ))}
       {x.cardio.map((c, i) => (
         <div key={'c' + i} className="list-item" style={{ display: 'block' }}>
-          <div className="small"><strong>{CARDIO.find((a) => a.key === c.activity)?.label}</strong></div>
-          <div className="tiny muted">{fmtDuration(c.durationMin)}{c.distanceKm ? tr(" · {v0} km · {v1}", { v0: fmt(c.distanceKm, 2), v1: fmtPace(pace(c)!) }) : ''}{c.avgHr ? tr(" · avg {v0} bpm", { v0: c.avgHr }) : ''}{c.elevationM ? ` · +${c.elevationM} m` : ''}</div>
+          <div className="small"><strong>{trs(CARDIO.find((a) => a.key === c.activity)?.label)}</strong></div>
+          <div className="tiny muted">{fmtDuration(c.durationMin)}{trs(c.distanceKm ? tr(" · {v0} km · {v1}", { v0: fmt(c.distanceKm, 2), v1: fmtPace(pace(c)!) }) : '')}{trs(c.avgHr ? tr(" · avg {v0} bpm", { v0: c.avgHr }) : '')}{trs(c.elevationM ? ` · +${c.elevationM} m` : '')}</div>
         </div>
       ))}
-      {x.notes && <p className="small" style={{ marginTop: 10 }}>📝 {x.notes}</p>}
+      {x.notes && <p className="small" style={{ marginTop: 10 }}>📝 {trs(x.notes)}</p>}
       <div className="row" style={{ marginTop: 16 }}>
         <button className="btn danger" onClick={async () => { if (await askConfirm(tr("Delete this session?"), tr("Delete"))) { mutate((st) => { st.sessions = st.sessions.filter((y) => y.id !== x.id); }); onClose(); } }}>{tr("Delete")}</button>
         {x.exercises.length > 0 && <button className="btn grow" onClick={() => {
@@ -482,7 +483,7 @@ function TemplateEditor({ template, onClose }: { template: Template; onClose: ()
           <div className="row tiny muted"><span className="grow">{tr("Exercise")}</span><span style={{ width: 56 }}>{tr("Sets")}</span><span style={{ width: 56 }}>{tr("Reps")}</span><span style={{ width: 64 }}>{tr("Rest s")}</span><span style={{ width: 30 }} /></div>
           {t.exercises.map((e, i) => (
             <div key={i} className="row">
-              <span className="grow small">{exerciseName(s, e.exerciseId)}</span>
+              <span className="grow small">{trs(exerciseName(s, e.exerciseId))}</span>
               <input style={{ width: 56, padding: 6 }} type="number" value={e.sets} onChange={(ev) => setEx(i, 'sets', +ev.target.value)} />
               <input style={{ width: 56, padding: 6 }} type="number" value={e.reps} onChange={(ev) => setEx(i, 'reps', +ev.target.value)} />
               <input style={{ width: 64, padding: 6 }} type="number" step={15} value={e.restSec} onChange={(ev) => setEx(i, 'restSec', +ev.target.value)} />

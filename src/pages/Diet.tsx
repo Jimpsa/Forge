@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useEffect, useRef, useState } from 'react';
 import { confetti, haptic, replay, sound, useCountUp } from '../lib/fx';
 import type { FoodEntry, Meal } from '../types';
@@ -43,7 +44,7 @@ export function MacroSummary({ date }: { date: string }) {
   ];
   return (
     <div className="row" style={{ gap: 18, alignItems: 'center' }}>
-      <div ref={ringRef} style={{ borderRadius: '50%', flex: 'none' }}><Ring value={n.kcal ?? 0} max={t.kcal} label={fmt(Math.abs(shownLeft))} sub={left >= 0 ? tr("kcal left") : tr("kcal over")} /></div>
+      <div ref={ringRef} style={{ borderRadius: '50%', flex: 'none' }}><Ring value={n.kcal ?? 0} max={t.kcal} label={fmt(Math.abs(shownLeft))} sub={trs(left >= 0 ? tr("kcal left") : tr("kcal over"))} /></div>
       <div className="grow stack">
         {macros.map((m) => (
           <div key={m.k}>
@@ -85,7 +86,7 @@ export function WaterCard({ date }: { date: string }) {
         </svg>
         <div className="grow">
           <div className="row between"><h2 style={{ margin: 0 }}>{tr("Water")}</h2>{ml >= goal && <span className="pill accent">{tr("Goal reached ✦")}</span>}</div>
-          <div style={{ margin: '4px 0 10px' }}><span className="num" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.4rem' }}>{shown.toFixed(2)}</span> <span className="muted small">/ {fmt(goal / 1000, 1)} L</span></div>
+          <div style={{ margin: '4px 0 10px' }}><span className="num" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.4rem' }}>{trs(shown.toFixed(2))}</span> <span className="muted small">/ {fmt(goal / 1000, 1)} L</span></div>
         </div>
       </div>
       <div className="row wrap" ref={btns} style={{ marginTop: 10 }}>
@@ -138,14 +139,14 @@ export function Diet() {
             return (
               <div className="card" key={m.key}>
                 <div className="row between">
-                  <h2 style={{ margin: 0 }}>{tr(m.label)} <span className="muted small num">{kcal ? tr("{v0} kcal", { v0: fmt(kcal) }) : ''}</span></h2>
+                  <h2 style={{ margin: 0 }}>{tr(m.label)} <span className="muted small num">{trs(kcal ? tr("{v0} kcal", { v0: fmt(kcal) }) : '')}</span></h2>
                   <button className="btn sm primary" onClick={() => setPicker(m.key)}>{tr("+ Add")}</button>
                 </div>
                 {list.length > 0 && <div style={{ marginTop: 8 }}>
                   {list.map((e) => (
                     <div key={e.id} className="list-item click" onClick={() => setEditing(e)}>
                       <div className="grow">
-                        <div className="small">{e.name} <HistBadge name={e.name} /></div>
+                        <div className="small">{trs(e.name)} <HistBadge name={e.name} /></div>
                         <div className="tiny muted">{fmt(e.grams)} g · P {fmt(e.nutrients.protein)} · C {fmt(e.nutrients.carbs)} · F {fmt(e.nutrients.fat)}</div>
                       </div>
                       <span className="num small">{fmt(e.nutrients.kcal)}</span>
@@ -168,8 +169,8 @@ export function Diet() {
             return (
               <div key={key} style={{ marginBottom: 10 }}>
                 <div className="row between small">
-                  <span>{label} {target?.limit && <span className="pill">{tr("limit")}</span>}</span>
-                  <span className="num muted">{fmt(v, v < 10 ? 1 : 0)} / {target ? fmt(target.value, target.value < 10 ? 1 : 0) : '–'} {unit}</span>
+                  <span>{trs(label)} {target?.limit && <span className="pill">{tr("limit")}</span>}</span>
+                  <span className="num muted">{fmt(v, v < 10 ? 1 : 0)} / {trs(target ? fmt(target.value, target.value < 10 ? 1 : 0) : '–')} {trs(unit)}</span>
                 </div>
                 {target && <Bar value={v} max={target.value} limit={target.limit} color={target.limit ? 'var(--muted)' : 'var(--accent)'} />}
               </div>
@@ -198,7 +199,7 @@ function EditEntry({ entry, onClose }: { entry: FoodEntry | null; onClose: () =>
   const save = () => { mutate((st) => { const e = st.entries.find((x) => x.id === entry.id); if (e) { e.grams = grams ?? 0; e.meal = meal; e.nutrients = n; } }); onClose(); };
   const del = () => { mutate((st) => { st.entries = st.entries.filter((x) => x.id !== entry.id); }); onClose(); };
   return (
-    <Sheet open onClose={onClose} title={entry.name}>
+    <Sheet open onClose={onClose} title={trs(entry.name)}>
       <div className="stack">
         <div className="grid2">
           <NumField label={tr("Amount")} suffix="g" value={grams} onChange={setGrams} />
@@ -222,8 +223,8 @@ function MyFoods({ open, onClose }: { open: boolean; onClose: () => void }) {
       {s.foods.map((f) => (
         <div key={f.id} className="list-item">
           <div className="grow">
-            <div className="small">{f.name} {f.favorite && '★'} <span className="pill">{f.source === 'off' ? tr("scanned/online") : f.source}</span></div>
-            <div className="tiny muted">{fmt(f.per100.kcal)}{' '}{tr("kcal / 100 g")}{f.ingredients ? tr(" · {v0} ingredients", { v0: f.ingredients.length }) : ''}</div>
+            <div className="small">{trs(f.name)} {trs(f.favorite && '★')} <span className="pill">{trs(f.source === 'off' ? tr("scanned/online") : f.source)}</span></div>
+            <div className="tiny muted">{fmt(f.per100.kcal)}{' '}{tr("kcal / 100 g")}{trs(f.ingredients ? tr(" · {v0} ingredients", { v0: f.ingredients.length }) : '')}</div>
           </div>
           <button className="icon-btn" title={tr("Remove")} onClick={async () => (await askConfirm(`Remove “${f.name}”? Logged entries are kept.`, tr("Remove"))) && mutate((st) => { st.foods = st.foods.filter((x) => x.id !== f.id); })}>🗑</button>
         </div>

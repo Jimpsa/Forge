@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { ShoppingBasket } from 'lucide-react';
 import { mutate, useAppState } from '../lib/storage';
 import { prepItems } from '../lib/protocol';
@@ -16,11 +17,11 @@ export function PrepCard({ compact }: { compact?: boolean }) {
       {items.map((x) => (
         <div key={x.id} className="list-item" style={{ display: 'block' }}>
           <div className="row between" style={{ alignItems: 'flex-start' }}>
-            <strong className="small">{x.title}</strong>
+            <strong className="small">{trs(x.title)}</strong>
             <button className="btn sm" onClick={() => done(x.id)}>{tr("Got it ✓")}</button>
           </div>
-          {!compact && <p className="tiny muted" style={{ marginTop: 3 }}>{x.detail}</p>}
-          <ul className="small" style={{ margin: '4px 0 0', paddingLeft: 18 }}>{x.buy.map((b) => <li key={b}>{b}</li>)}</ul>
+          {!compact && <p className="tiny muted" style={{ marginTop: 3 }}>{trs(x.detail)}</p>}
+          <ul className="small" style={{ margin: '4px 0 0', paddingLeft: 18 }}>{x.buy.map((b) => <li key={b}>{trs(b)}</li>)}</ul>
         </div>
       ))}
     </div>

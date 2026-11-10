@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useEffect, useMemo, useState } from 'react';
 import { Share } from '@capacitor/share';
 import { Check, Snowflake } from 'lucide-react';
@@ -47,14 +48,14 @@ export function StreakCard() {
       <div className="row" style={{ gap: 12 }}>
         <FlameArt />
         <div className="grow">
-          <div className="num" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.5rem', lineHeight: 1.1 }}>{st.count}{' '}{tr("day")}{st.count === 1 ? '' : 's'}</div>
-          <div className="small muted">{tr("logging streak ·")}{' '}{st.freezesLeft}{' '}{tr("freeze")}{st.freezesLeft === 1 ? '' : 's'}{' '}{tr("left this month")}</div>
+          <div className="num" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.5rem', lineHeight: 1.1 }}>{st.count}{' '}{tr("day")}{trs(st.count === 1 ? '' : 's')}</div>
+          <div className="small muted">{tr("logging streak ·")}{' '}{st.freezesLeft}{' '}{tr("freeze")}{trs(st.freezesLeft === 1 ? '' : 's')}{' '}{tr("left this month")}</div>
         </div>
       </div>
       <div className="week-dots" style={{ marginTop: 12 }}>
-        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i}>{d}</span>)}
+        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i}>{trs(d)}</span>)}
         {st.week.map((d) => (
-          <div key={d.date} className={'wd ' + d.state + (d.today ? ' today' : '')} title={d.state}>
+          <div key={d.date} className={'wd ' + d.state + (d.today ? ' today' : '')} title={trs(d.state)}>
             {d.state === 'log' ? <Check size={14} strokeWidth={3} /> : d.state === 'freeze' ? <Snowflake size={14} /> : d.state === 'miss' ? '·' : ''}
           </div>
         ))}
@@ -82,7 +83,7 @@ export function RecapCard({ dismissible }: { dismissible?: boolean }) {
   if (!r.hasData) return null;
   if (dismissible && s.celebrated?.recapSeen === r.weekStart) return null;
   const showTrend = r.trend !== undefined && s.profile.goal !== 'maintain';
-  const text = [`My Forge week (${tr(r.label)})`, `💪 ${r.workouts} workouts · ${fmt(r.tonnes, 1)} t lifted`, r.prs ? `🏆 ${r.prs} new PR${r.prs > 1 ? 's' : ''}` : '', r.bestLift ? `Best lift: ${r.bestLift.name} ${r.bestLift.text}` : '', `📒 ${r.daysLogged}/7 days logged`].filter(Boolean).join('\n');
+  const text = [tr('My Forge week ({v0})', { v0: tr(r.label) }), tr('💪 {v0} workouts · {v1} t lifted', { v0: r.workouts, v1: fmt(r.tonnes, 1) }), r.prs ? tr(r.prs > 1 ? '🏆 {v0} new PRs' : '🏆 {v0} new PR', { v0: r.prs }) : '', r.bestLift ? tr('Best lift: {v0} {v1}', { v0: trs(r.bestLift.name), v1: r.bestLift.text }) : '', tr('📒 {v0}/7 days logged', { v0: r.daysLogged })].filter(Boolean).join('\n');
   return (
     <div className="card" style={{ padding: 12 }}>
       <div className="recap">
@@ -91,17 +92,17 @@ export function RecapCard({ dismissible }: { dismissible?: boolean }) {
           <div><div className="v num">{r.workouts}</div><div className="l">{tr("workouts")}</div></div>
           <div><div className="v num">{fmt(r.tonnes, 1)} t</div><div className="l">{tr("lifted")}</div></div>
           <div><div className="v num">{r.prs}</div><div className="l">{tr("new PRs")}</div></div>
-          <div><div className="v num">{r.workouts ? r.avgRpe.toFixed(1) : '–'}</div><div className="l">{tr("avg effort")}</div></div>
+          <div><div className="v num">{trs(r.workouts ? r.avgRpe.toFixed(1) : '–')}</div><div className="l">{tr("avg effort")}</div></div>
           <div><div className="v num">{r.daysLogged}/7</div><div className="l">{tr("days logged")}</div></div>
-          <div><div className="v num">{showTrend ? (Math.abs(r.trend!) < 0.05 ? '0.0' : `${r.trend! > 0 ? '+' : ''}${r.trend!.toFixed(1)}`) : '–'}</div><div className="l">{showTrend ? tr("kg / week") : tr("trend")}</div></div>
+          <div><div className="v num">{trs(showTrend ? (Math.abs(r.trend!) < 0.05 ? '0.0' : `${r.trend! > 0 ? '+' : ''}${r.trend!.toFixed(1)}`) : '–')}</div><div className="l">{trs(showTrend ? tr("kg / week") : tr("trend"))}</div></div>
         </div>
-        {r.bestLift && <div className="tiny" style={{ fontWeight: 700 }}>{tr("Best lift:")}{' '}{r.bestLift.name} {r.bestLift.text}</div>}
+        {r.bestLift && <div className="tiny" style={{ fontWeight: 700 }}>{tr("Best lift:")}{' '}{trs(r.bestLift.name)} {trs(r.bestLift.text)}</div>}
       </div>
       <div className="row" style={{ marginTop: 10 }}>
         <button className="btn grow" onClick={async () => { const res = await shareText('My Forge week', text); setMsg(res === 'copied' ? 'Copied — paste it anywhere' : res === 'shared' ? 'Shared!' : ''); }}>{tr("Share with friends")}</button>
         {dismissible && <button className="btn ghost" onClick={() => mutate((st) => { st.celebrated = { ...st.celebrated, recapSeen: r.weekStart }; })}>{tr("Hide")}</button>}
       </div>
-      {msg && <p className="tiny muted" style={{ marginTop: 6 }}>{msg}</p>}
+      {msg && <p className="tiny muted" style={{ marginTop: 6 }}>{trs(msg)}</p>}
     </div>
   );
 }
@@ -119,17 +120,17 @@ export function BadgesGrid() {
       <div className="row between"><h2 style={{ margin: 0 }}>{tr("Badges")}</h2><span className="pill">{earned.length} / {list.length}</span></div>
       <div className="badges" style={{ marginTop: 12 }}>
         {[...earned, ...list.filter((b) => b.progress < 1).sort((a, b) => b.progress - a.progress)].map((b) => (
-          <button key={b.id} type="button" className={'badge' + (b.progress >= 1 ? '' : ' locked')} aria-label={`${b.name}: ${b.progress >= 1 ? 'earned' : b.label}`}
+          <button key={b.id} type="button" className={'badge' + (b.progress >= 1 ? '' : ' locked')} aria-label={trs(`${b.name}: ${b.progress >= 1 ? 'earned' : b.label}`)}
             onClick={(e) => { setOpen(b.id); if (b.progress >= 1) { replay(e.currentTarget, 'tap'); haptic('tick'); } }}>
             <span className="medal"><Icon name={b.icon} size={24} /></span>
-            <span>{b.name}</span>
+            <span>{trs(b.name)}</span>
             {b.progress < 1 && <span className="prog"><i style={{ width: `${b.progress * 100}%` }} /></span>}
           </button>
         ))}
       </div>
       {sel && (
         <p className="small" style={{ marginTop: 12 }}>
-          <strong>{sel.name}:</strong> {sel.desc}. {sel.progress >= 1 ? tr("Earned{v0} ✓", { v0: s.celebrated?.badges?.[sel.id] ? ` ${s.celebrated.badges[sel.id]}` : '' }) : tr("Progress {v0}.", { v0: sel.label })}
+          <strong>{trs(sel.name)}:</strong> {trs(sel.desc)}. {trs(sel.progress >= 1 ? tr("Earned{v0} ✓", { v0: s.celebrated?.badges?.[sel.id] ? ` ${s.celebrated.badges[sel.id]}` : '' }) : tr("Progress {v0}.", { v0: sel.label }))}
         </p>
       )}
     </div>
@@ -150,10 +151,10 @@ export function StrengthLevels() {
         <p className="small muted">{tr("Log bench press, squat, deadlift or overhead press to see your level for your body weight (")}{fmt(s.profile.weightKg)}{' '}{tr("kg).")}</p>
       ) : rows.map((r) => (
         <div key={r.id} style={{ marginTop: 12 }}>
-          <div className="row between"><div><div className="tiny muted">{r.name}{' '}{tr("· best est. 1RM")}{' '}{fmt(r.best, 1)}{' '}{tr("kg")}</div><strong style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem' }}>{tr(r.label)}</strong></div><span className="num small">{r.ratio.toFixed(2)}{tr("× BW")}</span></div>
+          <div className="row between"><div><div className="tiny muted">{trs(r.name)}{' '}{tr("· best est. 1RM")}{' '}{fmt(r.best, 1)}{' '}{tr("kg")}</div><strong style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem' }}>{tr(r.label)}</strong></div><span className="num small">{trs(r.ratio.toFixed(2))}{tr("× BW")}</span></div>
           <div className="levels"><div className="marker" style={{ left: shown ? `${r.pos}%` : '0%' }} /></div>
-          <div className="ticks">{LEVELS.map((l, i) => <span key={l} style={{ left: `${i * 25}%` }}>{l === 'Intermediate' ? tr("Intermed.") : l}</span>)}</div>
-          {r.nextLabel && <div className="tiny" style={{ marginTop: 4 }}>{tr("Next:")}{' '}<strong>{r.nextLabel}{' '}{tr("at")}{' '}{fmt(r.nextKg)}{' '}{tr("kg")}</strong> <span className="muted">(+{fmt(r.nextKg! - r.best, 1)}{' '}{tr("kg)")}</span></div>}
+          <div className="ticks">{LEVELS.map((l, i) => <span key={l} style={{ left: `${i * 25}%` }}>{trs(l === 'Intermediate' ? tr("Intermed.") : l)}</span>)}</div>
+          {r.nextLabel && <div className="tiny" style={{ marginTop: 4 }}>{tr("Next:")}{' '}<strong>{trs(r.nextLabel)}{' '}{tr("at")}{' '}{fmt(r.nextKg)}{' '}{tr("kg")}</strong> <span className="muted">(+{fmt(r.nextKg! - r.best, 1)}{' '}{tr("kg)")}</span></div>}
         </div>
       ))}
       <p className="tiny muted" style={{ marginTop: 10 }}>{tr("Approximate strength standards for your sex and body weight. Every PR moves the marker.")}</p>

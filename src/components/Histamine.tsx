@@ -1,7 +1,8 @@
+import { trs } from '../i18n';
 import { useMemo, useState } from 'react';
 import { mutate, useAppState } from '../lib/storage';
 import { settingsOf } from '../lib/settings';
-import { HISTAMINE_GUIDE, histamineBucket, histamineOf, HIST_SYMPTOMS } from '../data/histamine';
+import { histamineGuide, histamineBucket, histamineOf, HIST_SYMPTOMS } from '../data/histamine';
 import { Md } from './Markdown';
 import { Sheet } from './ui';
 import { shortDate } from '../lib/util';
@@ -16,8 +17,8 @@ export function HistBadge({ name, full }: { name: string; full?: boolean }) {
   if (!on) return null;
   const r = histamineOf(name);
   if (r.level === 'low' && !r.liberator && !r.daoBlocker) return full ? <span className="pill" title={tr("Low histamine when fresh")}>{tr("low histamine")}</span> : null;
-  const label = [r.level !== 'low' ? `${r.level} histamine` : '', r.liberator ? 'liberator' : '', r.daoBlocker ? 'DAO blocker' : ''].filter(Boolean).join(' · ');
-  return <span className={'pill ' + (r.level === 'high' || r.daoBlocker ? 'warn' : '')} title={r.note}>{label}</span>;
+  const label = [r.level !== 'low' ? tr(`${r.level} histamine`) : '', r.liberator ? tr('liberator') : '', r.daoBlocker ? tr('DAO blocker') : ''].filter(Boolean).join(' · ');
+  return <span className={'pill ' + (r.level === 'high' || r.daoBlocker ? 'warn' : '')} title={trs(r.note)}>{trs(label)}</span>;
 }
 
 export function HistNote({ name }: { name: string }) {
@@ -25,12 +26,12 @@ export function HistNote({ name }: { name: string }) {
   if (!on) return null;
   const r = histamineOf(name);
   if (!r.note) return null;
-  return <p className="tiny muted" style={{ margin: 0 }}>{tr("Histamine:")}{' '}{r.note}</p>;
+  return <p className="tiny muted" style={{ margin: 0 }}>{tr("Histamine:")}{' '}{trs(r.note)}</p>;
 }
 
 export function GuideSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   if (!open) return null;
-  return <Sheet open onClose={onClose} title={tr("Histamine guide")}><div className="small legal-text"><Md text={HISTAMINE_GUIDE.replace(/^# .*\n/, '')} /></div></Sheet>;
+  return <Sheet open onClose={onClose} title={tr("Histamine guide")}><div className="small legal-text"><Md text={histamineGuide().replace(/^# .*\n/, '')} /></div></Sheet>;
 }
 
 /** Chips for histamine-type symptoms in the daily check-in. */
@@ -81,12 +82,12 @@ export function HistamineCard({ ask }: { ask: (q: string) => void }) {
       </div>
       <div className="row between tiny muted" style={{ marginTop: 4 }}><span>{shortDate(b.rows[0].date)}</span><span>{tr("today")}</span></div>
       <p className="small" style={{ marginTop: 8 }}>
-        {tr("Today: load")}{' '}<strong>{todayRow.load}</strong>{todayRow.top.length ? tr(" (mostly {v0})", { v0: todayRow.top.map((n) => n.split(',')[0].toLowerCase()).join(', ') }) : ''}.{' '}
+        {tr("Today: load")}{' '}<strong>{todayRow.load}</strong>{trs(todayRow.top.length ? tr(" (mostly {v0})", { v0: todayRow.top.map((n) => n.split(',')[0].toLowerCase()).join(', ') }) : '')}.{' '}
         {b.threshold !== undefined ? <>{tr("Your symptoms tend to rise above a load of about")}{' '}<strong>{b.threshold}</strong>{' '}{tr("(dashed line). Spread higher-histamine foods over the week to stay under it.")}</> : <span className="muted">{tr("After ~10 days of food logs and check-ins, the app estimates your personal threshold (")}{b.checkins}{tr("/10 so far).")}</span>}
       </p>
       <div className="row wrap" style={{ gap: 6, marginTop: 8 }}>
         <button className="btn sm" onClick={() => setGuide(true)}>{tr("Histamine guide")}</button>
-        <button className="btn sm" onClick={() => ask('Look at my histamine bucket, check-ins and food log. What is most likely filling my bucket, and what should I change or test first?')}>{tr("Ask the coach")}</button>
+        <button className="btn sm" onClick={() => ask(tr('Look at my histamine bucket, check-ins and food log. What is most likely filling my bucket, and what should I change or test first?'))}>{tr("Ask the coach")}</button>
       </div>
       <GuideSheet open={guide} onClose={() => setGuide(false)} />
     </div>

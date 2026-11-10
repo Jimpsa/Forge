@@ -1,7 +1,8 @@
+import { trs } from '../i18n';
 import type { ReactNode } from 'react';
 
 function inline(text: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) => (part.startsWith('**') && part.endsWith('**') ? <strong key={i}>{part.slice(2, -2)}</strong> : part));
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) => (part.startsWith('**') && part.endsWith('**') ? <strong key={i}>{trs(part.slice(2, -2))}</strong> : part));
 }
 
 /** Minimal, safe Markdown: paragraphs, "- " / "1. " lists, headings, **bold**. */

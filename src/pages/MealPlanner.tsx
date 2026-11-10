@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useEffect, useMemo, useState } from 'react';
 import type { Meal, PlannedDay, PlannedMeal } from '../types';
 import { mutate, useAppState } from '../lib/storage';
@@ -48,10 +49,10 @@ function MealCard({ m, onLog, logged }: { m: PlannedMeal; onLog?: () => void; lo
   return (
     <div className="list-item" style={{ display: 'block' }}>
       <div className="row between">
-        <div><div className="tiny muted">{m.slot}</div><strong className="small">{m.title}</strong></div>
+        <div><div className="tiny muted">{trs(m.slot)}</div><strong className="small">{trs(m.title)}</strong></div>
         {onLog && (logged ? <span className="pill accent">{tr("Logged ✓")}</span> : <button className="btn sm" onClick={onLog}>{tr("Log")}</button>)}
       </div>
-      <div className="tiny muted" style={{ marginTop: 3 }}>{m.items.map((x) => `${x.test ? '🧪 ' : ''}${x.name.split(',')[0]} ${portionLabel(x.name, x.grams)}${x.test ? ' (test portion)' : ''}`).join(' · ')}</div>
+      <div className="tiny muted" style={{ marginTop: 3 }}>{trs(m.items.map((x) => `${x.test ? '🧪 ' : ''}${trs(x.name).split(',')[0]} ${portionLabel(x.name, x.grams)}${x.test ? tr(' (test portion)') : ''}`).join(' · '))}</div>
       <div className="tiny" style={{ marginTop: 2 }}>{fmt(n.kcal)}{' '}{tr("kcal · P")}{' '}{fmt(n.protein)} · C {fmt(n.carbs)} · F {fmt(n.fat)}</div>
     </div>
   );
@@ -77,7 +78,7 @@ export function MealPlanCard({ onBuild }: { onBuild: () => void }) {
     {plan.style === 'protocol' && <PrepCard compact />}
     <div className="card" style={{ borderColor: 'var(--accent)' }}>
       <div className="row between">
-        <div><div className="tiny muted">{tr("Meal plan ·")}{' '}{style?.label} · {day.weekday}</div><h2 style={{ margin: '2px 0' }}>{day.training ? tr("Training day") : tr("Rest day")}{' '}{tr("menu")}</h2></div>
+        <div><div className="tiny muted">{tr("Meal plan ·")}{' '}{trs(style?.label)} · {trs(day.weekday)}</div><h2 style={{ margin: '2px 0' }}>{trs(day.training ? tr("Training day") : tr("Rest day"))}{' '}{tr("menu")}</h2></div>
         <button className="btn sm" onClick={onBuild}>{tr("Week")}</button>
       </div>
       {day.meals.map((m, i) => <MealCard key={i} m={m} logged={loggedSlots.includes(m.slot)} onLog={() => { logMeal(m); setLogged((x) => [...x, m.slot]); }} />)}
@@ -116,7 +117,7 @@ export function MealPlanner({ open, onClose }: { open: boolean; onClose: () => v
           <div className="row wrap" style={{ gap: 6 }}>
             {styles.map((x) => <button key={x.key} type="button" className={'btn sm' + (inp.style === x.key ? ' primary' : '')} onClick={() => set({ style: x.key })}>{tr(x.label)}</button>)}
           </div>
-          <p className="tiny muted" style={{ marginTop: 6 }}>{STYLES.find((x) => x.key === inp.style)?.blurb}</p>
+          <p className="tiny muted" style={{ marginTop: 6 }}>{trs(STYLES.find((x) => x.key === inp.style)?.blurb)}</p>
           {inp.style === 'protocol' && !s.protocol && (
             <div className="card flat" style={{ marginTop: 8, borderColor: 'var(--accent-2)' }}>
               <p className="small">{tr("You haven’t started the gut reset yet. Start it today in Phase 1 (meat, eggs, animal fats, fresh white rice and peeled potatoes), and the plan will follow every phase from here.")}</p>
@@ -127,7 +128,7 @@ export function MealPlanner({ open, onClose }: { open: boolean; onClose: () => v
               <p className="tiny muted" style={{ marginTop: 6 }}>{tr("Already on it? Set your real start date and phase in Coach → Reset.")}</p>
             </div>
           )}
-          {inp.style === 'protocol' && s.protocol && <p className="tiny" style={{ marginTop: 6 }}>{tr("Following")}{' '}{PHASES[s.protocol.phase].name}{tr(". The plan updates by itself when your phase or tested foods change.")}</p>}
+          {inp.style === 'protocol' && s.protocol && <p className="tiny" style={{ marginTop: 6 }}>{tr("Following")}{' '}{trs(PHASES[s.protocol.phase].name)}{tr(". The plan updates by itself when your phase or tested foods change.")}</p>}
         </div>
         <div className="grid2">
           <div><div className="small" style={{ marginBottom: 4 }}>{tr("Meals per day")}</div>
@@ -135,7 +136,7 @@ export function MealPlanner({ open, onClose }: { open: boolean; onClose: () => v
           <div><div className="small" style={{ marginBottom: 4 }}>{tr("I usually train")}</div>
             <Seg value={inp.trainTime} onChange={(v: TrainTime) => set({ trainTime: v })} options={[{ value: 'morning', label: tr("AM") }, { value: 'midday', label: tr("Noon") }, { value: 'evening', label: tr("PM") }]} /></div>
         </div>
-        <p className="tiny muted">{s.program ? tr("Training days from your program: {v0}.", { v0: s.program.weekdays.join(', ') }) : tr("No training program yet, so Mon, Wed and Fri are treated as training days.")}{' '}{tr("Targets come from your profile (")}{s.profile.goal === 'cut' ? tr("fat loss") : s.profile.goal === 'bulk' ? tr("muscle gain") : tr("maintenance")}).</p>
+        <p className="tiny muted">{trs(s.program ? tr("Training days from your program: {v0}.", { v0: s.program.weekdays.join(', ') }) : tr("No training program yet, so Mon, Wed and Fri are treated as training days."))}{' '}{tr("Targets come from your profile (")}{trs(s.profile.goal === 'cut' ? tr("fat loss") : s.profile.goal === 'bulk' ? tr("muscle gain") : tr("maintenance"))}).</p>
 
         <div className="card" style={{ margin: 0, background: 'var(--bg)' }}>
           <div className="row between" style={{ marginBottom: 8 }}>
@@ -145,19 +146,19 @@ export function MealPlanner({ open, onClose }: { open: boolean; onClose: () => v
           <div className="row" style={{ gap: 4, overflowX: 'auto', paddingBottom: 4 }}>
             {days.map((d, i) => (
               <button key={d.weekday} type="button" className={'btn sm' + (i === dayIdx ? ' primary' : '')} style={{ flex: '1 0 auto', padding: '6px 8px' }} onClick={() => setDayIdx(i)}>
-                {d.weekday}{d.training ? ' 🏋' : ''}
+                {trs(d.weekday)}{trs(d.training ? ' 🏋' : '')}
               </button>
             ))}
           </div>
           <div className="stack" style={{ marginTop: 10 }}>
-            <div className="tiny muted">{day.training ? tr("Training day: more carbs, pre-workout snack, protein-rich meal after.") : tr("Rest day: fewer carbs, same protein.")}</div>
+            <div className="tiny muted">{trs(day.training ? tr("Training day: more carbs, pre-workout snack, protein-rich meal after.") : tr("Rest day: fewer carbs, same protein."))}</div>
             {[
               { l: 'Calories', v: tot.kcal ?? 0, t: tgt.kcal, c: 'var(--accent)', u: 'kcal' },
               { l: 'Protein', v: tot.protein ?? 0, t: tgt.protein, c: 'var(--protein)', u: 'g' },
               { l: inp.style === 'keto' ? 'Net carbs' : 'Carbs', v: inp.style === 'keto' ? netCarbs(tot) : tot.carbs ?? 0, t: tgt.carbs, c: 'var(--carbs)', u: 'g' },
               { l: 'Fat', v: tot.fat ?? 0, t: tgt.fat, c: 'var(--fat)', u: 'g' },
             ].map((x) => (
-              <div key={x.l}><div className="row between tiny"><span>{x.l}</span><span className="num muted">{fmt(x.v)} / {fmt(x.t)} {x.u}</span></div><Bar value={x.v} max={x.t} color={x.c} limit={x.l.includes('arbs') && inp.style === 'keto'} /></div>
+              <div key={x.l}><div className="row between tiny"><span>{trs(x.l)}</span><span className="num muted">{fmt(x.v)} / {fmt(x.t)} {trs(x.u)}</span></div><Bar value={x.v} max={x.t} color={x.c} limit={x.l.includes('arbs') && inp.style === 'keto'} /></div>
             ))}
           </div>
           <div style={{ marginTop: 6 }}>{day.meals.map((m, i) => <MealCard key={i} m={m} />)}</div>
@@ -170,13 +171,13 @@ export function MealPlanner({ open, onClose }: { open: boolean; onClose: () => v
           </div>
 
           <h3 style={{ marginTop: 14 }}>{tr("Good to know")}</h3>
-          <ul className="small" style={{ paddingLeft: 18, marginTop: 4 }}>{fresh.notes.map((n) => <li key={n} style={{ marginTop: 4 }}>{n}</li>)}</ul>
+          <ul className="small" style={{ paddingLeft: 18, marginTop: 4 }}>{fresh.notes.map((n) => <li key={n} style={{ marginTop: 4 }}>{trs(n)}</li>)}</ul>
 
-          <button className="btn sm" style={{ marginTop: 8 }} onClick={() => setShop(!shop)}>{shop ? tr("Hide") : tr("Show")}{' '}{tr("shopping list for the week")}</button>
+          <button className="btn sm" style={{ marginTop: 8 }} onClick={() => setShop(!shop)}>{trs(shop ? tr("Hide") : tr("Show"))}{' '}{tr("shopping list for the week")}</button>
           {shop && (
             <div style={{ marginTop: 8 }}>
-              {inp.style === 'protocol' && prepItems(s).length > 0 && <div className="tiny" style={{ margin: '4px 0 6px', color: 'var(--accent-2)' }}>{tr("Coming up soon:")}{' '}{prepItems(s).flatMap((x) => x.buy).join(', ')}</div>}
-              {list.map((x) => <div key={x.name} className="row between small" style={{ padding: '3px 0' }}><span>{x.name}</span><span className="num muted">{x.grams >= 1000 ? tr("{v0} kg", { v0: fmt(x.grams / 1000, 1) }) : `${fmt(x.grams)} g`}</span></div>)}
+              {inp.style === 'protocol' && prepItems(s).length > 0 && <div className="tiny" style={{ margin: '4px 0 6px', color: 'var(--accent-2)' }}>{tr("Coming up soon:")}{' '}{trs(prepItems(s).flatMap((x) => x.buy).join(', '))}</div>}
+              {list.map((x) => <div key={x.name} className="row between small" style={{ padding: '3px 0' }}><span>{trs(x.name)}</span><span className="num muted">{trs(x.grams >= 1000 ? tr("{v0} kg", { v0: fmt(x.grams / 1000, 1) }) : `${fmt(x.grams)} g`)}</span></div>)}
               <button className="btn sm" style={{ marginTop: 8 }} onClick={() => shareText('Forge shopping list', list.map((x) => `• ${x.name}: ${x.grams >= 1000 ? `${fmt(x.grams / 1000, 1)} kg` : `${fmt(x.grams)} g`}`).join('\n'))}>{tr("Share / copy list")}</button>
             </div>
           )}

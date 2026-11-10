@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GutLog, Severity } from '../types';
 import { getState, mutate, useAppState } from '../lib/storage';
@@ -35,12 +36,12 @@ export function Coach() {
 
 // ---------------- Insights ----------------
 
-const kcalPill = (k: number) => <span className={'pill ' + (k < 0 ? 'accent' : 'warn')} style={{ whiteSpace: 'nowrap' }}>{k > 0 ? '+' : '−'}{Math.abs(k)}{' '}{tr("kcal/day")}</span>;
+const kcalPill = (k: number) => <span className={'pill ' + (k < 0 ? 'accent' : 'warn')} style={{ whiteSpace: 'nowrap' }}>{trs(k > 0 ? '+' : '−')}{Math.abs(k)}{' '}{tr("kcal/day")}</span>;
 
 function SuggestionList({ items }: { items: Suggestion[] }) {
   return <>{items.map((x, i) => (
     <div key={i} className="list-item" style={{ alignItems: 'flex-start' }}>
-      <div className="grow"><div><strong>{x.title}</strong></div><div className="small muted">{x.detail}</div></div>
+      <div className="grow"><div><strong>{trs(x.title)}</strong></div><div className="small muted">{trs(x.detail)}</div></div>
       {kcalPill(x.kcal)}
     </div>
   ))}</>;
@@ -55,9 +56,9 @@ function Insights({ ask }: { ask: (q: string) => void }) {
   return (
     <>
       <div className="card" style={{ borderColor: toneColor }}>
-        <div className="tiny muted">{tr("Goal:")}{' '}{goalWord}{' '}{tr("· last")}{' '}{a.windowDays}{' '}{tr("days ·")}{' '}{a.loggedDays}{' '}{tr("days fully logged")}</div>
-        <h2 style={{ margin: '6px 0' }}>{a.verdict.title}</h2>
-        <p className="small">{a.verdict.text}</p>
+        <div className="tiny muted">{tr("Goal:")}{' '}{trs(goalWord)}{' '}{tr("· last")}{' '}{a.windowDays}{' '}{tr("days ·")}{' '}{a.loggedDays}{' '}{tr("days fully logged")}</div>
+        <h2 style={{ margin: '6px 0' }}>{trs(a.verdict.title)}</h2>
+        <p className="small">{trs(a.verdict.text)}</p>
         {a.enough && (
           <div className="grid3" style={{ marginTop: 12 }}>
             <Stat v={fmt(a.avgKcal)} l={tr("avg kcal (target {v0})", { v0: fmt(a.avgTarget) })} />
@@ -79,21 +80,21 @@ function Insights({ ask }: { ask: (q: string) => void }) {
       {a.enough && a.eatLess.length > 0 && (
         <div className="card">
           <h2>{tr("Biggest wins: eat a bit less of")}</h2>
-          <p className="tiny muted" style={{ marginBottom: 6 }}>{tr("Ranked by calories saved, from what you actually eat. You need ≈")}{a.gap}{' '}{tr("kcal/day less")}{a.gapSource === 'trend' ? tr(" (based on your weight trend)") : ''}.</p>
+          <p className="tiny muted" style={{ marginBottom: 6 }}>{tr("Ranked by calories saved, from what you actually eat. You need ≈")}{a.gap}{' '}{tr("kcal/day less")}{trs(a.gapSource === 'trend' ? tr(" (based on your weight trend)") : '')}.</p>
           <SuggestionList items={a.eatLess} />
         </div>
       )}
       {a.enough && a.eatMore.length > 0 && (
         <div className="card">
           <h2>{tr("Easy ways to eat more")}</h2>
-          <p className="tiny muted" style={{ marginBottom: 6 }}>{tr("You need ≈")}{-a.gap}{' '}{tr("kcal/day more")}{a.gapSource === 'trend' ? tr(" (based on your weight trend)") : ''}{tr(". Calorie-dense additions that don't fill you up much:")}</p>
+          <p className="tiny muted" style={{ marginBottom: 6 }}>{tr("You need ≈")}{-a.gap}{' '}{tr("kcal/day more")}{trs(a.gapSource === 'trend' ? tr(" (based on your weight trend)") : '')}{tr(". Calorie-dense additions that don't fill you up much:")}</p>
           <SuggestionList items={a.eatMore} />
         </div>
       )}
       {a.enough && a.moveMore.length > 0 && (
         <div className="card">
-          <h2>{a.gap > 0 ? tr("…or move more instead") : tr("Training & cardio")}</h2>
-          {a.moveMore.map((m, i) => <div key={i} className="list-item" style={{ display: 'block' }}><strong>{m.title}</strong><div className="small muted">{m.detail}</div></div>)}
+          <h2>{trs(a.gap > 0 ? tr("…or move more instead") : tr("Training & cardio"))}</h2>
+          {a.moveMore.map((m, i) => <div key={i} className="list-item" style={{ display: 'block' }}><strong>{trs(m.title)}</strong><div className="small muted">{trs(m.detail)}</div></div>)}
         </div>
       )}
 
@@ -101,9 +102,9 @@ function Insights({ ask }: { ask: (q: string) => void }) {
         <div className="card">
           <h2>{tr("Protein")}</h2>
           <div style={{ marginBottom: 8 }}><Bar value={a.avgProtein} max={a.proteinTarget} color="var(--protein)" /></div>
-          <p className="small">{a.protein.text}</p>
+          <p className="small">{trs(a.protein.text)}</p>
           {a.protein.options.length > 0 && <><h3 style={{ marginTop: 10 }}>{tr("Easy additions")}</h3>{a.protein.options.map((o, i) => (
-            <div key={i} className="list-item"><span className="grow small">{o.title}</span><span className="small" style={{ color: 'var(--protein)' }}>{o.detail}</span><span className="tiny muted">{o.kcal}{' '}{tr("kcal")}</span></div>
+            <div key={i} className="list-item"><span className="grow small">{trs(o.title)}</span><span className="small" style={{ color: 'var(--protein)' }}>{trs(o.detail)}</span><span className="tiny muted">{o.kcal}{' '}{tr("kcal")}</span></div>
           ))}</>}
         </div>
       )}
@@ -111,7 +112,7 @@ function Insights({ ask }: { ask: (q: string) => void }) {
       {a.enough && (a.quality.length > 0 || a.training.length > 0) && (
         <div className="card">
           <h2>{tr("Food quality & training")}</h2>
-          {[...a.quality, ...a.training].map((q, i) => <div key={i} className="list-item" style={{ display: 'block' }}><strong>{q.title}</strong><div className="small muted">{q.detail}</div></div>)}
+          {[...a.quality, ...a.training].map((q, i) => <div key={i} className="list-item" style={{ display: 'block' }}><strong>{trs(q.title)}</strong><div className="small muted">{trs(q.detail)}</div></div>)}
         </div>
       )}
 
@@ -120,7 +121,7 @@ function Insights({ ask }: { ask: (q: string) => void }) {
           <h2>{tr("Where your calories come from")}</h2>
           {a.topFoods.map((f) => (
             <div key={f.foodId} style={{ marginBottom: 8 }}>
-              <div className="row between small"><span>{f.name}</span><span className="num muted">{fmt(f.kcalPerDay)}{' '}{tr("kcal/day ·")}{' '}{Math.round(f.share * 100)}%</span></div>
+              <div className="row between small"><span>{trs(f.name)}</span><span className="num muted">{fmt(f.kcalPerDay)}{' '}{tr("kcal/day ·")}{' '}{Math.round(f.share * 100)}%</span></div>
               <Bar value={f.share} max={a.topFoods[0].share} color="var(--carbs)" />
             </div>
           ))}
@@ -182,7 +183,7 @@ function AskCoach({ draft, setDraft }: { draft: string; setDraft: (s: string) =>
       <div className="card">
         <h2>{tr("AI coach")}</h2>
         <p className="small">{tr("The AI coach runs on Claude and is available when you open Forge on claude.ai (it uses your own Claude account — nothing extra to pay or set up).")}</p>
-        <p className="small muted" style={{ marginTop: 8 }}>{err || tr("In a self-hosted version this would connect to the Claude API through your own server.")}</p>
+        <p className="small muted" style={{ marginTop: 8 }}>{trs(err || tr("In a self-hosted version this would connect to the Claude API through your own server."))}</p>
       </div>
     );
   }
@@ -192,7 +193,7 @@ function AskCoach({ draft, setDraft }: { draft: string; setDraft: (s: string) =>
       <div className="card" style={{ minHeight: 200 }}>
         {chat.length === 0 && !busy && (
           <div>
-            <p className="small">{tr("Hi")}{s.profile.name ? ` ${s.profile.name}` : ''}{tr("! I’m an")}{' '}<strong>{tr("AI coach")}</strong>{' '}{tr("for")}{' '}<strong>{tr("diet, training and gut health")}</strong>{tr(". I can see a summary of your logged food, weight trend, workouts and gut check-ins, so you can ask me things like:")}</p>
+            <p className="small">{tr("Hi")}{trs(s.profile.name ? ` ${s.profile.name}` : '')}{tr("! I’m an")}{' '}<strong>{tr("AI coach")}</strong>{' '}{tr("for")}{' '}<strong>{tr("diet, training and gut health")}</strong>{tr(". I can see a summary of your logged food, weight trend, workouts and gut check-ins, so you can ask me things like:")}</p>
             <div className="stack" style={{ marginTop: 10 }}>{STARTERS.map((q) => <button key={q} className="btn sm block" style={{ textAlign: 'left', whiteSpace: 'normal' }} onClick={() => send(tr(q))}>{tr(q)}</button>)}</div>
           </div>
         )}
@@ -210,7 +211,7 @@ function AskCoach({ draft, setDraft }: { draft: string; setDraft: (s: string) =>
             </div>
           </div>
         )}
-        {err && <p className="small" style={{ color: 'var(--warn)' }}>{err}</p>}
+        {err && <p className="small" style={{ color: 'var(--warn)' }}>{trs(err)}</p>}
         <div ref={end} />
       </div>
       <form className="row" onSubmit={(e) => { e.preventDefault(); send(draft); }} style={{ position: 'sticky', bottom: 'calc(72px + env(safe-area-inset-bottom))', background: 'var(--bg)', padding: '8px 0' }}>
@@ -232,7 +233,7 @@ const WELL = ['Poor', 'OK', 'Good', 'Great'];
 function SevPicker({ label, value, onChange }: { label: string; value: Severity; onChange: (v: Severity) => void }) {
   return (
     <div>
-      <div className="small" style={{ marginBottom: 4 }}>{label}</div>
+      <div className="small" style={{ marginBottom: 4 }}>{trs(label)}</div>
       <Seg value={String(value)} onChange={(v) => onChange(Number(v) as Severity)} options={SEVERITY.map((l, i) => ({ value: String(i), label: l }))} />
     </div>
   );
@@ -264,9 +265,9 @@ function Gut({ ask }: { ask: (q: string) => void }) {
         {histOn && <HistSymptomChips value={g.hist ?? []} onChange={(v) => setG({ ...g, hist: v.length ? v : undefined })} />}
         <div className="grid4">
           {(['energy', 'sleep', 'mood', 'soreness'] as const).map((k) => (
-            <label key={k} className="field"><span>{k[0].toUpperCase() + k.slice(1)}</span>
+            <label key={k} className="field"><span>{trs(k[0].toUpperCase() + k.slice(1))}</span>
               <select value={g[k] ?? ''} onChange={(e) => setG({ ...g, [k]: e.target.value === '' ? undefined : (+e.target.value as Severity) })}>
-                <option value="">–</option>{(k === 'soreness' ? ['None', 'Mild', 'Quite sore', 'Very sore'] : WELL).map((l, i) => <option key={l} value={i}>{l}</option>)}
+                <option value="">–</option>{(k === 'soreness' ? ['None', 'Mild', 'Quite sore', 'Very sore'] : WELL).map((l, i) => <option key={l} value={i}>{trs(l)}</option>)}
               </select>
             </label>
           ))}
@@ -274,11 +275,11 @@ function Gut({ ask }: { ask: (q: string) => void }) {
         <label className="field"><span>{tr("Stool (Bristol scale) — optional")}</span>
           <select value={g.stool ?? ''} onChange={(e) => setG({ ...g, stool: e.target.value ? +e.target.value : undefined })}>
             <option value="">{tr("No bowel movement / skip")}</option>
-            {BRISTOL.map((b) => <option key={b.type} value={b.type}>{tr("Type")}{' '}{b.type}: {tr(b.label)} ({b.meaning})</option>)}
+            {BRISTOL.map((b) => <option key={b.type} value={b.type}>{tr("Type")}{' '}{b.type}: {tr(b.label)} ({trs(b.meaning)})</option>)}
           </select>
         </label>
         <label className="field"><span>{tr("Notes (stress, sleep, period, medication…)")}</span><input value={g.notes ?? ''} onChange={(e) => setG({ ...g, notes: e.target.value || undefined })} /></label>
-        <button className="btn primary block" onClick={save}>{saved ? tr("Saved ✓") : existing ? tr("Update check-in") : tr("Save check-in")}</button>
+        <button className="btn primary block" onClick={save}>{trs(saved ? tr("Saved ✓") : existing ? tr("Update check-in") : tr("Save check-in"))}</button>
         <p className="tiny muted">{tr("Takes 10 seconds. Together with your food log, this shows which foods line up with bad days.")}</p>
       </div>
 
@@ -294,15 +295,15 @@ function Gut({ ask }: { ask: (q: string) => void }) {
           <>
             {pat.patterns.map((x) => (
               <div key={x.key} className="list-item" style={{ display: 'block' }}>
-                <div className="row between"><strong>{tr(x.label)}</strong><span className="pill warn">{x.ratio.toFixed(1)}{tr("× symptoms")}</span></div>
-                <div className="small muted">{tr("Symptom score")}{' '}{x.withAvg.toFixed(1)}{' '}{tr("on days with it (")}{x.nWith}{tr(") vs")}{' '}{x.withoutAvg.toFixed(1)}{' '}{tr("without (")}{x.nWithout}). {x.why}</div>
+                <div className="row between"><strong>{tr(x.label)}</strong><span className="pill warn">{trs(x.ratio.toFixed(1))}{tr("× symptoms")}</span></div>
+                <div className="small muted">{tr("Symptom score")}{' '}{trs(x.withAvg.toFixed(1))}{' '}{tr("on days with it (")}{x.nWith}{tr(") vs")}{' '}{trs(x.withoutAvg.toFixed(1))}{' '}{tr("without (")}{x.nWithout}). {trs(x.why)}</div>
               </div>
             ))}
-            {pat.extra.map((t, i) => <div key={i} className="list-item small">{t}</div>)}
+            {pat.extra.map((t, i) => <div key={i} className="list-item small">{trs(t)}</div>)}
             <p className="tiny muted" style={{ marginTop: 8 }}>{tr("These are correlations from a small sample, not proof. To confirm a trigger: cut it for 2 weeks, then reintroduce it and see whether symptoms return — ideally with a dietitian.")}</p>
           </>
         )}
-        <button className="btn sm" style={{ marginTop: 10 }} onClick={() => ask('Look at my gut check-ins and food log. What might be causing my symptoms, and what should I try first?')}>{tr("Ask the coach about my gut")}</button>
+        <button className="btn sm" style={{ marginTop: 10 }} onClick={() => ask(tr('Look at my gut check-ins and food log. What might be causing my symptoms, and what should I try first?'))}>{tr("Ask the coach about my gut")}</button>
       </div>
 
       {recent.length > 0 && (
@@ -311,7 +312,7 @@ function Gut({ ask }: { ask: (q: string) => void }) {
           {recent.map((x) => (
             <div key={x.date} className="list-item small">
               <span style={{ width: 90 }}>{prettyDate(x.date)}</span>
-              <span className="grow muted">{tr("Bloat")}{' '}{SEVERITY[x.bloating]}{' '}{tr("· Pain")}{' '}{SEVERITY[x.pain]}{' '}{tr("· Reflux")}{' '}{SEVERITY[x.reflux]}{x.skin !== undefined ? tr(" · Skin {v0}", { v0: SEVERITY[x.skin] }) : ''}{x.stool ? tr(" · Type {v0}", { v0: x.stool }) : ''}{x.energy !== undefined ? tr(" · Energy {v0}", { v0: WELL[x.energy] }) : ''}</span>
+              <span className="grow muted">{tr("Bloat")}{' '}{trs(SEVERITY[x.bloating])}{' '}{tr("· Pain")}{' '}{trs(SEVERITY[x.pain])}{' '}{tr("· Reflux")}{' '}{trs(SEVERITY[x.reflux])}{trs(x.skin !== undefined ? tr(" · Skin {v0}", { v0: SEVERITY[x.skin] }) : '')}{trs(x.stool ? tr(" · Type {v0}", { v0: x.stool }) : '')}{trs(x.energy !== undefined ? tr(" · Energy {v0}", { v0: WELL[x.energy] }) : '')}</span>
             </div>
           ))}
         </div>
@@ -319,7 +320,7 @@ function Gut({ ask }: { ask: (q: string) => void }) {
 
       <div className="card" style={{ borderColor: 'var(--danger)' }}>
         <h2>{tr("⚠️ See a doctor if you have")}</h2>
-        <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>{RED_FLAGS.map((r) => <li key={r}>{r}</li>)}</ul>
+        <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>{RED_FLAGS.map((r) => <li key={r}>{trs(r)}</li>)}</ul>
         <p className="tiny muted" style={{ marginTop: 8 }}>{tr("Also see a doctor if symptoms last more than a few weeks despite changes. Severe pain, heavy bleeding or vomiting blood: seek urgent care.")}</p>
       </div>
 
@@ -327,8 +328,8 @@ function Gut({ ask }: { ask: (q: string) => void }) {
         <h2>{tr("Gut health guide")}</h2>
         {GUIDE.map((sec) => (
           <details key={sec.title} className="list-item" style={{ display: 'block' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{sec.title}</summary>
-            <ul className="small" style={{ paddingLeft: 18, marginBottom: 4 }}>{sec.points.map((pt) => <li key={pt} style={{ marginTop: 4 }}>{pt}</li>)}</ul>
+            <summary style={{ cursor: 'pointer', fontWeight: 600 }}>{trs(sec.title)}</summary>
+            <ul className="small" style={{ paddingLeft: 18, marginBottom: 4 }}>{sec.points.map((pt) => <li key={pt} style={{ marginTop: 4 }}>{trs(pt)}</li>)}</ul>
           </details>
         ))}
         <p className="tiny muted" style={{ marginTop: 8 }}>{tr("General information, not a diagnosis. Most mild issues improve with these habits; ongoing symptoms deserve a proper check-up.")}</p>

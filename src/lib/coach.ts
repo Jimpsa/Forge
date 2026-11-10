@@ -1,4 +1,5 @@
 // Rule-based diet coach: turns logged food, weigh-ins and training into ranked, quantified suggestions.
+import { trs } from '../i18n';
 import type { AppState, Food, FoodEntry, NutrientKey, Nutrients } from '../types';
 import { BUILTIN_FOODS } from '../data/foods';
 import { dailyTargets, entriesFor, findFood, isTrainingDay, microTargets, scale, sum, tdee } from './nutrition';
@@ -265,10 +266,10 @@ export function analyze(s: AppState, windowDays = 14): Analysis {
       if (covered >= need || eatMore.length >= 4) break;
       const food = bf(a.name);
       if (!ok(food.name)) continue;
-      if (eatMore.some((x) => x.title.toLowerCase().includes(clean(food.name)))) continue;
+      if (eatMore.some((x) => [clean(food.name), clean(trs(food.name))].some((n) => x.title.toLowerCase().includes(n)))) continue;
       const sv = a.grams ? { label: a.label!, grams: a.grams } : serving(food);
       const k = kcalOf(food, sv.grams);
-      eatMore.push({ title: `${food.name.split(',')[0]} (${sv.label})`, detail: a.note, kcal: r10(k) });
+      eatMore.push({ title: `${trs(food.name).split(',')[0]} (${trs(sv.label)})`, detail: a.note, kcal: r10(k) });
       covered += k;
     }
   }
@@ -306,7 +307,7 @@ export function analyze(s: AppState, windowDays = 14): Analysis {
       const sv = serving(f);
       const pr = ((f.per100.protein ?? 0) * sv.grams) / 100;
       if (pr < 8) continue;
-      options.push({ title: `${f.name.split(',')[0]} (${sv.label})`, detail: `+${Math.round(pr)} g protein`, kcal: r10(kcalOf(f, sv.grams)) });
+      options.push({ title: `${trs(f.name).split(',')[0]} (${trs(sv.label)})`, detail: `+${Math.round(pr)} g protein`, kcal: r10(kcalOf(f, sv.grams)) });
     }
   }
   const protein: Analysis['protein'] = proteinGap > proteinTarget * 0.1

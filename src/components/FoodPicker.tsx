@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Food, Meal, NutrientKey, Nutrients } from '../types';
 import { NUTRIENTS, MEALS } from '../types';
@@ -27,7 +28,7 @@ export function FoodPicker({ open, onClose, date, meal: initialMeal }: { open: b
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title={picked ? tr("Amount") : tr("Add food")}>
+    <Sheet open={open} onClose={onClose} title={trs(picked ? tr("Amount") : tr("Add food"))}>
       {picked ? (
         <AmountStep food={picked} meal={meal} setMeal={setMeal} onBack={() => setPicked(null)}
           onAdd={(grams) => {
@@ -56,8 +57,8 @@ function FoodRow({ f, onPick }: { f: Food; onPick: (f: Food) => void }) {
   return (
     <div className="list-item click" onClick={() => onPick(f)}>
       <div className="grow">
-        <div>{f.name} {f.source === 'recipe' && <span className="pill accent">{tr("recipe")}</span>}{f.favorite && ' ★'} <HistBadge name={f.name} /></div>
-        <div className="tiny muted">{f.brand ? f.brand + ' · ' : ''}{fmt(p.kcal)}{' '}{tr("kcal · P")}{' '}{fmt(p.protein, 1)} · C {fmt(p.carbs, 1)} · F {fmt(p.fat, 1)}{' '}{tr("per 100 g")}</div>
+        <div>{trs(f.name)} {f.source === 'recipe' && <span className="pill accent">{tr("recipe")}</span>}{trs(f.favorite && ' ★')} <HistBadge name={f.name} /></div>
+        <div className="tiny muted">{trs(f.brand ? f.brand + ' · ' : '')}{fmt(p.kcal)}{' '}{tr("kcal · P")}{' '}{fmt(p.protein, 1)} · C {fmt(p.carbs, 1)} · F {fmt(p.fat, 1)}{' '}{tr("per 100 g")}</div>
       </div>
       <span className="muted">›</span>
     </div>
@@ -79,7 +80,7 @@ function SearchTab({ onPick, onMeat }: { onPick: (f: Food) => void; onMeat: () =
       return [...favs, ...recent];
     }
     const terms = q.toLowerCase().split(/\s+/).filter(Boolean);
-    return all.filter((f) => terms.every((t) => `${f.name} ${f.brand ?? ''} ${f.keywords ?? ''}`.toLowerCase().includes(t))).slice(0, 40);
+    return all.filter((f) => terms.every((t) => `${f.name} ${trs(f.name)} ${f.brand ?? ''} ${f.keywords ?? ''}`.toLowerCase().includes(t))).slice(0, 40);
   }, [s, q]);
 
   const ctrl = useRef<AbortController | null>(null);
@@ -99,7 +100,7 @@ function SearchTab({ onPick, onMeat }: { onPick: (f: Food) => void; onMeat: () =
         <input autoFocus placeholder={tr("Search foods, e.g. 'oats' or a brand")} value={q} onChange={(e) => setQ(e.target.value)} />
       </form>
       <div style={{ marginTop: 8 }}>
-        {!q.trim() && <div className="tiny muted" style={{ margin: '6px 0' }}>{local.length ? tr("Favorites & recent") : tr("Type to search the built-in database and your foods.")}</div>}
+        {!q.trim() && <div className="tiny muted" style={{ margin: '6px 0' }}>{trs(local.length ? tr("Favorites & recent") : tr("Type to search the built-in database and your foods."))}</div>}
         {local.map((f) => <FoodRow key={f.id} f={f} onPick={onPick} />)}
         {q.trim() && looksLikeMeat(q) && (
           <div className="list-item click" onClick={onMeat} style={{ background: 'var(--surface-2)', borderRadius: 10, padding: '10px 12px', marginTop: 6 }}>
@@ -110,7 +111,7 @@ function SearchTab({ onPick, onMeat }: { onPick: (f: Food) => void; onMeat: () =
         {q.trim() && !IS_ARTIFACT && (
           <div style={{ marginTop: 10 }}>
             <button className="btn block" onClick={goOnline} disabled={status === 'loading'}>
-              {status === 'loading' ? tr("Searching Open Food Facts…") : tr("Search online for “{v0}”", { v0: q })}
+              {trs(status === 'loading' ? tr("Searching Open Food Facts…") : tr("Search online for “{v0}”", { v0: q }))}
             </button>
             {status === 'error' && <p className="small" style={{ color: 'var(--danger)' }}>{tr("Couldn’t reach Open Food Facts. Check your connection.")}</p>}
             {online.map((f) => <FoodRow key={f.id} f={f} onPick={onPick} />)}
@@ -137,15 +138,15 @@ function MeatTab({ onPick }: { onPick: (f: Food) => void }) {
     <div className="stack">
       <div className="row wrap" style={{ gap: 6 }}>
         {(Object.keys(SPECIES) as Species[]).map((sp) => (
-          <button key={sp} className={'btn sm' + (sp === species ? ' primary' : '')} onClick={() => pickSpecies(sp)}>{SPECIES[sp].label.replace(' (moose, deer, reindeer)', '')}</button>
+          <button key={sp} className={'btn sm' + (sp === species ? ' primary' : '')} onClick={() => pickSpecies(sp)}>{trs(SPECIES[sp].label.replace(' (moose, deer, reindeer)', ''))}</button>
         ))}
       </div>
       <label className="field"><span>{tr("Cut")}</span>
-        <select value={cut.key} onChange={(e) => pickCut(e.target.value)}>{CUTS[species].map((c) => <option key={c.key} value={c.key}>{c.name}</option>)}</select>
+        <select value={cut.key} onChange={(e) => pickCut(e.target.value)}>{CUTS[species].map((c) => <option key={c.key} value={c.key}>{trs(c.name)}</option>)}</select>
       </label>
       {!isLiver && (
         <div>
-          <div className="row between small"><span>{tr("Fat content")}{cut.mince ? tr(" (as on the pack)") : ''}</span><strong className="num">{fat}%</strong></div>
+          <div className="row between small"><span>{tr("Fat content")}{trs(cut.mince ? tr(" (as on the pack)") : '')}</span><strong className="num">{fat}%</strong></div>
           <input type="range" min={cut.min} max={cut.max} step={1} value={fat} onChange={(e) => setFat(+e.target.value)} style={{ padding: 0 }} aria-label={tr("Fat percent")} />
           <div className="row between tiny muted"><span>{cut.min}{tr("% lean")}</span><span>{tr("typical")}{' '}{cut.fat}%</span><span>{cut.max}%</span></div>
         </div>
@@ -153,11 +154,11 @@ function MeatTab({ onPick }: { onPick: (f: Food) => void }) {
       <div>
         <div className="small" style={{ marginBottom: 4 }}>{tr("I’m weighing it…")}</div>
         <Seg value={cooked} onChange={setCooked} options={[{ value: 'raw', label: tr("Raw") }, { value: 'cooked', label: tr("Cooked") }]} />
-        <p className="tiny muted" style={{ marginTop: 4 }}>{cooked === 'raw' ? tr("Most accurate: weigh before cooking.") : tr("Cooked weight (fried/grilled without added fat{v0}). Log oil or butter separately.", { v0: cut.mince ? ', fat drained' : '' })}</p>
+        <p className="tiny muted" style={{ marginTop: 4 }}>{trs(cooked === 'raw' ? tr("Most accurate: weigh before cooking.") : tr("Cooked weight (fried/grilled without added fat{v0}). Log oil or butter separately.", { v0: cut.mince ? ', fat drained' : '' }))}</p>
       </div>
       <div className="small muted">{tr("Per 100 g:")}</div>
       <NutrientTable n={food.per100} />
-      <button className="btn primary block" onClick={() => onPick(food)}>{tr("Continue with")}{' '}{food.name.toLowerCase()}</button>
+      <button className="btn primary block" onClick={() => onPick(food)}>{tr("Continue with")}{' '}{trs(food.name.toLowerCase())}</button>
       <p className="tiny muted">{tr("Estimated from reference values (USDA): protein falls ~0.28 g for every 1% more fat. Pack labels beat estimates — for a specific product, scan it or add it under “New”.")}</p>
     </div>
   );
@@ -207,7 +208,7 @@ function ScanTab({ onPick }: { onPick: (f: Food) => void }) {
         <input inputMode="numeric" placeholder={tr("Barcode number")} value={code} onChange={(e) => setCode(e.target.value)} />
         <button className="btn primary">{tr("Look up")}</button>
       </form>
-      {msg && <p className="small muted">{msg}</p>}
+      {msg && <p className="small muted">{trs(msg)}</p>}
     </div>
   );
 }
@@ -228,14 +229,14 @@ function AmountStep({ food, meal, setMeal, onAdd, onBack }: { food: Food; meal: 
   return (
     <div className="stack">
       <div className="row between">
-        <div><strong>{food.name}</strong>{food.brand && <div className="tiny muted">{food.brand}</div>}</div>
-        <button className="icon-btn" onClick={toggleFav} title={tr("Favorite")}>{isFav ? '★' : '☆'}</button>
+        <div><strong>{trs(food.name)}</strong>{food.brand && <div className="tiny muted">{trs(food.brand)}</div>}</div>
+        <button className="icon-btn" onClick={toggleFav} title={tr("Favorite")}>{trs(isFav ? '★' : '☆')}</button>
       </div>
       <div className="grid2">
         <NumField label={tr("Quantity")} value={qty} onChange={setQty} step={0.25} min={0} />
         <label className="field"><span>{tr("Unit")}</span>
           <select value={si} onChange={(e) => { const i = +e.target.value; setSi(i); setQty(servings[i].grams === 1 ? 100 : 1); }}>
-            {servings.map((s, i) => <option key={i} value={i}>{s.grams === 1 ? tr("grams") : `${tr(s.label)} (${fmt(s.grams)} g)`}</option>)}
+            {servings.map((s, i) => <option key={i} value={i}>{trs(s.grams === 1 ? tr("grams") : `${tr(s.label)} (${fmt(s.grams)} g)`)}</option>)}
           </select>
         </label>
       </div>
@@ -265,7 +266,7 @@ export function NutrientTable({ n }: { n: Nutrients }) {
         <summary className="small muted" style={{ cursor: 'pointer' }}>{tr("All nutrients")}</summary>
         {NUTRIENTS.slice(4).map(({ key, label, unit }) => (
           <div key={key} className="row between small" style={{ padding: '3px 0' }}>
-            <span className="muted">{label}</span><span className="num">{n[key] === undefined ? '–' : `${fmt(n[key], n[key]! < 10 ? 1 : 0)} ${unit}`}</span>
+            <span className="muted">{trs(label)}</span><span className="num">{trs(n[key] === undefined ? '–' : `${fmt(n[key], n[key]! < 10 ? 1 : 0)} ${unit}`)}</span>
           </div>
         ))}
       </details>
@@ -307,12 +308,12 @@ function CreateFood({ onCreated }: { onCreated: (f: Food) => void }) {
         </div>
       )}
       <div className="grid2">
-        {NUTRIENTS.slice(0, 4).map(({ key, label, unit }) => <NumField key={key} label={label + (key === 'kcal' ? ' *' : '')} suffix={unit} value={vals[key]} onChange={(v) => set(key, v)} step={0.1} />)}
+        {NUTRIENTS.slice(0, 4).map(({ key, label, unit }) => <NumField key={key} label={trs(label + (key === 'kcal' ? ' *' : ''))} suffix={unit} value={vals[key]} onChange={(v) => set(key, v)} step={0.1} />)}
       </div>
       <details>
         <summary className="small muted" style={{ cursor: 'pointer' }}>{tr("Fiber, sugar, vitamins & minerals (optional)")}</summary>
         <div className="grid2" style={{ marginTop: 10 }}>
-          {NUTRIENTS.slice(4).map(({ key, label, unit }) => <NumField key={key} label={label} suffix={unit} value={vals[key]} onChange={(v) => set(key, v)} step={0.1} />)}
+          {NUTRIENTS.slice(4).map(({ key, label, unit }) => <NumField key={key} label={trs(label)} suffix={unit} value={vals[key]} onChange={(v) => set(key, v)} step={0.1} />)}
         </div>
       </details>
       <button className="btn primary block" disabled={!valid} onClick={save}>{tr("Save food")}</button>
@@ -329,7 +330,7 @@ function RecipeBuilder({ onCreated }: { onCreated: (f: Food) => void }) {
   const matches = useMemo(() => {
     if (!q.trim()) return [];
     const t = q.toLowerCase();
-    return allFoods(s).filter((f) => f.source !== 'recipe' && f.name.toLowerCase().includes(t)).slice(0, 8);
+    return allFoods(s).filter((f) => f.source !== 'recipe' && `${f.name} ${trs(f.name)}`.toLowerCase().includes(t)).slice(0, 8);
   }, [s, q]);
   const total = items.reduce((a, i) => a + i.grams, 0);
   const per100 = recipePer100(s, items);
@@ -353,13 +354,13 @@ function RecipeBuilder({ onCreated }: { onCreated: (f: Food) => void }) {
         <input placeholder={tr("Add ingredient (search your foods)…")} value={q} onChange={(e) => setQ(e.target.value)} />
         {matches.map((f) => (
           <div key={f.id} className="list-item click" onClick={() => { setItems((x) => [...x, { foodId: f.id, grams: f.servings[0]?.grams ?? 100 }]); setQ(''); }}>
-            <span className="grow small">{f.name}</span><span className="pill">{tr("+ add")}</span>
+            <span className="grow small">{trs(f.name)}</span><span className="pill">{tr("+ add")}</span>
           </div>
         ))}
       </div>
       {items.map((it, i) => (
         <div key={i} className="row">
-          <span className="grow small">{findFood(s, it.foodId)?.name}</span>
+          <span className="grow small">{trs(findFood(s, it.foodId)?.name)}</span>
           <input style={{ width: 90 }} type="number" inputMode="decimal" value={it.grams}
             onChange={(e) => setItems((x) => x.map((y, j) => (j === i ? { ...y, grams: +e.target.value } : y)))} />
           <span className="small muted">g</span>

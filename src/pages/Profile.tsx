@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useRef, useState } from 'react';
 import type { Profile as P } from '../types';
 import { defaultState, exportJson, mutate, replaceState, useAppState, useSyncStatus } from '../lib/storage';
@@ -98,7 +99,7 @@ export function ProfileForm({ onboarding }: { onboarding?: boolean }) {
         ) : (
           <p className="tiny muted" style={{ marginTop: 8 }}>{tr("BMR")}{' '}{fmt(bmr(p))}{' '}{tr("kcal (Mifflin–St Jeor) · maintenance ≈")}{' '}{fmt(tdee(p))}{' '}{tr("kcal. Formulas are ±10% for most people — after 2–4 weeks of logging and weigh-ins, the Coach tab measures your real maintenance.")}</p>
         )}
-        <button className="btn primary block" style={{ marginTop: 12 }} onClick={save}>{onboarding ? tr("Get started") : saved ? tr("Saved ✓") : tr("Save profile")}</button>
+        <button className="btn primary block" style={{ marginTop: 12 }} onClick={save}>{trs(onboarding ? tr("Get started") : saved ? tr("Saved ✓") : tr("Save profile"))}</button>
       </div>
     </>
   );
@@ -127,8 +128,8 @@ export function Profile() {
           <Stat v={s.body.length} l="weigh-ins" />
         </div>
         <p className="small muted">
-          {sync.status === 'cloud' || sync.status === 'saving' ? tr("☁️ {v0} to your account, privately — only you can see it, on any device where you open this page.", { v0: sync.status === 'saving' ? 'Saving…' : 'Saved' })
-            : sync.status === 'error' ? `⚠️ ${sync.message}` : tr("Your data is stored on this device only. Export a backup regularly, or to move to another phone.")}
+          {trs(sync.status === 'cloud' || sync.status === 'saving' ? tr("☁️ {v0} to your account, privately — only you can see it, on any device where you open this page.", { v0: sync.status === 'saving' ? 'Saving…' : 'Saved' })
+            : sync.status === 'error' ? `⚠️ ${sync.message}` : tr("Your data is stored on this device only. Export a backup regularly, or to move to another phone."))}
         </p>
         <div className="grid2" style={{ marginTop: 10 }}>
           {!IS_ARTIFACT && <button className="btn" onClick={exportJson}>{tr("⬇ Export backup")}</button>}

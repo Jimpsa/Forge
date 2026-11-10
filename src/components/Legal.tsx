@@ -1,6 +1,7 @@
+import { trs } from '../i18n';
 import { useState } from 'react';
 import { mutate, useAppState, replaceState, defaultState } from '../lib/storage';
-import { LEGAL_DOCS, LEGAL_URL, LEGAL_VERSION, type LegalDoc } from '../data/legal';
+import { LEGAL_DOCS, LEGAL_URL, LEGAL_VERSION, legalText, type LegalDoc } from '../data/legal';
 import { Md } from './Markdown';
 import { Sheet } from './ui';
 import { askConfirm } from './confirm';
@@ -14,8 +15,8 @@ export function LegalSheet({ doc, onClose }: { doc: LegalDoc | null; onClose: ()
   const d = LEGAL_DOCS[doc];
   // Drop the document's own "# Title" line; the sheet shows the title.
   return (
-    <Sheet open onClose={onClose} title={d.title}>
-      <div className="small legal-text"><Md text={d.text.replace(/^# .*\n/, '')} /></div>
+    <Sheet open onClose={onClose} title={trs(d.title)}>
+      <div className="small legal-text"><Md text={legalText(doc).replace(/^# .*\n/, '')} /></div>
       <p className="tiny muted" style={{ marginTop: 12 }}>{tr("Also available at")}{' '}{LEGAL_URL}</p>
     </Sheet>
   );
@@ -38,13 +39,13 @@ export function ConsentScreen() {
   const [declined, setDeclined] = useState(false);
   const updated = !!s.consent;
   const hasData = s.entries.length + s.sessions.length + s.body.length + (s.gut?.length ?? 0) > 0;
-  const link = (d: LegalDoc, label: string) => <button type="button" className="btn-link" onClick={(e) => { e.preventDefault(); setDoc(d); }}>{label}</button>;
+  const link = (d: LegalDoc, label: string) => <button type="button" className="btn-link" onClick={(e) => { e.preventDefault(); setDoc(d); }}>{trs(label)}</button>;
   const accept = () => mutate((st) => { st.consent = { version: LEGAL_VERSION, date: new Date().toISOString(), age16: true, terms: true, health: true }; });
 
   return (
     <div className="app">
-      <div className="row" style={{ justifyContent: 'flex-end', gap: 6, marginTop: 8 }}>{[{ k: 'auto', l: '🌐' }, ...LANGS.map((x) => ({ k: x.key, l: x.label }))].map((x) => <button key={x.k} type="button" className={'btn sm' + ((s.settings?.lang ?? 'auto') === x.k ? ' primary' : '')} onClick={() => mutate((st) => { st.settings = { ...settingsOf(st), lang: x.k as Settings['lang'] }; })}>{x.l}</button>)}</div>
-      <div className="page-head"><div><h1>{updated ? tr("We updated our terms") : tr("Welcome to Forge")}</h1><p className="muted small">{updated ? tr("Please review and confirm to keep using the app.") : tr("Before you start, a few things we need your OK for.")}</p></div></div>
+      <div className="row" style={{ justifyContent: 'flex-end', gap: 6, marginTop: 8 }}>{[{ k: 'auto', l: '🌐' }, ...LANGS.map((x) => ({ k: x.key, l: x.label }))].map((x) => <button key={x.k} type="button" className={'btn sm' + ((s.settings?.lang ?? 'auto') === x.k ? ' primary' : '')} onClick={() => mutate((st) => { st.settings = { ...settingsOf(st), lang: x.k as Settings['lang'] }; })}>{trs(x.l)}</button>)}</div>
+      <div className="page-head"><div><h1>{trs(updated ? tr("We updated our terms") : tr("Welcome to Forge"))}</h1><p className="muted small">{trs(updated ? tr("Please review and confirm to keep using the app.") : tr("Before you start, a few things we need your OK for."))}</p></div></div>
       <div className="card">
         <p className="small">{tr("Forge tracks food, training, weight and wellbeing (including gut symptoms and, if you choose, your menstrual cycle). Under EU law this is")}{' '}<strong>{tr("health data")}</strong>{tr(", so we need your explicit consent to process it.")}</p>
         <p className="small" style={{ marginTop: 8 }}>{tr("Today your data is stored")}{' '}<strong>{tr("only on this device")}</strong>{' '}{tr("(or in your Claude account if you use the claude.ai version). No ads, no tracking, never sold.")}</p>
@@ -78,10 +79,10 @@ export function LegalCard() {
       <h2>{tr("Privacy & legal")}</h2>
       {(Object.keys(LEGAL_DOCS) as LegalDoc[]).map((d) => (
         <button key={d} type="button" className="list-item click" style={{ width: '100%', background: 'none', border: 0, borderTop: '1px solid var(--border)', color: 'inherit', textAlign: 'left' }} onClick={() => setDoc(d)}>
-          <span className="grow">{LEGAL_DOCS[d].title}</span><span className="muted">›</span>
+          <span className="grow">{trs(LEGAL_DOCS[d].title)}</span><span className="muted">›</span>
         </button>
       ))}
-      {c && <p className="tiny muted" style={{ marginTop: 8 }}>{tr("Consent given")}{' '}{new Date(c.date).toLocaleDateString(locale())}{' '}{tr("(version")}{' '}{c.version}{tr("). Export or delete your data under “Your data” above.")}</p>}
+      {c && <p className="tiny muted" style={{ marginTop: 8 }}>{tr("Consent given")}{' '}{trs(new Date(c.date).toLocaleDateString(locale()))}{' '}{tr("(version")}{' '}{trs(c.version)}{tr("). Export or delete your data under “Your data” above.")}</p>}
       <button className="btn sm ghost danger" style={{ marginTop: 6 }} onClick={async () => {
         if (await askConfirm(tr("Withdraw consent to health-data processing? The app will stop until you consent again. Your data stays on this device unless you delete it."), tr("Withdraw"))) mutate((st) => { st.consent = undefined; });
       }}>{tr("Withdraw consent")}</button>

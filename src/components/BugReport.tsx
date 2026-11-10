@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useState } from 'react';
 import { Share } from '@capacitor/share';
 import { buildReport, issueUrl } from '../lib/bugreport';
@@ -34,8 +35,8 @@ export function BugReport({ open, onClose }: { open: boolean; onClose: () => voi
         </div>
         <p className="tiny muted">{tr("GitHub issues are public, so don’t include personal health details there. Use Share or Copy for anything private.")}</p>
         <a className="btn primary block" style={{ textAlign: 'center', textDecoration: 'none' }} href={issueUrl(title(), report())} target="_blank" rel="noreferrer">{tr("Open as GitHub issue")}</a>
-        {done && <p className="small" style={{ color: 'var(--accent)' }}>{done}</p>}
-        <details><summary className="tiny muted" style={{ cursor: 'pointer' }}>{tr("Preview report")}</summary><pre className="tiny muted" style={{ whiteSpace: 'pre-wrap' }}>{report()}</pre></details>
+        {done && <p className="small" style={{ color: 'var(--accent)' }}>{trs(done)}</p>}
+        <details><summary className="tiny muted" style={{ cursor: 'pointer' }}>{tr("Preview report")}</summary><pre className="tiny muted" style={{ whiteSpace: 'pre-wrap' }}>{trs(report())}</pre></details>
       </div>
     </Sheet>
   );

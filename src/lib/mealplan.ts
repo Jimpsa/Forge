@@ -13,6 +13,7 @@ import { activeTest, allowedNow, itemByKey, itemFood, yogurtToday } from './prot
 import { SCHEDULE } from '../data/programs';
 import { avoidInElimination } from '../data/histamine';
 import { ITEM_FOODS } from './protocol';
+import { trs } from '../i18n';
 const ITEM_TEST_GRAMS = (key: string) => ITEM_FOODS[key]?.testGrams ?? 30;
 
 export type DietStyle = 'balanced' | 'pescetarian' | 'vegetarian' | 'vegan' | 'keto' | 'carnivore' | 'protocol';
@@ -302,7 +303,7 @@ export function portionLabel(name: string, grams: number) {
   if (!sv || sv.grams < 8) return `${grams} g`;
   const n = grams / sv.grams;
   const r = Math.round(n * 2) / 2;
-  if (r >= 0.5 && Math.abs(n - r) < 0.15 && r <= 6) return `${r === 0.5 ? '½' : r} × ${sv.label.replace(/^1\s+/, '')} (${grams} g)`;
+  if (r >= 0.5 && Math.abs(n - r) < 0.15 && r <= 6) return `${r === 0.5 ? '½' : r} × ${trs(sv.label).replace(/^1\s+/, '')} (${grams} g)`;
   return `${grams} g`;
 }
 

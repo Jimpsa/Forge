@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useState } from 'react';
 import type { Protocol } from '../types';
 import { mutate, useAppState } from '../lib/storage';
@@ -26,18 +27,18 @@ export function Reset({ goGut, ask }: { goGut: () => void; ask: (q: string) => v
     <>
       <div className="card">
         <div className="row between">
-          <div className="tiny muted">{tr("Gut reset · started")}{' '}{shortDate(p.start)} · {p.raw ? tr("raw route") : tr("cooked route")}</div>
+          <div className="tiny muted">{tr("Gut reset · started")}{' '}{shortDate(p.start)} · {trs(p.raw ? tr("raw route") : tr("cooked route"))}</div>
           <span className="pill accent">{tr("Day")}{' '}{dayOf(p.start)}</span>
         </div>
-        <h2 style={{ margin: '6px 0 2px' }}>{ph.name}</h2>
-        <p className="small muted">{ph.goal}</p>
+        <h2 style={{ margin: '6px 0 2px' }}>{trs(ph.name)}</h2>
+        <p className="small muted">{trs(ph.goal)}</p>
         {ph.minDays > 0 && (
           <div style={{ marginTop: 10 }}>
-            <div className="row between small"><span>{tr("Day")}{' '}{day}{' '}{tr("of this phase")}</span><span className="muted">{p.phase === 1 ? tr("min") : tr("suggested")} {ph.minDays}{p.phase === 2 ? '–28' : ''}{' '}{tr("days")}</span></div>
+            <div className="row between small"><span>{tr("Day")}{' '}{day}{' '}{tr("of this phase")}</span><span className="muted">{trs(p.phase === 1 ? tr("min") : tr("suggested"))} {ph.minDays}{trs(p.phase === 2 ? '–28' : '')}{' '}{tr("days")}</span></div>
             <Bar value={day} max={ph.minDays} />
           </div>
         )}
-        {ph.moveOn && <p className="tiny muted" style={{ marginTop: 8 }}>{tr("Move on when:")}{' '}{ph.moveOn}</p>}
+        {ph.moveOn && <p className="tiny muted" style={{ marginTop: 8 }}>{tr("Move on when:")}{' '}{trs(ph.moveOn)}</p>}
         <div className="row" style={{ marginTop: 12 }}>
           {p.phase > 1 && <button className="btn sm ghost" onClick={async () => (await askConfirm(`Go back to ${PHASES[(p.phase - 1) as 1 | 2].name}?`, tr("Go back"))) && upd((x) => { x.phase = (x.phase - 1) as 1 | 2; x.phaseStart = today(); })}>{tr("‹ Back a phase")}</button>}
           <span className="grow" />
@@ -48,8 +49,8 @@ export function Reset({ goGut, ask }: { goGut: () => void; ask: (q: string) => v
       <PrepCard />
       <div className="card" style={{ borderColor: checkedIn ? 'var(--border)' : 'var(--warn)' }}>
         <div className="row between">
-          <div><strong>{checkedIn ? tr("✅ Today’s log is done") : tr("📝 Log today")}</strong><div className="tiny muted">{tr("Stool, bloating, pain, skin, energy, sleep and mood — plus your food in the Diet tab.")}</div></div>
-          <button className="btn sm" onClick={goGut}>{checkedIn ? tr("Edit") : tr("Check in")}</button>
+          <div><strong>{trs(checkedIn ? tr("✅ Today’s log is done") : tr("📝 Log today"))}</strong><div className="tiny muted">{tr("Stool, bloating, pain, skin, energy, sleep and mood — plus your food in the Diet tab.")}</div></div>
+          <button className="btn sm" onClick={goGut}>{trs(checkedIn ? tr("Edit") : tr("Check in"))}</button>
         </div>
       </div>
 
@@ -61,10 +62,10 @@ export function Reset({ goGut, ask }: { goGut: () => void; ask: (q: string) => v
 
       <div className="card">
         <h2>{tr("Rules for all phases")}</h2>
-        <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>{RULES.map((r) => <li key={r} style={{ marginTop: 4 }}>{r}</li>)}</ul>
+        <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>{RULES.map((r) => <li key={r} style={{ marginTop: 4 }}>{trs(r)}</li>)}</ul>
         <div className="row" style={{ marginTop: 12 }}>
-          <span className="small muted grow">{tr("Route:")}{' '}{p.raw ? tr("raw foods") : tr("high-quality cooked/pasteurised alternatives")}</span>
-          <button className="btn sm" onClick={() => upd((x) => { x.raw = !x.raw; })}>{tr("Switch to")}{' '}{p.raw ? tr("cooked") : tr("raw")}</button>
+          <span className="small muted grow">{tr("Route:")}{' '}{trs(p.raw ? tr("raw foods") : tr("high-quality cooked/pasteurised alternatives"))}</span>
+          <button className="btn sm" onClick={() => upd((x) => { x.raw = !x.raw; })}>{tr("Switch to")}{' '}{trs(p.raw ? tr("cooked") : tr("raw"))}</button>
         </div>
       </div>
 
@@ -111,7 +112,7 @@ function StartProtocol() {
         <div>
           <div className="small" style={{ marginBottom: 4 }}>{tr("Raw foods in phases 2–3?")}</div>
           <Seg value={route} onChange={setRoute} options={[{ value: 'raw', label: tr("Raw route") }, { value: 'cooked', label: tr("Cooked alternatives") }]} />
-          <p className="tiny muted" style={{ marginTop: 6 }}>{route === 'raw' ? tr("Raw butter, raw cheese, raw egg yolks, tartare and raw milk.") : tr("Same steps with high-quality cooked/pasteurised versions: grass-fed butter, aged quality cheese, soft-cooked pasture-raised yolks, lightly seared beef, organic whole milk. You can switch later.")}</p>
+          <p className="tiny muted" style={{ marginTop: 6 }}>{trs(route === 'raw' ? tr("Raw butter, raw cheese, raw egg yolks, tartare and raw milk.") : tr("Same steps with high-quality cooked/pasteurised versions: grass-fed butter, aged quality cheese, soft-cooked pasture-raised yolks, lightly seared beef, organic whole milk. You can switch later."))}</p>
         </div>
         <button className="btn primary block" onClick={() => mutate((s) => { s.protocol = { start, phase: +phase as 1 | 2 | 3, phaseStart: phase === '1' ? start : today(), raw: route === 'raw', tests: [] }; })}>{tr("Start tracking")}</button>
       </div>
@@ -124,9 +125,9 @@ function PhaseOne() {
     <>
       <div className="card">
         <h2>{tr("✅ Eat")}</h2>
-        <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>{PHASE1_EAT.map((x) => <li key={x} style={{ marginTop: 4 }}>{x}</li>)}</ul>
+        <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>{PHASE1_EAT.map((x) => <li key={x} style={{ marginTop: 4 }}>{trs(x)}</li>)}</ul>
         <h2 style={{ marginTop: 14 }}>{tr("🚫 Avoid")}</h2>
-        <p className="small">{PHASE1_AVOID}</p>
+        <p className="small">{trs(PHASE1_AVOID)}</p>
       </div>
       <div className="card">
         <h2>{tr("Good to know")}</h2>
@@ -154,15 +155,15 @@ function TestCard() {
   return (
     <div className="card" style={{ borderColor: 'var(--accent)' }}>
       <div className="tiny muted">{tr("Now testing · started")}{' '}{prettyDate(t.start)}</div>
-      <h2 style={{ margin: '4px 0' }}>{itemLabel(p, it)}</h2>
+      <h2 style={{ margin: '4px 0' }}>{trs(itemLabel(p, it))}</h2>
       <Bar value={Math.min(d, 3)} max={3} />
       <p className="small" style={{ marginTop: 8 }}>
-        {tr("Day")}{' '}{d}{' '}{tr("of 2–3.")}{' '}{d < 3 ? tr("Keep the amount small and log how you feel each day.") : tr("Time to decide — did it suit you?")}
+        {tr("Day")}{' '}{d}{' '}{tr("of 2–3.")}{' '}{trs(d < 3 ? tr("Keep the amount small and log how you feel each day.") : tr("Time to decide — did it suit you?"))}
       </p>
-      {it.tip && <p className="tiny muted">{it.tip}</p>}
+      {it.tip && <p className="tiny muted">{trs(it.tip)}</p>}
       {a.nDuring > 0 && a.nBefore > 0 && (
         <p className="small" style={{ color: a.rose ? 'var(--warn)' : 'var(--accent)', marginTop: 6 }}>
-          {tr("Symptom score")}{' '}{a.before!.toFixed(1)}{' '}{tr("before →")}{' '}{a.during!.toFixed(1)}{' '}{tr("during.")}{' '}{a.rose ? tr("Looks like a possible reaction.") : tr("No clear reaction so far.")}
+          {tr("Symptom score")}{' '}{trs(a.before!.toFixed(1))}{' '}{tr("before →")}{' '}{trs(a.during!.toFixed(1))}{' '}{tr("during.")}{' '}{trs(a.rose ? tr("Looks like a possible reaction.") : tr("No clear reaction so far."))}
         </p>
       )}
       {(a.nBefore === 0 || a.nDuring === 0) && <p className="tiny muted" style={{ marginTop: 6 }}>{tr("Check in daily so the app can compare symptoms before and during the test.")}</p>}
@@ -178,8 +179,8 @@ function ItemRow({ it, p, onStart, disabled }: { it: ProtocolItem; p: Protocol; 
   return (
     <div className="list-item">
       <div className="grow">
-        <div className="small">{itemLabel(p, it)} {it.histamine && <span className="pill warn" title={tr("On common high-histamine lists")}>{tr("histamine")}</span>}</div>
-        {it.tip && <div className="tiny muted">{it.tip}</div>}
+        <div className="small">{trs(itemLabel(p, it))} {it.histamine && <span className="pill warn" title={tr("On common high-histamine lists")}>{tr("histamine")}</span>}</div>
+        {it.tip && <div className="tiny muted">{trs(it.tip)}</div>}
       </div>
       <button className="btn sm" disabled={disabled} onClick={onStart}>{tr("Start")}</button>
     </div>
@@ -201,8 +202,8 @@ function Reintroduction({ ask }: { ask: (q: string) => void }) {
   };
   const steps: { key: string; title: string; items: ProtocolItem[]; note?: string }[] = p.phase === 2
     ? [
-      { key: '2A', title: 'Step 2A · ' + (p.raw ? 'Raw animal foods' : 'Quality animal foods') + ' (in this order)', items: next.filter((i) => i.step === '2A') },
-      { key: '2B-1', title: 'Step 2B · ' + (p.raw ? 'Tartare' : 'Seared beef'), items: next.filter((i) => i.step === '2B' && !i.group) },
+      { key: '2A', title: tr('Step 2A · ') + tr(p.raw ? 'Raw animal foods' : 'Quality animal foods') + tr(' (in this order)'), items: next.filter((i) => i.step === '2A') },
+      { key: '2B-1', title: tr('Step 2B · ') + tr(p.raw ? 'Tartare' : 'Seared beef'), items: next.filter((i) => i.step === '2B' && !i.group) },
       { key: '2B-v', title: tr("Step 2B · Gentle vegetables (cooked/peeled)"), items: next.filter((i) => i.group === 'veg') },
       { key: '2B-f', title: tr("Step 2B · Gentle fruit"), items: next.filter((i) => i.group === 'fruit') },
     ]
@@ -217,7 +218,7 @@ function Reintroduction({ ask }: { ask: (q: string) => void }) {
       <TestCard />
       {steps.filter((x) => x.items.length).map((st) => (
         <div className="card" key={st.key}>
-          <h2>{st.title}</h2>
+          <h2>{trs(st.title)}</h2>
           {st.items.map((it, i) => <ItemRow key={it.key} it={it} p={p} disabled={!!cur || (st.key === '2A' && i > 0)} onStart={() => start(it.key)} />)}
           {cur && <p className="tiny muted" style={{ marginTop: 6 }}>{tr("Finish the current test first — one new food at a time.")}</p>}
         </div>
@@ -225,14 +226,14 @@ function Reintroduction({ ask }: { ask: (q: string) => void }) {
       {(ok.length > 0 || bad.length > 0) && (
         <div className="card">
           <h2>{tr("Results")}</h2>
-          {ok.length > 0 && <div className="row wrap" style={{ gap: 6 }}>{ok.map((t) => <span key={t.id} className="pill accent">✓ {itemLabel(p, itemByKey(t.food)!)}</span>)}</div>}
+          {ok.length > 0 && <div className="row wrap" style={{ gap: 6 }}>{ok.map((t) => <span key={t.id} className="pill accent">✓ {trs(itemLabel(p, itemByKey(t.food)!))}</span>)}</div>}
           {bad.map((t) => (
             <div key={t.id} className="list-item">
-              <div className="grow"><div className="small">✗ {itemLabel(p, itemByKey(t.food)!)}</div><div className="tiny muted">{tr("Reacted")}{' '}{t.ended ? prettyDate(t.ended) : ''}{tr(". Wait until you’re settled, then retry a smaller amount.")}</div></div>
+              <div className="grow"><div className="small">✗ {trs(itemLabel(p, itemByKey(t.food)!))}</div><div className="tiny muted">{tr("Reacted")}{' '}{trs(t.ended ? prettyDate(t.ended) : '')}{tr(". Wait until you’re settled, then retry a smaller amount.")}</div></div>
               <button className="btn sm" disabled={!!cur} onClick={() => start(t.food)}>{tr("Retry")}</button>
             </div>
           ))}
-          <button className="btn sm ghost" style={{ marginTop: 8 }} onClick={() => ask('Based on my reintroduction results so far, what should I test next and how should I build meals from the foods I tolerate?')}>{tr("Ask the coach for meal ideas")}</button>
+          <button className="btn sm ghost" style={{ marginTop: 8 }} onClick={() => ask(tr('Based on my reintroduction results so far, what should I test next and how should I build meals from the foods I tolerate?'))}>{tr("Ask the coach for meal ideas")}</button>
         </div>
       )}
       {anyRaw && p.phase === 2 && (
@@ -268,7 +269,7 @@ function PhaseThree() {
           <>
             <div className="row between"><span className="small">{tr("Day")}{' '}{y.day}</span><span style={{ fontSize: '1.4rem', fontWeight: 700 }}>{y.tbsp}{' '}{tr("tbsp today")}</span></div>
             <div style={{ margin: '8px 0' }}><Bar value={y.tbsp} max={YOGURT_CAP} /></div>
-            <p className="tiny muted">{y.holding ? tr("Holding at {v0} tbsp/day.", { v0: y.cap }) : y.slow ? tr("Histamine-aware: +1 tbsp every 2 days.") : tr("Tomorrow: {v0} tbsp.", { v0: Math.min(y.cap, y.tbsp + 1) })}{' '}{tr("Log it in the Diet tab as “L. reuteri yogurt”.")}</p>
+            <p className="tiny muted">{trs(y.holding ? tr("Holding at {v0} tbsp/day.", { v0: y.cap }) : y.slow ? tr("Histamine-aware: +1 tbsp every 2 days.") : tr("Tomorrow: {v0} tbsp.", { v0: Math.min(y.cap, y.tbsp + 1) }))}{' '}{tr("Log it in the Diet tab as “L. reuteri yogurt”.")}</p>
             <div className="grid2" style={{ marginTop: 10 }}>
               <button className="btn" onClick={() => upd((x) => { x.yogurt!.cap = Math.max(1, y.tbsp - 1); })}>{tr("Symptoms — drop back")}</button>
               <button className="btn" disabled={y.holding} onClick={() => upd((x) => { x.yogurt!.cap = y.tbsp; })}>{tr("Feels right — hold here")}</button>
@@ -294,8 +295,8 @@ function OffProtocol() {
   return (
     <div className="card">
       <h2>{tr("Not on your current list")}</h2>
-      <p className="tiny muted" style={{ marginBottom: 6 }}>{tr("Logged in the last 7 days, outside")}{' '}{PHASES[s.protocol!.phase].name}{tr(". If one was a deliberate test, start it as a test so it’s tracked.")}</p>
-      {list.map((x) => <div key={x.name} className="list-item small"><span className="grow">{x.name}</span><span className="muted">{x.days}{' '}{tr("day")}{x.days > 1 ? 's' : ''}</span></div>)}
+      <p className="tiny muted" style={{ marginBottom: 6 }}>{tr("Logged in the last 7 days, outside")}{' '}{trs(PHASES[s.protocol!.phase].name)}{tr(". If one was a deliberate test, start it as a test so it’s tracked.")}</p>
+      {list.map((x) => <div key={x.name} className="list-item small"><span className="grow">{trs(x.name)}</span><span className="muted">{x.days}{' '}{tr("day")}{trs(x.days > 1 ? 's' : '')}</span></div>)}
     </div>
   );
 }
@@ -310,7 +311,7 @@ function Progress() {
       <h2>{tr("Symptoms by protocol week")}</h2>
       {w.map((x) => (
         <div key={x.week} style={{ marginBottom: 8 }}>
-          <div className="row between small"><span>{tr("Week")}{' '}{x.week} <span className="tiny muted">({x.n}{' '}{tr("check-ins)")}</span></span><span className="num muted">{tr("score")}{' '}{fmt(x.score, 1)}{x.skin !== undefined ? tr(" · skin {v0}/3", { v0: fmt(x.skin, 1) }) : ''}</span></div>
+          <div className="row between small"><span>{tr("Week")}{' '}{x.week} <span className="tiny muted">({x.n}{' '}{tr("check-ins)")}</span></span><span className="num muted">{tr("score")}{' '}{fmt(x.score, 1)}{trs(x.skin !== undefined ? tr(" · skin {v0}/3", { v0: fmt(x.skin, 1) }) : '')}</span></div>
           <Bar value={x.score ?? 0} max={max} color="var(--warn)" />
         </div>
       ))}

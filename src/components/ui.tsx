@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { clamp } from '../lib/util';
 import { tr } from '../i18n';
@@ -50,13 +51,13 @@ export function Ring({ value, max, size = 132, label, sub, warnOver = true }: { 
   const pct = max > 0 ? clamp(value / max, 0, 1) : 0;
   const over = warnOver && value > max * 1.05;
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${label} ${sub}`}>
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={trs(`${label} ${sub}`)}>
       <defs><linearGradient id={gid} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--accent)" /><stop offset="1" stopColor="var(--accent-2)" /></linearGradient></defs>
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-2)" strokeWidth="11" />
       <circle className="arc" cx={size / 2} cy={size / 2} r={r} fill="none" stroke={over ? 'var(--warn)' : tr("url(#{v0})", { v0: gid })} strokeWidth="11"
         strokeDasharray={c} strokeDashoffset={c * (1 - pct)} strokeLinecap="round" transform={tr("rotate(-90 {v0} {v1})", { v0: size / 2, v1: size / 2 })} />
-      <text x="50%" y="48%" textAnchor="middle" fill="var(--text)" fontSize={size / 6} fontWeight="800" style={{ fontFamily: 'var(--font-display)' }}>{label}</text>
-      <text x="50%" y="63%" textAnchor="middle" fill="var(--muted)" fontSize={size / 12}>{sub}</text>
+      <text x="50%" y="48%" textAnchor="middle" fill="var(--text)" fontSize={size / 6} fontWeight="800" style={{ fontFamily: 'var(--font-display)' }}>{trs(label)}</text>
+      <text x="50%" y="63%" textAnchor="middle" fill="var(--muted)" fontSize={size / 12}>{trs(sub)}</text>
     </svg>
   );
 }
@@ -75,7 +76,7 @@ export function NumField({ label, value, onChange, step = 1, min, suffix, requir
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <label className="field">
-      <span>{tr(label)}{suffix ? ` (${tr(suffix)})` : ''}</span>
+      <span>{tr(label)}{trs(suffix ? ` (${tr(suffix)})` : '')}</span>
       <input type="text" inputMode="decimal" data-step={step} data-min={min} value={text}
         onFocus={() => { focused.current = true; }}
         onBlur={() => { focused.current = false; if (text.trim() === '' && required && value !== undefined) setText(String(value)); }}
@@ -91,7 +92,7 @@ export function NumField({ label, value, onChange, step = 1, min, suffix, requir
 }
 
 export const Stat = ({ v, l }: { v: ReactNode; l: ReactNode }) => (
-  <div className="stat"><div className="v">{v}</div><div className="l">{l}</div></div>
+  <div className="stat"><div className="v">{trs(v)}</div><div className="l">{trs(l)}</div></div>
 );
 
 export const chartTheme = {
@@ -122,8 +123,8 @@ export function EmptyState({ kind, title, text, action }: { kind: 'plate' | 'dum
           <path d="M22 42l20-10 18 6 32-22" fill="none" stroke="var(--good)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
         </>}
       </svg>
-      <h3 style={{ margin: 0 }}>{title}</h3>
-      <p className="small muted" style={{ maxWidth: 300 }}>{text}</p>
+      <h3 style={{ margin: 0 }}>{trs(title)}</h3>
+      <p className="small muted" style={{ maxWidth: 300 }}>{trs(text)}</p>
       {action}
     </div>
   );

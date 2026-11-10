@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useAppState } from '../lib/storage';
 import { loadRatio, sessionKcal, sessionKind, weeklySummaries } from '../lib/training';
 import { fmt, fmtDuration, today } from '../lib/util';
@@ -32,7 +33,7 @@ export function Today({ go }: { go: (t: Tab) => void }) {
   return (
     <div>
       <div className="page-head">
-        <div><h1>{tr(greet)}{s.profile.name ? `, ${s.profile.name}` : ''}</h1><p className="muted small">{new Date().toLocaleDateString(locale(), { weekday: 'long', month: 'long', day: 'numeric' })}</p></div>
+        <div><h1>{tr(greet)}{trs(s.profile.name ? `, ${s.profile.name}` : '')}</h1><p className="muted small">{trs(new Date().toLocaleDateString(locale(), { weekday: 'long', month: 'long', day: 'numeric' }))}</p></div>
       </div>
 
       <div className="card" onClick={() => go('diet')} style={{ cursor: 'pointer' }}>
@@ -43,15 +44,15 @@ export function Today({ go }: { go: (t: Tab) => void }) {
       <div className="card">
         <div className="row between" style={{ marginBottom: 10 }}><h2 style={{ margin: 0 }}>{tr("Training")}</h2><span className="muted small click" style={{ cursor: 'pointer' }} onClick={() => go('train')}>{tr("Open ›")}</span></div>
         {s.active ? (
-          <button className="btn primary block" onClick={() => go('train')}>{tr("Continue “")}{s.active.name}”</button>
+          <button className="btn primary block" onClick={() => go('train')}>{tr("Continue “")}{trs(s.active.name)}”</button>
         ) : todays.length ? (
           <>
-            {todays.map((x) => <div key={x.id} className="small">✅ {x.name} <span className="pill">{sessionKind(x)}</span> <span className="muted">{fmtDuration(x.durationMin)}{' '}{tr("· effort")}{' '}{x.rpe}/10</span></div>)}
+            {todays.map((x) => <div key={x.id} className="small">✅ {trs(x.name)} <span className="pill">{trs(sessionKind(x))}</span> <span className="muted">{fmtDuration(x.durationMin)}{' '}{tr("· effort")}{' '}{x.rpe}/10</span></div>)}
             <p className="tiny muted" style={{ marginTop: 6 }}>≈ {fmt(burned)}{' '}{tr("kcal burned in training")}</p>
           </>
         ) : (
           <div className="grid2">
-            {next && <button className="btn primary" onClick={() => { startWorkout(next); go('train'); }}>{tr("Start")}{' '}{next.name.split(' · ')[0]}</button>}
+            {next && <button className="btn primary" onClick={() => { startWorkout(next); go('train'); }}>{tr("Start")}{' '}{trs(next.name.split(' · ')[0])}</button>}
             <button className="btn" onClick={() => go('train')}>{tr("Other workout")}</button>
           </div>
         )}
@@ -72,7 +73,7 @@ export function Today({ go }: { go: (t: Tab) => void }) {
           <Stat v={fmt(week.volume / 1000, 1) + ' t'} l="lifted" />
           <Stat v={fmt(week.runKm, 1)} l="km run" />
         </div>
-        <p className="small muted" style={{ marginTop: 10 }}>{ratio.status}</p>
+        <p className="small muted" style={{ marginTop: 10 }}>{trs(ratio.status)}</p>
       </div>
 
       <WaterCard date={t} />

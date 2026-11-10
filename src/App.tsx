@@ -1,3 +1,4 @@
+import { trs } from './i18n';
 import { useEffect, useMemo, useState } from 'react';
 import { Dumbbell, House, MessageCircle, TrendingUp, User, Utensils, type LucideIcon } from 'lucide-react';
 import { mutate, useAppState, useSyncStatus } from './lib/storage';
@@ -88,7 +89,7 @@ export default function App() {
     <>
       <main className="app">
         <UpdateBanner />
-        {sync.status === 'error' && <div className="card flat small" style={{ borderColor: 'var(--warn)' }}>⚠️ {sync.message}</div>}
+        {sync.status === 'error' && <div className="card flat small" style={{ borderColor: 'var(--warn)' }}>⚠️ {trs(sync.message)}</div>}
         {tab === 'today' && <Today go={setTab} />}
         {tab === 'diet' && <Diet />}
         {tab === 'train' && <Train />}
@@ -101,7 +102,7 @@ export default function App() {
           <div className="tab-pill" style={{ width: `calc(100% / ${TABS.length})`, transform: `translateX(${tabIndex * 100}%)` }} />
           {TABS.map((t) => (
             <button key={t.key} className={tab === t.key ? 'on' : ''} aria-current={tab === t.key ? 'page' : undefined} onClick={() => setTab(t.key)}>
-              <span className="ico"><t.Ico /></span>{tr(t.label)}{t.key === 'train' && s.active ? ' •' : ''}
+              <span className="ico"><t.Ico /></span>{tr(t.label)}{trs(t.key === 'train' && s.active ? ' •' : '')}
             </button>
           ))}
         </nav>

@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useMemo, useState } from 'react';
 import { Area, Bar as RBar, CartesianGrid, ComposedChart, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { mutate, useAppState } from '../lib/storage';
@@ -55,7 +56,7 @@ function BodyTab() {
           <NumField label={tr("Body fat")} suffix="%" value={bf} onChange={setBf} step={0.1} />
           <NumField label={tr("Waist")} suffix="cm" value={waist} onChange={setWaist} step={0.5} />
         </div>
-        <button className="btn primary block" style={{ marginTop: 10 }} onClick={save}>{existing ? tr("Update") : tr("Save")}</button>
+        <button className="btn primary block" style={{ marginTop: 10 }} onClick={save}>{trs(existing ? tr("Update") : tr("Save"))}</button>
       </div>
       <div className="card">
         <h2>{tr("Weight trend")}</h2>
@@ -73,7 +74,7 @@ function BodyTab() {
                   <XAxis dataKey="date" {...chartTheme.axis} />
                   <YAxis domain={['dataMin - 1', 'dataMax + 1']} {...chartTheme.axis} tickFormatter={(v) => fmt(v, 0)} />
                   <Tooltip {...chartTheme.tooltip} formatter={(v) => `${fmt(Number(v), 1)} kg`} />
-                  <Line dataKey="weight" name="Weigh-in" stroke="#8b93a7" strokeWidth={0} dot={{ r: 3, fill: '#8b93a7' }} isAnimationActive={false} />
+                  <Line dataKey="weight" name={tr("Weigh-in")} stroke="#8b93a7" strokeWidth={0} dot={{ r: 3, fill: '#8b93a7' }} isAnimationActive={false} />
                   <Line dataKey="avg" name="7-day avg" stroke="#7cf29c" strokeWidth={2.5} dot={false} isAnimationActive={false} />
                 </LineChart>
               </ResponsiveContainer>
@@ -98,7 +99,7 @@ function StrengthTab() {
     <>
       <div className="card">
         <label className="field"><span>{tr("Exercise")}</span>
-          <select value={id} onChange={(e) => setEx(e.target.value)}>{trained.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}</select>
+          <select value={id} onChange={(e) => setEx(e.target.value)}>{trained.map((e) => <option key={e.id} value={e.id}>{trs(e.name)}</option>)}</select>
         </label>
         <div className="grid3" style={{ margin: '12px 0' }}>
           <Stat v={tr("{v0} kg", { v0: fmt(best, 1) })} l="best est. 1RM" />
@@ -114,9 +115,9 @@ function StrengthTab() {
               <YAxis yAxisId="v" orientation="right" hide />
               <Tooltip {...chartTheme.tooltip} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <RBar yAxisId="v" dataKey="volume" name="Volume (kg)" fill="#2a3a4f" isAnimationActive={false} />
-              <Line yAxisId="w" dataKey="e1rm" name="Est. 1RM" stroke="#7cf29c" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
-              <Line yAxisId="w" dataKey="top" name="Top set" stroke="#6cb6ff" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+              <RBar yAxisId="v" dataKey="volume" name={tr("Volume (kg)")} fill="#2a3a4f" isAnimationActive={false} />
+              <Line yAxisId="w" dataKey="e1rm" name={tr("Est. 1RM")} stroke="#7cf29c" strokeWidth={2.5} dot={{ r: 3 }} isAnimationActive={false} />
+              <Line yAxisId="w" dataKey="top" name={tr("Top set")} stroke="#6cb6ff" strokeWidth={1.5} dot={false} isAnimationActive={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -128,7 +129,7 @@ function StrengthTab() {
           const h = exerciseHistory(s, e.id);
           return (
             <div key={e.id} className="list-item">
-              <span className="grow small">{e.name}</span>
+              <span className="grow small">{trs(e.name)}</span>
               <span className="num small">{fmt(Math.max(...h.map((x) => x.e1rm)), 1)}{' '}{tr("kg")}{' '}<span className="muted tiny">{tr("e1RM")}</span></span>
             </div>
           );
@@ -157,8 +158,8 @@ function EffortTab() {
               <YAxis yAxisId="r" orientation="right" domain={[0, 10]} {...chartTheme.axis} />
               <Tooltip {...chartTheme.tooltip} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <RBar yAxisId="l" dataKey="load" name="Load" fill="#7cf29c" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-              <Line yAxisId="r" dataKey="avgRpe" name="Avg effort" stroke="#f5c35b" strokeWidth={2} connectNulls isAnimationActive={false} />
+              <RBar yAxisId="l" dataKey="load" name={tr("Load")} fill="#7cf29c" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+              <Line yAxisId="r" dataKey="avgRpe" name={tr("Avg effort")} stroke="#f5c35b" strokeWidth={2} connectNulls isAnimationActive={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -183,9 +184,9 @@ function EffortTab() {
               <YAxis allowDecimals={false} {...chartTheme.axis} />
               <Tooltip {...chartTheme.tooltip} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
-              <RBar dataKey="strength" stackId="a" name="Strength" fill="#7cf29c" isAnimationActive={false} />
-              <RBar dataKey="cardio" stackId="a" name="Cardio" fill="#6cb6ff" isAnimationActive={false} />
-              <RBar dataKey="mixed" stackId="a" name="Mixed" fill="#f5c35b" isAnimationActive={false} />
+              <RBar dataKey="strength" stackId="a" name={tr("Strength")} fill="#7cf29c" isAnimationActive={false} />
+              <RBar dataKey="cardio" stackId="a" name={tr("Cardio")} fill="#6cb6ff" isAnimationActive={false} />
+              <RBar dataKey="mixed" stackId="a" name={tr("Mixed")} fill="#f5c35b" isAnimationActive={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -220,8 +221,8 @@ function DietTab() {
               <XAxis dataKey="date" {...chartTheme.axis} />
               <YAxis {...chartTheme.axis} />
               <Tooltip {...chartTheme.tooltip} />
-              <RBar dataKey="kcal" name="Eaten" fill="#7cf29c" radius={[4, 4, 0, 0]} isAnimationActive={false} />
-              <Line dataKey="target" name="Target" stroke="#8b93a7" strokeDasharray="4 4" dot={false} isAnimationActive={false} />
+              <RBar dataKey="kcal" name={tr("Eaten")} fill="#7cf29c" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+              <Line dataKey="target" name={tr("Target")} stroke="#8b93a7" strokeDasharray="4 4" dot={false} isAnimationActive={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -235,8 +236,8 @@ function DietTab() {
               <XAxis dataKey="date" {...chartTheme.axis} />
               <YAxis {...chartTheme.axis} />
               <Tooltip {...chartTheme.tooltip} />
-              <Area dataKey="protein" name="Protein g" fill="rgba(108,182,255,.25)" stroke="#6cb6ff" isAnimationActive={false} />
-              <Line dataKey="proteinTarget" name="Target" stroke="#8b93a7" strokeDasharray="4 4" dot={false} isAnimationActive={false} />
+              <Area dataKey="protein" name={tr("Protein g")} fill="rgba(108,182,255,.25)" stroke="#6cb6ff" isAnimationActive={false} />
+              <Line dataKey="proteinTarget" name={tr("Target")} stroke="#8b93a7" strokeDasharray="4 4" dot={false} isAnimationActive={false} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>

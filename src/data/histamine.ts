@@ -5,8 +5,13 @@ import type { AppState, GutLog } from '../types';
 import { entriesFor } from '../lib/nutrition';
 import { addDays, today } from '../lib/util';
 import guide from '../../docs/health/histamine-guide.md?raw';
+import guideFi from '../../docs/health/histamine-guide.fi.md?raw';
+import guideSv from '../../docs/health/histamine-guide.sv.md?raw';
+import { lang } from '../i18n';
 
 export const HISTAMINE_GUIDE = guide;
+/** The guide in the app's current language (the AI coach always gets the English reference text). */
+export const histamineGuide = () => (lang() === 'fi' ? guideFi : lang() === 'sv' ? guideSv : guide);
 
 export type HLevel = 'low' | 'medium' | 'high';
 export interface HRating { level: HLevel; liberator?: boolean; daoBlocker?: boolean; note?: string }

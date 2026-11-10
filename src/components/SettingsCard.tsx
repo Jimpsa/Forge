@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import type { Settings } from '../types';
 import { mutate, useAppState } from '../lib/storage';
 import { settingsOf } from '../lib/settings';
@@ -11,7 +12,7 @@ export function SettingsCard() {
   const set = (patch: Partial<Settings>) => mutate((x) => { x.settings = { ...settingsOf(x), ...patch }; });
   const Toggle = ({ k, label, hint }: { k: 'celebrations' | 'vibration' | 'sounds'; label: string; hint?: string }) => (
     <label className="setting-row" htmlFor={tr("set-{v0}", { v0: k })}>
-      <span><span>{label}</span>{hint && <span className="tiny muted" style={{ display: 'block' }}>{hint}</span>}</span>
+      <span><span>{trs(label)}</span>{hint && <span className="tiny muted" style={{ display: 'block' }}>{trs(hint)}</span>}</span>
       <span className="switch"><input id={tr("set-{v0}", { v0: k })} type="checkbox" checked={st[k]} onChange={(e) => { set({ [k]: e.target.checked }); if (e.target.checked && k === 'vibration') setTimeout(() => haptic('tap'), 50); }} /><span /></span>
     </label>
   );

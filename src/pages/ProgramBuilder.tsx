@@ -1,3 +1,4 @@
+import { trs } from '../i18n';
 import { useMemo, useState } from 'react';
 import { mutate, useAppState } from '../lib/storage';
 import { buildProgram, MUSCLES, PRESETS, all, programTemplates, type Avoid, type Equip, type Goal, type Level, type Muscle, type Priority, type ProgramInputs } from '../data/programs';
@@ -29,25 +30,25 @@ export function ProgramCard({ onBuild }: { onBuild: () => void }) {
   return (
     <div className="card" style={{ borderColor: 'var(--accent)' }}>
       <div className="row between">
-        <div><div className="tiny muted">{tr("Your program · week")}{' '}{week}{deload ? tr(" · deload week") : ''}</div><h2 style={{ margin: '2px 0' }}>{program.name}</h2></div>
+        <div><div className="tiny muted">{tr("Your program · week")}{' '}{week}{trs(deload ? tr(" · deload week") : '')}</div><h2 style={{ margin: '2px 0' }}>{trs(program.name)}</h2></div>
         <span className="pill">{doneThisWeek}/{templates.length}{' '}{tr("this week")}</span>
       </div>
       {deload && <p className="small" style={{ color: 'var(--warn)', marginTop: 4 }}>{tr("Deload week: do about half the sets with lighter weights (RPE 6). You’ll come back stronger.")}</p>}
       <div className="row" style={{ marginTop: 10 }}>
-        <button className="btn primary grow" onClick={() => startWorkout(next)}>{tr("Start")}{' '}{next.name.split(' · ')[0]}</button>
+        <button className="btn primary grow" onClick={() => startWorkout(next)}>{tr("Start")}{' '}{trs(next.name.split(' · ')[0])}</button>
         <button className="btn" onClick={() => setView(true)}>{tr("View")}</button>
       </div>
-      <p className="tiny muted" style={{ marginTop: 6 }}>{tr("Next:")}{' '}{next.name}</p>
-      <Sheet open={view} onClose={() => setView(false)} title={program.name}>
-        <p className="small muted">{program.summary} · {program.weekdays.join(', ')}</p>
+      <p className="tiny muted" style={{ marginTop: 6 }}>{tr("Next:")}{' '}{trs(next.name)}</p>
+      <Sheet open={view} onClose={() => setView(false)} title={trs(program.name)}>
+        <p className="small muted">{trs(program.summary)} · {trs(program.weekdays.join(', '))}</p>
         {templates.map((t) => (
           <div key={t.id} className="list-item" style={{ display: 'block' }}>
-            <div className="row between"><strong className="small">{t.name}</strong><button className="btn sm" onClick={() => { setView(false); startWorkout(t); }}>{tr("Start")}</button></div>
-            <div className="tiny muted">{t.exercises.map((e) => `${exerciseName(s, e.exerciseId)} ${e.sets}×${e.reps}`).join(' · ')}</div>
+            <div className="row between"><strong className="small">{trs(t.name)}</strong><button className="btn sm" onClick={() => { setView(false); startWorkout(t); }}>{tr("Start")}</button></div>
+            <div className="tiny muted">{trs(t.exercises.map((e) => `${exerciseName(s, e.exerciseId)} ${e.sets}×${e.reps}`).join(' · '))}</div>
           </div>
         ))}
         <h3 style={{ marginTop: 14 }}>{tr("Why it’s built this way")}</h3>
-        <ul className="small" style={{ paddingLeft: 18, marginTop: 4 }}>{program.notes.map((n) => <li key={n} style={{ marginTop: 4 }}>{n}</li>)}</ul>
+        <ul className="small" style={{ paddingLeft: 18, marginTop: 4 }}>{program.notes.map((n) => <li key={n} style={{ marginTop: 4 }}>{trs(n)}</li>)}</ul>
         <div className="row" style={{ marginTop: 12 }}>
           <button className="btn grow" onClick={() => { setView(false); onBuild(); }}>{tr("Build a new program")}</button>
           <button className="btn danger" onClick={async () => { if (await askConfirm(tr("Remove this program? Your workout history is kept."), tr("Remove"))) { mutate((st) => { st.templates = st.templates.filter((t) => !program.templateIds.includes(t.id)); st.program = undefined; }); setView(false); } }}>{tr("Remove")}</button>
@@ -123,15 +124,15 @@ export function ProgramBuilder({ open, onClose }: { open: boolean; onClose: () =
           <div className="small" style={{ marginBottom: 6 }}>{tr("Go easy on (avoid exercises that load it)")}</div>
           <div className="row wrap" style={{ gap: 6 }}>
             {([['lowerback', 'Lower back'], ['knees', 'Knees'], ['shoulders', 'Shoulders']] as [Avoid, string][]).map(([k, l]) => (
-              <button key={k} type="button" className={chip(inp.avoid.includes(k))} onClick={() => set({ avoid: inp.avoid.includes(k) ? inp.avoid.filter((x) => x !== k) : [...inp.avoid, k] })}>{l}</button>
+              <button key={k} type="button" className={chip(inp.avoid.includes(k))} onClick={() => set({ avoid: inp.avoid.includes(k) ? inp.avoid.filter((x) => x !== k) : [...inp.avoid, k] })}>{trs(l)}</button>
             ))}
           </div>
         </div>
 
         {/* ---------- Preview ---------- */}
         <div className="card" style={{ margin: 0, background: 'var(--bg)' }}>
-          <div className="row between"><div><div className="tiny muted">{tr("Preview")}</div><h2 style={{ margin: 0 }}>{program.name}</h2></div><button className="btn sm" onClick={() => set({ seed: inp.seed + 1 })}>{tr("Shuffle exercises")}</button></div>
-          <p className="tiny muted">{program.summary}</p>
+          <div className="row between"><div><div className="tiny muted">{tr("Preview")}</div><h2 style={{ margin: 0 }}>{trs(program.name)}</h2></div><button className="btn sm" onClick={() => set({ seed: inp.seed + 1 })}>{tr("Shuffle exercises")}</button></div>
+          <p className="tiny muted">{trs(program.summary)}</p>
           <h3 style={{ marginTop: 10 }}>{tr("Weekly sets per muscle")}</h3>
           {MUSCLES.filter((m) => program.weekly[m.key]).map((m) => (
             <div key={m.key} style={{ marginBottom: 6 }}>
@@ -141,20 +142,20 @@ export function ProgramBuilder({ open, onClose }: { open: boolean; onClose: () =
           ))}
           {program.days.map((d) => (
             <div key={d.name} style={{ marginTop: 12 }}>
-              <div className="row between"><strong className="small">{d.weekday} · {d.name}</strong><span className="tiny muted">~{d.minutes}{' '}{tr("min")}</span></div>
+              <div className="row between"><strong className="small">{trs(d.weekday)} · {trs(d.name)}</strong><span className="tiny muted">~{d.minutes}{' '}{tr("min")}</span></div>
               {d.exercises.map((x, i) => (
                 <div key={i} className="row small" style={{ padding: '3px 0', gap: 8 }}>
-                  <span className="pill" style={{ minWidth: 26, textAlign: 'center', visibility: x.superset ? 'visible' : 'hidden' }}>{x.superset ?? '·'}</span>
-                  <span className="grow">{x.name}</span>
+                  <span className="pill" style={{ minWidth: 26, textAlign: 'center', visibility: x.superset ? 'visible' : 'hidden' }}>{trs(x.superset ?? '·')}</span>
+                  <span className="grow">{trs(x.name)}</span>
                   <span className="num muted">{x.sets} × {x.repRange[0]}–{x.repRange[1]}</span>
                 </div>
               ))}
             </div>
           ))}
           <h3 style={{ marginTop: 14 }}>{tr("Why it’s built this way")}</h3>
-          <ul className="small" style={{ paddingLeft: 18, marginTop: 4 }}>{program.notes.map((n) => <li key={n} style={{ marginTop: 4 }}>{n}</li>)}</ul>
+          <ul className="small" style={{ paddingLeft: 18, marginTop: 4 }}>{program.notes.map((n) => <li key={n} style={{ marginTop: 4 }}>{trs(n)}</li>)}</ul>
         </div>
-        <button className="btn primary block" onClick={save}>{tr("Save program")}{s.program ? tr(" (replaces current)") : ''}</button>
+        <button className="btn primary block" onClick={save}>{tr("Save program")}{trs(s.program ? tr(" (replaces current)") : '')}</button>
         <p className="tiny muted">{tr("Saved as workout templates. Weights start from your history and the workout screen suggests when to add weight. You can still edit any day afterwards.")}</p>
       </div>
     </Sheet>
