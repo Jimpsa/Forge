@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { tr } from '../i18n';
 
 type T = { id: number; icon?: ReactNode; title: string; sub?: string };
 let push: ((t: Omit<T, 'id'>) => void) | null = null;
@@ -18,7 +19,7 @@ export function ToastHost() {
   return (
     <div className="toast" key={t.id} role="status" onClick={() => setItems((x) => x.slice(1))}>
       {t.icon && <div className="medal" style={{ width: 40, height: 40 }}>{t.icon}</div>}
-      <div><strong>{t.title}</strong>{t.sub && <div className="tiny muted">{t.sub}</div>}</div>
+      <div><strong>{tr(t.title)}</strong>{t.sub && <div className="tiny muted">{tr(t.sub)}</div>}</div>
     </div>
   );
 }

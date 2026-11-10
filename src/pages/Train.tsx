@@ -11,6 +11,7 @@ import { Trophy } from 'lucide-react';
 import { progression, readiness } from '../lib/readiness';
 import { ReadinessCard } from '../components/Readiness';
 import { ProgramBuilder, ProgramCard } from './ProgramBuilder';
+import { tr } from '../i18n';
 
 const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Legs', 'Glutes', 'Core', 'Full body'];
 
@@ -43,31 +44,31 @@ export function Train() {
 
   return (
     <div>
-      <div className="page-head"><h1>Training</h1></div>
+      <div className="page-head"><h1>{tr("Training")}</h1></div>
       <ProgramCard onBuild={() => setBuilder(true)} />
       <ProgramBuilder open={builder} onClose={() => setBuilder(false)} />
       <div className="card">
-        <h2>Start</h2>
+        <h2>{tr("Start")}</h2>
         <div className="grid2">
-          <button className="btn primary" onClick={() => startWorkout()}>🏋️ Empty workout</button>
-          <button className="btn" onClick={() => setCardioOpen(true)}>🏃 Log run / cardio</button>
+          <button className="btn primary" onClick={() => startWorkout()}>{tr("🏋️ Empty workout")}</button>
+          <button className="btn" onClick={() => setCardioOpen(true)}>{tr("🏃 Log run / cardio")}</button>
         </div>
-        <h3 style={{ marginTop: 16 }}>Templates</h3>
+        <h3 style={{ marginTop: 16 }}>{tr("Templates")}</h3>
         {s.templates.map((t) => (
           <div key={t.id} className="list-item">
             <div className="grow click" style={{ cursor: 'pointer' }} onClick={() => startWorkout(t)}>
               <div>{t.name}</div>
               <div className="tiny muted">{t.exercises.map((e) => exerciseName(s, e.exerciseId)).join(' · ')}</div>
             </div>
-            <button className="btn sm ghost" onClick={() => setTplEdit(t)}>Edit</button>
-            <button className="btn sm" onClick={() => startWorkout(t)}>Start</button>
+            <button className="btn sm ghost" onClick={() => setTplEdit(t)}>{tr("Edit")}</button>
+            <button className="btn sm" onClick={() => startWorkout(t)}>{tr("Start")}</button>
           </div>
         ))}
-        <button className="btn sm ghost" style={{ marginTop: 8 }} onClick={() => setTplEdit({ id: 't-' + uid(), name: 'New template', exercises: [] })}>+ New template</button>
+        <button className="btn sm ghost" style={{ marginTop: 8 }} onClick={() => setTplEdit({ id: 't-' + uid(), name: 'New template', exercises: [] })}>{tr("+ New template")}</button>
       </div>
 
       <div className="card">
-        <h2>This week's effort</h2>
+        <h2>{tr("This week's effort")}</h2>
         <div className="grid4">
           <Stat v={week.sessions} l="sessions" />
           <Stat v={fmt(week.load)} l="load (RPE×min)" />
@@ -76,20 +77,20 @@ export function Train() {
         </div>
         <p className="small" style={{ marginTop: 10 }}>
           <span className={'pill ' + (ratio.ratio && ratio.ratio > 1.3 ? 'warn' : 'accent')}>{ratio.ratio ? `${fmt(ratio.ratio, 2)}×` : '—'}</span>{' '}
-          {ratio.status} <span className="muted tiny">(last 7 days vs 4-week average)</span>
+          {ratio.status} <span className="muted tiny">{tr("(last 7 days vs 4-week average)")}</span>
         </p>
       </div>
 
       <div className="card">
-        <h2>History</h2>
-        {sessions.length === 0 && <EmptyState kind="dumbbell" title="No workouts yet" text="Start a template above. Your history, PRs and effort will build up here." />}
+        <h2>{tr("History")}</h2>
+        {sessions.length === 0 && <EmptyState kind="dumbbell" title={tr("No workouts yet")} text={tr("Start a template above. Your history, PRs and effort will build up here.")} />}
         {sessions.slice(0, 50).map((x) => (
           <div key={x.id} className="list-item click" onClick={() => setDetail(x)}>
             <div className="grow">
               <div>{x.name} <span className="pill">{sessionKind(x)}</span></div>
-              <div className="tiny muted">{prettyDate(x.date)} · {fmtDuration(x.durationMin)} · effort {x.rpe}/10
-                {x.exercises.length > 0 && ` · ${sessionSets(x)} sets · ${fmt(sessionVolume(x))} kg`}
-                {x.cardio.map((c, i) => <span key={i}> · {CARDIO.find((a) => a.key === c.activity)?.label}{c.distanceKm ? ` ${fmt(c.distanceKm, 2)} km` : ''}</span>)}
+              <div className="tiny muted">{prettyDate(x.date)} · {fmtDuration(x.durationMin)}{' '}{tr("· effort")}{' '}{x.rpe}/10
+                {x.exercises.length > 0 && tr(" · {v0} sets · {v1} kg", { v0: sessionSets(x), v1: fmt(sessionVolume(x)) })}
+                {x.cardio.map((c, i) => <span key={i}> · {CARDIO.find((a) => a.key === c.activity)?.label}{c.distanceKm ? tr(" {v0} km", { v0: fmt(c.distanceKm, 2) }) : ''}</span>)}
               </div>
             </div>
             <span className="num small muted">{fmt(sessionLoad(x))}</span>
@@ -152,11 +153,11 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
         <div className="rest-banner">
           <span className="row" style={{ gap: 10 }}>
             <svg className="rest-ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="none" stroke="rgba(0,0,0,.18)" strokeWidth="5" /><circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" strokeDasharray="100.5" strokeDashoffset={100.5 * (1 - restLeft / (a.restTotal ?? Math.max(restLeft, 1)))} /></svg>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem' }}>Rest {Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem' }}>{tr("Rest")}{' '}{Math.floor(restLeft / 60)}:{String(restLeft % 60).padStart(2, '0')}</span>
           </span>
           <span className="row">
             <button className="btn sm" onClick={() => upd((w) => { w.restEndsAt = (w.restEndsAt ?? Date.now()) + 30000; w.restTotal = (w.restTotal ?? 0) + 30; })}>+30s</button>
-            <button className="btn sm" onClick={() => upd((w) => { w.restEndsAt = undefined; })}>Skip</button>
+            <button className="btn sm" onClick={() => upd((w) => { w.restEndsAt = undefined; })}>{tr("Skip")}</button>
           </span>
         </div>
       )}
@@ -168,18 +169,18 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
           <div className="card" key={ei}>
             <div className="row between">
               <h2 style={{ margin: 0 }}>{exerciseName(s, ex.exerciseId)}</h2>
-              <button className="icon-btn" title="Remove exercise" onClick={async () => (await askConfirm('Remove this exercise?', 'Remove')) && upd((w) => { w.exercises.splice(ei, 1); })}>✕</button>
+              <button className="icon-btn" title={tr("Remove exercise")} onClick={async () => (await askConfirm(tr("Remove this exercise?"), tr("Remove"))) && upd((w) => { w.exercises.splice(ei, 1); })}>✕</button>
             </div>
             <Suggestion exerciseId={ex.exerciseId} targetReps={ex.targetReps} onApply={(wgt, reps) => upd((w) => { for (const set of w.exercises[ei].sets) if (!set.done && !set.warmup) { set.weight = wgt; set.reps = reps; } })} />
-            {last && <div className="tiny muted">Last time ({prettyDate(last.date)}): {last.sets.map((x) => `${fmt(x.weight, 1)}×${x.reps}`).join(', ')} · best e1RM {fmt(Math.max(...hist.map((h) => h.e1rm)), 1)} kg</div>}
-            <div className="set-row tiny muted" style={{ marginTop: 10 }}><span>Set</span><span>kg</span><span>Reps</span><span>RPE</span><span /></div>
+            {last && <div className="tiny muted">{tr("Last time (")}{prettyDate(last.date)}): {last.sets.map((x) => `${fmt(x.weight, 1)}×${x.reps}`).join(', ')}{' '}{tr("· best e1RM")}{' '}{fmt(Math.max(...hist.map((h) => h.e1rm)), 1)}{' '}{tr("kg")}</div>}
+            <div className="set-row tiny muted" style={{ marginTop: 10 }}><span>{tr("Set")}</span><span>{tr("kg")}</span><span>{tr("Reps")}</span><span>{tr("RPE")}</span><span /></div>
             {ex.sets.map((set, si) => (
               <div key={si} className={'set-row' + (set.done ? ' done' : '')}>
-                <button className="btn sm ghost" title="Toggle warm-up" onClick={() => upd((w) => { w.exercises[ei].sets[si].warmup = !set.warmup; })}>{set.warmup ? 'W' : si + 1 - ex.sets.slice(0, si).filter((x) => x.warmup).length}</button>
+                <button className="btn sm ghost" title={tr("Toggle warm-up")} onClick={() => upd((w) => { w.exercises[ei].sets[si].warmup = !set.warmup; })}>{set.warmup ? 'W' : si + 1 - ex.sets.slice(0, si).filter((x) => x.warmup).length}</button>
                 <input type="number" inputMode="decimal" step={0.5} value={set.weight || ''} placeholder="0" onChange={(e) => upd((w) => { w.exercises[ei].sets[si].weight = +e.target.value; })} />
                 <input type="number" inputMode="numeric" value={set.reps || ''} placeholder="0" onChange={(e) => upd((w) => { w.exercises[ei].sets[si].reps = +e.target.value; })} />
                 <input type="number" inputMode="decimal" min={1} max={10} step={0.5} value={set.rpe ?? ''} placeholder="–" onChange={(e) => upd((w) => { w.exercises[ei].sets[si].rpe = e.target.value ? Math.min(10, Math.max(1, +e.target.value)) : undefined; })} />
-                <button className={'check' + (set.done ? ' on' : '')} aria-label="Complete set" onClick={() => upd((w) => {
+                <button className={'check' + (set.done ? ' on' : '')} aria-label={tr("Complete set")} onClick={() => upd((w) => {
                   const st = w.exercises[ei].sets[si];
                   st.done = !st.done;
                   if (st.done && !st.warmup) { const sec = ex.restSec ?? w.restSec; w.restEndsAt = Date.now() + sec * 1000; w.restTotal = sec; }
@@ -188,10 +189,10 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
               </div>
             ))}
             <div className="row" style={{ marginTop: 10 }}>
-              <button className="btn sm" onClick={() => upd((w) => { const prev = w.exercises[ei].sets.at(-1); w.exercises[ei].sets.push({ reps: prev?.reps ?? 8, weight: prev?.weight ?? 0, done: false }); })}>+ Set</button>
-              {ex.sets.length > 0 && <button className="btn sm ghost" onClick={() => upd((w) => { w.exercises[ei].sets.pop(); })}>− Set</button>}
+              <button className="btn sm" onClick={() => upd((w) => { const prev = w.exercises[ei].sets.at(-1); w.exercises[ei].sets.push({ reps: prev?.reps ?? 8, weight: prev?.weight ?? 0, done: false }); })}>{tr("+ Set")}</button>
+              {ex.sets.length > 0 && <button className="btn sm ghost" onClick={() => upd((w) => { w.exercises[ei].sets.pop(); })}>{tr("− Set")}</button>}
               <span className="grow" />
-              <label className="tiny muted row" style={{ gap: 4 }}>Rest
+              <label className="tiny muted row" style={{ gap: 4 }}>{tr("Rest")}
                 <select style={{ width: 80, padding: '4px 6px' }} value={ex.restSec ?? a.restSec} onChange={(e) => upd((w) => { w.exercises[ei].restSec = +e.target.value; })}>
                   {[30, 60, 90, 120, 150, 180, 240, 300].map((x) => <option key={x} value={x}>{x < 60 ? `${x}s` : `${x / 60}m`}</option>)}
                 </select>
@@ -207,17 +208,17 @@ function ActiveWorkoutView({ onSaved }: { onSaved: (s: Summary) => void }) {
             <h2 style={{ margin: 0 }}>{CARDIO.find((x) => x.key === c.activity)?.label}</h2>
             <button className="icon-btn" onClick={() => upd((w) => { w.cardio.splice(ci, 1); })}>✕</button>
           </div>
-          <div className="small muted">{fmtDuration(c.durationMin)}{c.distanceKm ? ` · ${fmt(c.distanceKm, 2)} km · ${fmtPace(pace(c)!)}` : ''}{c.avgHr ? ` · ${c.avgHr} bpm` : ''}</div>
+          <div className="small muted">{fmtDuration(c.durationMin)}{c.distanceKm ? tr(" · {v0} km · {v1}", { v0: fmt(c.distanceKm, 2), v1: fmtPace(pace(c)!) }) : ''}{c.avgHr ? tr(" · {v0} bpm", { v0: c.avgHr }) : ''}</div>
         </div>
       ))}
 
       <div className="grid2" style={{ marginBottom: 14 }}>
-        <button className="btn" onClick={() => setAdding(true)}>+ Exercise</button>
-        <button className="btn" onClick={() => setCardio(true)}>+ Cardio block</button>
+        <button className="btn" onClick={() => setAdding(true)}>{tr("+ Exercise")}</button>
+        <button className="btn" onClick={() => setCardio(true)}>{tr("+ Cardio block")}</button>
       </div>
       <div className="grid2">
-        <button className="btn danger" onClick={async () => (await askConfirm('Discard this workout?', 'Discard')) && mutate((st) => { st.active = undefined; })}>Discard</button>
-        <button className="btn primary" onClick={() => setFinishing(true)}>Finish</button>
+        <button className="btn danger" onClick={async () => (await askConfirm(tr("Discard this workout?"), tr("Discard"))) && mutate((st) => { st.active = undefined; })}>{tr("Discard")}</button>
+        <button className="btn primary" onClick={() => setFinishing(true)}>{tr("Finish")}</button>
       </div>
 
       <ExercisePicker open={adding} onClose={() => setAdding(false)} onPick={(id) => {
@@ -245,7 +246,7 @@ function Suggestion({ exerciseId, targetReps, onApply }: { exerciseId: string; t
     <div style={{ margin: '6px 0', padding: '8px 10px', borderRadius: 10, background: 'var(--surface-2)', borderLeft: `3px solid ${color}` }}>
       <div className="row between">
         <strong className="small">{ico} {p.text}</strong>
-        {p.kind !== 'first' && sets.length > 0 && (applied ? <span className="tiny muted">applied</span> : <button className="btn sm" onClick={() => onApply(p.weight, p.reps)}>Apply</button>)}
+        {p.kind !== 'first' && sets.length > 0 && (applied ? <span className="tiny muted">{tr("applied")}</span> : <button className="btn sm" onClick={() => onApply(p.weight, p.reps)}>{tr("Apply")}</button>)}
       </div>
       <div className="tiny muted" style={{ marginTop: 2 }}>{p.why}</div>
     </div>
@@ -290,27 +291,27 @@ function SavedSummary({ summary, onClose }: { summary: Summary; onClose: () => v
     return () => clearTimeout(id);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <Sheet open onClose={onClose} title="Workout done 💪">
+    <Sheet open onClose={onClose} title={tr("Workout done 💪")}>
       <div className="grid2">
-        <CountStat value={x.durationMin} suffix=" min" label="duration" delay={0} />
-        <CountStat value={vol} suffix=" kg" label="total lifted" delay={120} />
-        <CountStat value={sessionKcal(x, s.profile.weightKg)} label="≈ kcal burned" delay={240} />
-        <CountStat value={x.rpe} suffix="/10" label="effort" delay={360} />
+        <CountStat value={x.durationMin} suffix=" min" label={tr("duration")} delay={0} />
+        <CountStat value={vol} suffix=" kg" label={tr("total lifted")} delay={120} />
+        <CountStat value={sessionKcal(x, s.profile.weightKg)} label={tr("≈ kcal burned")} delay={240} />
+        <CountStat value={x.rpe} suffix="/10" label={tr("effort")} delay={360} />
       </div>
       <div className="row wrap" style={{ gap: 6, marginTop: 10 }}>
-        {prs.length > 0 && <span className="pill accent pop" style={{ animationDelay: '.6s' }}>🏆 {prs.length} new PR{prs.length > 1 ? 's' : ''}</span>}
-        {volDelta !== undefined && <span className={'pill pop ' + (volDelta >= 0 ? 'accent' : '')} style={{ animationDelay: '.75s' }}>Volume {volDelta >= 0 ? '+' : ''}{volDelta}% vs last {x.name}</span>}
-        <span className="pill pop" style={{ animationDelay: '.9s' }}>{sessionSets(x)} set{sessionSets(x) === 1 ? '' : 's'}</span>
+        {prs.length > 0 && <span className="pill accent pop" style={{ animationDelay: '.6s' }}>🏆 {prs.length}{' '}{tr("new PR")}{prs.length > 1 ? 's' : ''}</span>}
+        {volDelta !== undefined && <span className={'pill pop ' + (volDelta >= 0 ? 'accent' : '')} style={{ animationDelay: '.75s' }}>{tr("Volume")}{' '}{volDelta >= 0 ? '+' : ''}{volDelta}{tr("% vs last")}{' '}{x.name}</span>}
+        <span className="pill pop" style={{ animationDelay: '.9s' }}>{sessionSets(x)}{' '}{tr("set")}{sessionSets(x) === 1 ? '' : 's'}</span>
       </div>
       {prs.map((p, i) => (
         <div key={i} ref={i === 0 ? goldRef : undefined} className="gold-card go" style={{ marginTop: 12, animationDelay: `${0.3 + i * 0.15}s` }}>
-          <div className="row between"><Trophy size={30} color="var(--accent-2)" aria-hidden="true" />{p.delta > 0 && <span className="delta">+{fmt(p.delta, 1)} kg</span>}</div>
-          <div className="tiny muted" style={{ marginTop: 6 }}>New PR · {p.name}</div>
-          <div className="num" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.7rem', lineHeight: 1.1 }}>{p.set ? `${fmt(p.set.weight, 1)} kg × ${p.set.reps}` : `${fmt(p.value, 1)} kg`}</div>
-          <div className="tiny muted">{p.kind === 'e1RM' ? `Estimated 1RM ${fmt(p.value, 1)} kg · best ever` : `Heaviest ever: ${fmt(p.value, 1)} kg`}</div>
+          <div className="row between"><Trophy size={30} color="var(--accent-2)" aria-hidden="true" />{p.delta > 0 && <span className="delta">+{fmt(p.delta, 1)}{' '}{tr("kg")}</span>}</div>
+          <div className="tiny muted" style={{ marginTop: 6 }}>{tr("New PR ·")}{' '}{p.name}</div>
+          <div className="num" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.7rem', lineHeight: 1.1 }}>{p.set ? tr("{v0} kg × {v1}", { v0: fmt(p.set.weight, 1), v1: p.set.reps }) : tr("{v0} kg", { v0: fmt(p.value, 1) })}</div>
+          <div className="tiny muted">{p.kind === 'e1RM' ? tr("Estimated 1RM {v0} kg · best ever", { v0: fmt(p.value, 1) }) : tr("Heaviest ever: {v0} kg", { v0: fmt(p.value, 1) })}</div>
         </div>
       ))}
-      <button className="btn primary block" style={{ marginTop: 16 }} onClick={onClose}>Done</button>
+      <button className="btn primary block" style={{ marginTop: 16 }} onClick={onClose}>{tr("Done")}</button>
     </Sheet>
   );
 }
@@ -334,13 +335,13 @@ function FinishSheet({ open, onClose, onSaved, elapsedMin }: { open: boolean; on
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title="Finish workout">
+    <Sheet open={open} onClose={onClose} title={tr("Finish workout")}>
       <div className="stack">
-        <div><h3>How hard was the whole session?</h3><RpePicker value={rpe} onChange={setRpe} /></div>
-        <NumField label="Duration" suffix="min" value={dur} onChange={setDur} />
-        <label className="field"><span>Notes</span><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
-        <p className="tiny muted">Only completed (✓) sets are saved.</p>
-        <button className="btn primary block" onClick={save}>Save workout</button>
+        <div><h3>{tr("How hard was the whole session?")}</h3><RpePicker value={rpe} onChange={setRpe} /></div>
+        <NumField label={tr("Duration")} suffix="min" value={dur} onChange={setDur} />
+        <label className="field"><span>{tr("Notes")}</span><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
+        <p className="tiny muted">{tr("Only completed (✓) sets are saved.")}</p>
+        <button className="btn primary block" onClick={save}>{tr("Save workout")}</button>
       </div>
     </Sheet>
   );
@@ -360,26 +361,26 @@ function CardioForm({ open, onClose, onSave, withRpe }: { open: boolean; onClose
   const def = CARDIO.find((c) => c.key === activity)!;
   const p = dist && dur ? dur / dist : undefined;
   return (
-    <Sheet open={open} onClose={onClose} title={withRpe ? 'Log run / cardio' : 'Add cardio block'}>
+    <Sheet open={open} onClose={onClose} title={withRpe ? tr("Log run / cardio") : tr("Add cardio block")}>
       <div className="stack">
-        <label className="field"><span>Activity</span>
-          <select value={activity} onChange={(e) => setActivity(e.target.value as CardioActivity)}>{CARDIO.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}</select>
+        <label className="field"><span>{tr("Activity")}</span>
+          <select value={activity} onChange={(e) => setActivity(e.target.value as CardioActivity)}>{CARDIO.map((c) => <option key={c.key} value={c.key}>{tr(c.label)}</option>)}</select>
         </label>
         <div className="grid2">
-          <NumField label="Duration" suffix="min" value={dur} onChange={setDur} step={0.5} />
-          {def.distance && <NumField label="Distance" suffix="km" value={dist} onChange={setDist} step={0.01} />}
-          <NumField label="Avg heart rate" suffix="bpm" value={hr} onChange={setHr} />
-          {def.distance && <NumField label="Elevation gain" suffix="m" value={elev} onChange={setElev} />}
+          <NumField label={tr("Duration")} suffix="min" value={dur} onChange={setDur} step={0.5} />
+          {def.distance && <NumField label={tr("Distance")} suffix="km" value={dist} onChange={setDist} step={0.01} />}
+          <NumField label={tr("Avg heart rate")} suffix="bpm" value={hr} onChange={setHr} />
+          {def.distance && <NumField label={tr("Elevation gain")} suffix="m" value={elev} onChange={setElev} />}
         </div>
-        {p && activity === 'run' && <p className="small muted">Pace {fmtPace(p)} · {fmt(60 / p, 1)} km/h</p>}
+        {p && activity === 'run' && <p className="small muted">{tr("Pace")}{' '}{fmtPace(p)} · {fmt(60 / p, 1)}{' '}{tr("km/h")}</p>}
         {withRpe && (
           <>
-            <div><h3>Effort (RPE)</h3><RpePicker value={rpe} onChange={setRpe} /></div>
-            <label className="field"><span>Date</span><input type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)} /></label>
-            <label className="field"><span>Notes</span><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
+            <div><h3>{tr("Effort (RPE)")}</h3><RpePicker value={rpe} onChange={setRpe} /></div>
+            <label className="field"><span>{tr("Date")}</span><input type="date" value={date} max={today()} onChange={(e) => setDate(e.target.value)} /></label>
+            <label className="field"><span>{tr("Notes")}</span><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} /></label>
           </>
         )}
-        <button className="btn primary block" disabled={!dur} onClick={() => onSave({ activity, durationMin: dur!, distanceKm: def.distance ? dist : undefined, avgHr: hr, elevationM: def.distance ? elev : undefined }, { rpe, date, notes })}>Save</button>
+        <button className="btn primary block" disabled={!dur} onClick={() => onSave({ activity, durationMin: dur!, distanceKm: def.distance ? dist : undefined, avgHr: hr, elevationM: def.distance ? elev : undefined }, { rpe, date, notes })}>{tr("Save")}</button>
       </div>
     </Sheet>
   );
@@ -409,9 +410,9 @@ function ExercisePicker({ open, onClose, onPick }: { open: boolean; onClose: () 
     onPick(id); setQ('');
   };
   return (
-    <Sheet open={open} onClose={onClose} title="Add exercise">
+    <Sheet open={open} onClose={onClose} title={tr("Add exercise")}>
       <div className="stack">
-        <input autoFocus placeholder="Search exercises" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input autoFocus placeholder={tr("Search exercises")} value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="row wrap" style={{ gap: 6 }}>
           {MUSCLES.map((m) => <button key={m} className={'btn sm' + (muscle === m ? ' primary' : '')} onClick={() => setMuscle(muscle === m ? '' : m)}>{m}</button>)}
         </div>
@@ -422,7 +423,7 @@ function ExercisePicker({ open, onClose, onPick }: { open: boolean; onClose: () 
             </div>
           ))}
           {q.trim() && !list.some((e) => e.name.toLowerCase() === q.trim().toLowerCase()) && (
-            <button className="btn block" style={{ marginTop: 8 }} onClick={create}>Create “{q.trim()}”{muscle ? ` (${muscle})` : ''}</button>
+            <button className="btn block" style={{ marginTop: 8 }} onClick={create}>{tr("Create “")}{q.trim()}”{muscle ? ` (${muscle})` : ''}</button>
           )}
         </div>
       </div>
@@ -436,7 +437,7 @@ function SessionDetail({ session, onClose }: { session: Session | null; onClose:
   const x = session;
   return (
     <Sheet open onClose={onClose} title={x.name}>
-      <p className="small muted">{prettyDate(x.date)} · {sessionKind(x)} · effort {x.rpe}/10 ({RPE_LABELS[x.rpe]})</p>
+      <p className="small muted">{prettyDate(x.date)} · {sessionKind(x)}{' '}{tr("· effort")}{' '}{x.rpe}/10 ({RPE_LABELS[x.rpe]})</p>
       <div className="grid3" style={{ margin: '12px 0' }}>
         <Stat v={fmtDuration(x.durationMin)} l="duration" />
         <Stat v={fmt(sessionLoad(x))} l="training load" />
@@ -451,16 +452,16 @@ function SessionDetail({ session, onClose }: { session: Session | null; onClose:
       {x.cardio.map((c, i) => (
         <div key={'c' + i} className="list-item" style={{ display: 'block' }}>
           <div className="small"><strong>{CARDIO.find((a) => a.key === c.activity)?.label}</strong></div>
-          <div className="tiny muted">{fmtDuration(c.durationMin)}{c.distanceKm ? ` · ${fmt(c.distanceKm, 2)} km · ${fmtPace(pace(c)!)}` : ''}{c.avgHr ? ` · avg ${c.avgHr} bpm` : ''}{c.elevationM ? ` · +${c.elevationM} m` : ''}</div>
+          <div className="tiny muted">{fmtDuration(c.durationMin)}{c.distanceKm ? tr(" · {v0} km · {v1}", { v0: fmt(c.distanceKm, 2), v1: fmtPace(pace(c)!) }) : ''}{c.avgHr ? tr(" · avg {v0} bpm", { v0: c.avgHr }) : ''}{c.elevationM ? ` · +${c.elevationM} m` : ''}</div>
         </div>
       ))}
       {x.notes && <p className="small" style={{ marginTop: 10 }}>📝 {x.notes}</p>}
       <div className="row" style={{ marginTop: 16 }}>
-        <button className="btn danger" onClick={async () => { if (await askConfirm('Delete this session?', 'Delete')) { mutate((st) => { st.sessions = st.sessions.filter((y) => y.id !== x.id); }); onClose(); } }}>Delete</button>
+        <button className="btn danger" onClick={async () => { if (await askConfirm(tr("Delete this session?"), tr("Delete"))) { mutate((st) => { st.sessions = st.sessions.filter((y) => y.id !== x.id); }); onClose(); } }}>{tr("Delete")}</button>
         {x.exercises.length > 0 && <button className="btn grow" onClick={() => {
           mutate((st) => { st.templates.push({ id: 't-' + uid(), name: x.name + ' (copy)', exercises: x.exercises.map((e) => ({ exerciseId: e.exerciseId, sets: e.sets.filter((z) => !z.warmup).length, reps: e.sets.at(-1)?.reps ?? 8, restSec: e.restSec ?? 120 })) }); });
           onClose();
-        }}>Save as template</button>}
+        }}>{tr("Save as template")}</button>}
       </div>
     </Sheet>
   );
@@ -475,10 +476,10 @@ function TemplateEditor({ template, onClose }: { template: Template; onClose: ()
   const setEx = (i: number, k: 'sets' | 'reps' | 'restSec', v: number) => setT((x) => ({ ...x, exercises: x.exercises.map((e, j) => (j === i ? { ...e, [k]: v } : e)) }));
   return (
     <>
-      <Sheet open={!adding} onClose={onClose} title="Template">
+      <Sheet open={!adding} onClose={onClose} title={tr("Template")}>
         <div className="stack">
-          <label className="field"><span>Name</span><input value={t.name} onChange={(e) => setT({ ...t, name: e.target.value })} /></label>
-          <div className="row tiny muted"><span className="grow">Exercise</span><span style={{ width: 56 }}>Sets</span><span style={{ width: 56 }}>Reps</span><span style={{ width: 64 }}>Rest s</span><span style={{ width: 30 }} /></div>
+          <label className="field"><span>{tr("Name")}</span><input value={t.name} onChange={(e) => setT({ ...t, name: e.target.value })} /></label>
+          <div className="row tiny muted"><span className="grow">{tr("Exercise")}</span><span style={{ width: 56 }}>{tr("Sets")}</span><span style={{ width: 56 }}>{tr("Reps")}</span><span style={{ width: 64 }}>{tr("Rest s")}</span><span style={{ width: 30 }} /></div>
           {t.exercises.map((e, i) => (
             <div key={i} className="row">
               <span className="grow small">{exerciseName(s, e.exerciseId)}</span>
@@ -488,10 +489,10 @@ function TemplateEditor({ template, onClose }: { template: Template; onClose: ()
               <button className="icon-btn" style={{ width: 30 }} onClick={() => setT({ ...t, exercises: t.exercises.filter((_, j) => j !== i) })}>✕</button>
             </div>
           ))}
-          <button className="btn sm" onClick={() => setAdding(true)}>+ Exercise</button>
+          <button className="btn sm" onClick={() => setAdding(true)}>{tr("+ Exercise")}</button>
           <div className="row">
-            {exists && <button className="btn danger" onClick={async () => { if (await askConfirm('Delete this template?', 'Delete')) { mutate((st) => { st.templates = st.templates.filter((x) => x.id !== t.id); }); onClose(); } }}>Delete</button>}
-            <button className="btn primary grow" onClick={save} disabled={!t.name.trim()}>Save template</button>
+            {exists && <button className="btn danger" onClick={async () => { if (await askConfirm(tr("Delete this template?"), tr("Delete"))) { mutate((st) => { st.templates = st.templates.filter((x) => x.id !== t.id); }); onClose(); } }}>{tr("Delete")}</button>}
+            <button className="btn primary grow" onClick={save} disabled={!t.name.trim()}>{tr("Save template")}</button>
           </div>
         </div>
       </Sheet>

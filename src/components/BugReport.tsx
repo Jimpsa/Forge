@@ -3,6 +3,7 @@ import { Share } from '@capacitor/share';
 import { buildReport, issueUrl } from '../lib/bugreport';
 import { IS_NATIVE } from '../lib/app';
 import { Sheet } from './ui';
+import { tr } from '../i18n';
 
 export function BugReport({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [text, setText] = useState('');
@@ -23,18 +24,18 @@ export function BugReport({ open, onClose }: { open: boolean; onClose: () => voi
   };
 
   return (
-    <Sheet open={open} onClose={() => { onClose(); setDone(''); }} title="Report a bug">
+    <Sheet open={open} onClose={() => { onClose(); setDone(''); }} title={tr("Report a bug")}>
       <div className="stack">
-        <p className="small muted">What did you do, what did you expect, and what happened instead? App version, device, screen and recent error messages are added automatically.</p>
-        <textarea rows={5} placeholder="e.g. Tapped ✓ on a set and the rest timer didn’t start" value={text} onChange={(e) => setText(e.target.value)} />
+        <p className="small muted">{tr("What did you do, what did you expect, and what happened instead? App version, device, screen and recent error messages are added automatically.")}</p>
+        <textarea rows={5} placeholder={tr("e.g. Tapped ✓ on a set and the rest timer didn’t start")} value={text} onChange={(e) => setText(e.target.value)} />
         <div className="grid2">
-          <button className="btn" onClick={share}>Share…</button>
-          <button className="btn" onClick={copy}>Copy report</button>
+          <button className="btn" onClick={share}>{tr("Share…")}</button>
+          <button className="btn" onClick={copy}>{tr("Copy report")}</button>
         </div>
-        <p className="tiny muted">GitHub issues are public, so don’t include personal health details there. Use Share or Copy for anything private.</p>
-        <a className="btn primary block" style={{ textAlign: 'center', textDecoration: 'none' }} href={issueUrl(title(), report())} target="_blank" rel="noreferrer">Open as GitHub issue</a>
+        <p className="tiny muted">{tr("GitHub issues are public, so don’t include personal health details there. Use Share or Copy for anything private.")}</p>
+        <a className="btn primary block" style={{ textAlign: 'center', textDecoration: 'none' }} href={issueUrl(title(), report())} target="_blank" rel="noreferrer">{tr("Open as GitHub issue")}</a>
         {done && <p className="small" style={{ color: 'var(--accent)' }}>{done}</p>}
-        <details><summary className="tiny muted" style={{ cursor: 'pointer' }}>Preview report</summary><pre className="tiny muted" style={{ whiteSpace: 'pre-wrap' }}>{report()}</pre></details>
+        <details><summary className="tiny muted" style={{ cursor: 'pointer' }}>{tr("Preview report")}</summary><pre className="tiny muted" style={{ whiteSpace: 'pre-wrap' }}>{report()}</pre></details>
       </div>
     </Sheet>
   );

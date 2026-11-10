@@ -4,6 +4,7 @@ import { dailyTargets, entriesFor, isTrainingDay, sum, totalsFor } from './nutri
 import { allExercises, e1rm, exerciseHistory, sessionVolume, weeklySummaries, workingSets } from './training';
 import { foodCategory, weightTrend } from './coach';
 import { addDays, parseDate, today, weekStart } from './util';
+import { locale } from '../i18n';
 
 // ---------------- Streak (forgiving) ----------------
 
@@ -157,7 +158,7 @@ export function weeklyRecap(s: AppState, weekStartDate = addDays(weekStart(today
   const trend = weightTrend(s, 28);
   return {
     weekStart: weekStartDate,
-    label: `${parseDate(weekStartDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}–${parseDate(addDays(weekStartDate, 6)).toLocaleDateString(undefined, { day: 'numeric' })}`,
+    label: `${parseDate(weekStartDate).toLocaleDateString(locale(), { month: 'short', day: 'numeric' })}–${parseDate(addDays(weekStartDate, 6)).toLocaleDateString(locale(), { day: 'numeric' })}`,
     workouts: sessions.length,
     tonnes: sessions.reduce((a, x) => a + sessionVolume(x), 0) / 1000,
     prs: new Set(prs).size,

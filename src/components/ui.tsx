@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { clamp } from '../lib/util';
+import { tr } from '../i18n';
 
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode }) {
   useEffect(() => {
@@ -15,8 +16,8 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
       <div className="sheet" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
         {title && (
           <div className="row between" style={{ marginBottom: 12 }}>
-            <h2 style={{ margin: 0 }}>{title}</h2>
-            <button className="icon-btn" onClick={onClose} aria-label="Close">✕</button>
+            <h2 style={{ margin: 0 }}>{tr(title)}</h2>
+            <button className="icon-btn" onClick={onClose} aria-label={tr("Close")}>✕</button>
           </div>
         )}
         {children}
@@ -29,7 +30,7 @@ export function Seg<T extends string>({ value, options, onChange }: { value: T; 
   return (
     <div className="seg">
       {options.map((o) => (
-        <button key={o.value} className={o.value === value ? 'on' : ''} onClick={() => onChange(o.value)} type="button">{o.label}</button>
+        <button key={o.value} className={o.value === value ? 'on' : ''} onClick={() => onChange(o.value)} type="button">{tr(o.label)}</button>
       ))}
     </div>
   );
@@ -52,8 +53,8 @@ export function Ring({ value, max, size = 132, label, sub, warnOver = true }: { 
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`${label} ${sub}`}>
       <defs><linearGradient id={gid} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--accent)" /><stop offset="1" stopColor="var(--accent-2)" /></linearGradient></defs>
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-2)" strokeWidth="11" />
-      <circle className="arc" cx={size / 2} cy={size / 2} r={r} fill="none" stroke={over ? 'var(--warn)' : `url(#${gid})`} strokeWidth="11"
-        strokeDasharray={c} strokeDashoffset={c * (1 - pct)} strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`} />
+      <circle className="arc" cx={size / 2} cy={size / 2} r={r} fill="none" stroke={over ? 'var(--warn)' : tr("url(#{v0})", { v0: gid })} strokeWidth="11"
+        strokeDasharray={c} strokeDashoffset={c * (1 - pct)} strokeLinecap="round" transform={tr("rotate(-90 {v0} {v1})", { v0: size / 2, v1: size / 2 })} />
       <text x="50%" y="48%" textAnchor="middle" fill="var(--text)" fontSize={size / 6} fontWeight="800" style={{ fontFamily: 'var(--font-display)' }}>{label}</text>
       <text x="50%" y="63%" textAnchor="middle" fill="var(--muted)" fontSize={size / 12}>{sub}</text>
     </svg>
@@ -74,7 +75,7 @@ export function NumField({ label, value, onChange, step = 1, min, suffix, requir
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <label className="field">
-      <span>{label}{suffix ? ` (${suffix})` : ''}</span>
+      <span>{tr(label)}{suffix ? ` (${tr(suffix)})` : ''}</span>
       <input type="text" inputMode="decimal" data-step={step} data-min={min} value={text}
         onFocus={() => { focused.current = true; }}
         onBlur={() => { focused.current = false; if (text.trim() === '' && required && value !== undefined) setText(String(value)); }}

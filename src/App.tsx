@@ -19,6 +19,7 @@ import { Train } from './pages/Train';
 import { Progress } from './pages/Progress';
 import { Profile, ProfileForm } from './pages/Profile';
 import { Coach } from './pages/Coach';
+import { setLang, tr } from './i18n';
 
 export type Tab = 'today' | 'diet' | 'train' | 'coach' | 'progress' | 'profile';
 const TABS: { key: Tab; label: string; Ico: LucideIcon }[] = [
@@ -40,12 +41,12 @@ function useCelebrations() {
     if (earned.firstRun) { mutate((st) => { st.celebrated = { ...st.celebrated, badges: Object.fromEntries(earned.all.map((b) => [b.id, today()])) }; }); return; }
     if (!earned.fresh.length) return;
     mutate((st) => { st.celebrated = { ...st.celebrated, badges: { ...st.celebrated?.badges, ...Object.fromEntries(earned.fresh.map((b) => [b.id, today()])) } }; });
-    earned.fresh.forEach((b, i) => setTimeout(() => { toast({ icon: <Icon name={b.icon} size={20} />, title: `Badge earned: ${b.name}`, sub: b.desc }); if (i === 0) celebrate(null, 80); }, i * 600));
+    earned.fresh.forEach((b, i) => setTimeout(() => { toast({ icon: <Icon name={b.icon} size={20} />, title: tr("Badge earned: {v0}", { v0: b.name }), sub: b.desc }); if (i === 0) celebrate(null, 80); }, i * 600));
   }, [earned]);
   useEffect(() => {
     if (!pd?.perfect || s.celebrated?.perfectDays?.includes(today())) return;
     mutate((st) => { st.celebrated = { ...st.celebrated, perfectDays: [...(st.celebrated?.perfectDays ?? []), today()].slice(-120) }; });
-    toast({ title: 'Perfect day ✨', sub: 'Calories, protein, water and check-in all done.' });
+    toast({ title: tr("Perfect day ✨"), sub: tr("Calories, protein, water and check-in all done.") });
     celebrate(null, 120);
   }, [pd?.perfect]); // eslint-disable-line react-hooks/exhaustive-deps
 }
@@ -55,6 +56,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>(s.active ? 'train' : 'today');
   const sync = useSyncStatus();
   const settings = settingsOf(s);
+  setLang(settings.lang); // synchronous, so this render already uses the chosen language
   useEffect(() => {
     applySettings(settings);
     const mq = [matchMedia('(prefers-color-scheme: light)'), matchMedia('(prefers-reduced-motion: reduce)')];
@@ -68,14 +70,14 @@ export default function App() {
   useEffect(() => { window.scrollTo(0, 0); setScreen(tab); }, [tab]);
   useEffect(() => { if (sync.status === 'cloud' && s.active) setTab('train'); }, [sync.status === 'cloud']); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (sync.status === 'loading') return <div className="app"><div className="empty" style={{ marginTop: '30vh' }}>Loading your data…</div></div>;
+  if (sync.status === 'loading') return <div className="app"><div className="empty" style={{ marginTop: '30vh' }}>{tr("Loading your data…")}</div></div>;
 
   if (!s.consent || s.consent.version !== LEGAL_VERSION) return <><ConsentScreen /><ConfirmHost /></>;
 
   if (!s.onboarded) {
     return (
       <div className="app">
-        <div className="page-head"><div><h1>Welcome to Forge</h1><p className="muted small">Diet and training in one place. Set up your profile to get personal calorie and macro targets.</p></div></div>
+        <div className="page-head"><div><h1>{tr("Welcome to Forge")}</h1><p className="muted small">{tr("Diet and training in one place. Set up your profile to get personal calorie and macro targets.")}</p></div></div>
         <ProfileForm onboarding />
         <ConfirmHost />
       </div>
@@ -99,7 +101,7 @@ export default function App() {
           <div className="tab-pill" style={{ width: `calc(100% / ${TABS.length})`, transform: `translateX(${tabIndex * 100}%)` }} />
           {TABS.map((t) => (
             <button key={t.key} className={tab === t.key ? 'on' : ''} aria-current={tab === t.key ? 'page' : undefined} onClick={() => setTab(t.key)}>
-              <span className="ico"><t.Ico /></span>{t.label}{t.key === 'train' && s.active ? ' •' : ''}
+              <span className="ico"><t.Ico /></span>{tr(t.label)}{t.key === 'train' && s.active ? ' •' : ''}
             </button>
           ))}
         </nav>

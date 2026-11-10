@@ -1,5 +1,6 @@
 // In-app replacement for window.confirm/alert (which some hosts, e.g. sandboxed frames, block).
 import { useEffect, useState } from 'react';
+import { tr } from '../i18n';
 
 type Req = { message: string; okLabel: string; cancel: boolean; resolve: (ok: boolean) => void };
 let show: ((r: Req) => void) | null = null;
@@ -21,7 +22,7 @@ export function ConfirmHost() {
       <div className="sheet" style={{ maxWidth: 380, borderRadius: 18, margin: 16 }} onClick={(e) => e.stopPropagation()} role="alertdialog" aria-modal="true">
         <p style={{ marginBottom: 16 }}>{req.message}</p>
         <div className="row">
-          {req.cancel && <button className="btn grow" onClick={() => done(false)}>Cancel</button>}
+          {req.cancel && <button className="btn grow" onClick={() => done(false)}>{tr("Cancel")}</button>}
           <button className="btn primary grow" autoFocus onClick={() => done(true)}>{req.okLabel}</button>
         </div>
       </div>

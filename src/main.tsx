@@ -10,6 +10,7 @@ import '@fontsource/bricolage-grotesque/800.css';
 import './styles.css';
 import { getState } from './lib/storage';
 import { applySettings, settingsOf } from './lib/settings';
+import { setLang } from './i18n';
 import { connectRemote } from './lib/storage';
 import { IS_ARTIFACT } from './lib/env';
 import { IS_NATIVE } from './lib/app';
@@ -18,6 +19,7 @@ import { installErrorCapture } from './lib/bugreport';
 
 installErrorCapture();
 applySettings(settingsOf(getState())); // before first paint, so there's no colour flash
+setLang(settingsOf(getState()).lang);
 
 // Ripple from the touch point on every button (CSS handles the squish).
 document.addEventListener('pointerdown', (e) => {

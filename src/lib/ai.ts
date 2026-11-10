@@ -7,6 +7,7 @@ import { age, dailyTargets } from './nutrition';
 import { weeklySummaries, exerciseName, exerciseHistory } from './training';
 import { addDays, today } from './util';
 import { protocolContext } from './protocol';
+import { lang } from '../i18n';
 import { HISTAMINE_GUIDE, histamineBucket } from '../data/histamine';
 import { readiness, progression } from './readiness';
 import { cycleInfo } from './cycle';
@@ -48,7 +49,7 @@ PLANS: The app builds training programs and meal plans for the user (shown in th
 
 PROTOCOLS: If the data shows the user is on a gut reset protocol, respect it: suggest meals and swaps only from foods allowed in their current phase, follow its one-food-at-a-time rule, and help them interpret reactions. Give honest, brief safety facts when relevant (e.g. raw-food infection risk, high-histamine foods, nutrient gaps in a restrictive phase, when to see a doctor or dietitian), without lecturing or repeating them every message.
 
-STYLE: Reply in the user's language. Be friendly and direct. Keep answers short and skimmable (under ~200 words unless they ask for more), using short paragraphs and "- " bullet lists. Use **bold** sparingly. No tables.`;
+STYLE: Reply in the user's language (the app language is given in the user data; use it unless the user writes in another language). Be friendly and direct. Keep answers short and skimmable (under ~200 words unless they ask for more), using short paragraphs and "- " bullet lists. Use **bold** sparingly. No tables.`;
 
 /** Compact snapshot of the user's data for the model (kept small on purpose). */
 export function buildContext(s: AppState): string {
@@ -57,7 +58,7 @@ export function buildContext(s: AppState): string {
   const t = dailyTargets(p, false), tt = dailyTargets(p, true);
   const w = weeklySummaries(s, 4);
   const lines: string[] = [];
-  lines.push(`Today: ${today()}`);
+  lines.push(`Today: ${today()}. App language: ${({ en: 'English', fi: 'Finnish', sv: 'Swedish' } as const)[lang()]}.`);
   lines.push(`Profile: ${p.sex}, ${age(p)} y, ${p.heightCm} cm, ${p.weightKg} kg. Goal: ${p.goal}${p.goal !== 'maintain' ? ` at ${p.rateKgPerWeek} kg/week` : ''}. Activity outside training: ${p.activity}.`);
   lines.push(`Targets: rest day ${t.kcal} kcal (P ${t.protein} / C ${t.carbs} / F ${t.fat} g), training day ${tt.kcal} kcal. Maintenance: formula ${a.formulaMaintenance}${a.measuredMaintenance ? `, measured from data ${a.measuredMaintenance}` : ''}${p.maintenanceKcal ? ' (using measured)' : ''}.`);
   lines.push(`Last 14 days: ${a.loggedDays} fully logged days. Avg intake ${Math.round(a.avgKcal)} kcal, protein ${Math.round(a.avgProtein)} g, carbs ${Math.round(a.avg.carbs ?? 0)} g, fat ${Math.round(a.avg.fat ?? 0)} g, fiber ${Math.round(a.avg.fiber ?? 0)} g, sugar ${Math.round(a.avg.sugar ?? 0)} g, sodium ${Math.round(a.avg.sodium ?? 0)} mg.`);

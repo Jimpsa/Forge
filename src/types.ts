@@ -195,6 +195,7 @@ export interface Settings {
   sounds: boolean;
   motion: 'system' | 'reduce' | 'full';
   histamine?: boolean; // histamine-aware mode (off by default)
+  lang?: 'auto' | 'en' | 'fi' | 'sv';
 }
 
 /** Remembers which one-off celebrations were already shown, so they never repeat. */

@@ -7,14 +7,15 @@ import { addDays, fmt, shortDate, today } from '../lib/util';
 import { chartTheme, EmptyState, NumField, Seg, Stat } from '../components/ui';
 import { CyclePattern } from '../components/Cycle';
 import { BadgesGrid, RecapCard, StreakCard, StrengthLevels } from '../components/Rewards';
+import { tr } from '../i18n';
 
 export function Progress() {
   const [tab, setTab] = useState<'awards' | 'body' | 'strength' | 'effort' | 'diet'>('awards');
   return (
     <div>
-      <div className="page-head"><h1>Progress</h1></div>
+      <div className="page-head"><h1>{tr("Progress")}</h1></div>
       <div style={{ marginBottom: 14 }}>
-        <Seg value={tab} onChange={setTab} options={[{ value: 'awards', label: 'Awards' }, { value: 'body', label: 'Body' }, { value: 'strength', label: 'Strength' }, { value: 'effort', label: 'Effort' }, { value: 'diet', label: 'Diet' }]} />
+        <Seg value={tab} onChange={setTab} options={[{ value: 'awards', label: tr("Awards") }, { value: 'body', label: tr("Body") }, { value: 'strength', label: tr("Strength") }, { value: 'effort', label: tr("Effort") }, { value: 'diet', label: tr("Diet") }]} />
       </div>
       {tab === 'awards' && <><BadgesGrid /><StrengthLevels /><StreakCard /><RecapCard /></>}
       {tab === 'body' && <BodyTab />}
@@ -48,21 +49,21 @@ function BodyTab() {
   return (
     <>
       <div className="card">
-        <h2>Log today</h2>
+        <h2>{tr("Log today")}</h2>
         <div className="grid3">
-          <NumField label="Weight" suffix="kg" value={w} onChange={setW} step={0.1} />
-          <NumField label="Body fat" suffix="%" value={bf} onChange={setBf} step={0.1} />
-          <NumField label="Waist" suffix="cm" value={waist} onChange={setWaist} step={0.5} />
+          <NumField label={tr("Weight")} suffix="kg" value={w} onChange={setW} step={0.1} />
+          <NumField label={tr("Body fat")} suffix="%" value={bf} onChange={setBf} step={0.1} />
+          <NumField label={tr("Waist")} suffix="cm" value={waist} onChange={setWaist} step={0.5} />
         </div>
-        <button className="btn primary block" style={{ marginTop: 10 }} onClick={save}>{existing ? 'Update' : 'Save'}</button>
+        <button className="btn primary block" style={{ marginTop: 10 }} onClick={save}>{existing ? tr("Update") : tr("Save")}</button>
       </div>
       <div className="card">
-        <h2>Weight trend</h2>
-        {data.length < 2 ? <div className="empty">Log your weight a few times to see the trend. Weigh in the morning for the most consistent numbers.</div> : (
+        <h2>{tr("Weight trend")}</h2>
+        {data.length < 2 ? <div className="empty">{tr("Log your weight a few times to see the trend. Weigh in the morning for the most consistent numbers.")}</div> : (
           <>
             <div className="grid3" style={{ marginBottom: 10 }}>
-              <Stat v={`${fmt(last, 1)} kg`} l="7-day average" />
-              <Stat v={`${last! - first! > 0 ? '+' : ''}${fmt(last! - first!, 1)} kg`} l="change" />
+              <Stat v={tr("{v0} kg", { v0: fmt(last, 1) })} l="7-day average" />
+              <Stat v={tr("{v0}{v1} kg", { v0: last! - first! > 0 ? '+' : '', v1: fmt(last! - first!, 1) })} l="change" />
               <Stat v={data.length} l="weigh-ins" />
             </div>
             <div className="chart">
@@ -89,19 +90,19 @@ function StrengthTab() {
   const trained = useMemo(() => allExercises(s).filter((e) => s.sessions.some((x) => x.exercises.some((y) => y.exerciseId === e.id))), [s]);
   const [ex, setEx] = useState<string>('');
   const id = ex || trained[0]?.id;
-  if (!trained.length) return <div className="card"><EmptyState kind="chart" title="No strength data yet" text="Finish a strength workout and your estimated max, best sets and volume show up here." /></div>;
+  if (!trained.length) return <div className="card"><EmptyState kind="chart" title={tr("No strength data yet")} text={tr("Finish a strength workout and your estimated max, best sets and volume show up here.")} /></div>;
   const hist = exerciseHistory(s, id);
   const data = hist.map((h) => ({ date: shortDate(h.date), e1rm: +h.e1rm.toFixed(1), top: h.topWeight, volume: h.volume }));
   const best = Math.max(...hist.map((h) => h.e1rm));
   return (
     <>
       <div className="card">
-        <label className="field"><span>Exercise</span>
+        <label className="field"><span>{tr("Exercise")}</span>
           <select value={id} onChange={(e) => setEx(e.target.value)}>{trained.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}</select>
         </label>
         <div className="grid3" style={{ margin: '12px 0' }}>
-          <Stat v={`${fmt(best, 1)} kg`} l="best est. 1RM" />
-          <Stat v={`${fmt(Math.max(...hist.map((h) => h.topWeight)), 1)} kg`} l="heaviest set" />
+          <Stat v={tr("{v0} kg", { v0: fmt(best, 1) })} l="best est. 1RM" />
+          <Stat v={tr("{v0} kg", { v0: fmt(Math.max(...hist.map((h) => h.topWeight)), 1) })} l="heaviest set" />
           <Stat v={hist.length} l="sessions" />
         </div>
         <div className="chart">
@@ -119,16 +120,16 @@ function StrengthTab() {
             </ComposedChart>
           </ResponsiveContainer>
         </div>
-        <p className="tiny muted">Estimated 1RM uses the Epley formula on sets of 12 reps or fewer.</p>
+        <p className="tiny muted">{tr("Estimated 1RM uses the Epley formula on sets of 12 reps or fewer.")}</p>
       </div>
       <div className="card">
-        <h2>Personal bests</h2>
+        <h2>{tr("Personal bests")}</h2>
         {trained.map((e) => {
           const h = exerciseHistory(s, e.id);
           return (
             <div key={e.id} className="list-item">
               <span className="grow small">{e.name}</span>
-              <span className="num small">{fmt(Math.max(...h.map((x) => x.e1rm)), 1)} kg <span className="muted tiny">e1RM</span></span>
+              <span className="num small">{fmt(Math.max(...h.map((x) => x.e1rm)), 1)}{' '}{tr("kg")}{' '}<span className="muted tiny">{tr("e1RM")}</span></span>
             </div>
           );
         })}
@@ -145,8 +146,8 @@ function EffortTab() {
   return (
     <>
       <div className="card">
-        <h2>Weekly training load</h2>
-        <p className="tiny muted" style={{ marginBottom: 10 }}>Load = session effort (1–10) × minutes. One number for lifting, running and mixed days, so you can compare them.</p>
+        <h2>{tr("Weekly training load")}</h2>
+        <p className="tiny muted" style={{ marginBottom: 10 }}>{tr("Load = session effort (1–10) × minutes. One number for lifting, running and mixed days, so you can compare them.")}</p>
         <div className="chart">
           <ResponsiveContainer>
             <ComposedChart data={weeks} margin={{ left: -20, right: -10, top: 8 }}>
@@ -163,7 +164,7 @@ function EffortTab() {
         </div>
       </div>
       <div className="card">
-        <h2>Averages (active weeks, last 12)</h2>
+        <h2>{tr("Averages (active weeks, last 12)")}</h2>
         <div className="grid4">
           <Stat v={fmt(avg('sessions'), 1)} l="sessions / week" />
           <Stat v={fmt(avg('load'))} l="load / week" />
@@ -173,7 +174,7 @@ function EffortTab() {
       </div>
       <CyclePattern />
       <div className="card">
-        <h2>Session mix</h2>
+        <h2>{tr("Session mix")}</h2>
         <div className="chart" style={{ height: 180 }}>
           <ResponsiveContainer>
             <ComposedChart data={weeks} margin={{ left: -20, right: 8, top: 8 }}>
@@ -206,7 +207,7 @@ function DietTab() {
   return (
     <>
       <div className="card">
-        <h2>Calories — last 14 days</h2>
+        <h2>{tr("Calories — last 14 days")}</h2>
         <div className="grid3" style={{ marginBottom: 10 }}>
           <Stat v={fmt(avg('kcal'))} l="avg kcal (logged days)" />
           <Stat v={fmt(avg('protein'))} l="avg protein g" />
@@ -226,7 +227,7 @@ function DietTab() {
         </div>
       </div>
       <div className="card">
-        <h2>Protein — last 14 days</h2>
+        <h2>{tr("Protein — last 14 days")}</h2>
         <div className="chart" style={{ height: 180 }}>
           <ResponsiveContainer>
             <ComposedChart data={data} margin={{ left: -15, right: 8, top: 8 }}>

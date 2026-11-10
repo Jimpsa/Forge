@@ -4,6 +4,7 @@ import { readiness } from '../lib/readiness';
 import { cycleInfo, addPeriodStart } from '../lib/cycle';
 import { today } from '../lib/util';
 import { Bar, Seg } from './ui';
+import { tr } from '../i18n';
 
 const LEVELS = ['Poor', 'OK', 'Good', 'Great'];
 const SORE = ['None', 'Mild', 'Quite', 'Very'];
@@ -39,40 +40,40 @@ export function ReadinessCard({ onApply, compact }: { onApply?: () => void; comp
   return (
     <div className="card" style={{ borderColor: color }}>
       <div className="row between">
-        <div><div className="tiny muted">Readiness today</div><h2 style={{ margin: '2px 0' }}>{r.title}</h2></div>
+        <div><div className="tiny muted">{tr("Readiness today")}</div><h2 style={{ margin: '2px 0' }}>{tr(r.title)}</h2></div>
         <div style={{ fontSize: '1.6rem', fontWeight: 800, color }}>{r.score}</div>
       </div>
       <Bar value={r.score} max={100} color={color} />
-      <p className="small" style={{ marginTop: 8 }}>{r.advice}</p>
+      <p className="small" style={{ marginTop: 8 }}>{tr(r.advice)}</p>
       {r.reasons.length > 0 && (
         <div className="row wrap" style={{ gap: 6, marginTop: 6 }}>
-          {r.reasons.map((x) => <span key={x.text} className={'pill ' + (x.delta < 0 ? 'warn' : 'accent')}>{x.text} {x.delta > 0 ? '+' : ''}{x.delta}</span>)}
+          {r.reasons.map((x) => <span key={x.text} className={'pill ' + (x.delta < 0 ? 'warn' : 'accent')}>{tr(x.text)} {x.delta > 0 ? '+' : ''}{x.delta}</span>)}
         </div>
       )}
       {c && (
-        <p className="tiny muted" style={{ marginTop: 8 }}>🌙 Cycle day {c.day}{c.hormonal ? '' : ` · ${c.label}`}. {c.note}</p>
+        <p className="tiny muted" style={{ marginTop: 8 }}>{tr("🌙 Cycle day")}{' '}{c.day}{c.hormonal ? '' : ` · ${tr(c.label)}`}. {c.note}</p>
       )}
       {(!answered || !compact) && (
         <details open={!answered} style={{ marginTop: 10 }}>
-          <summary className="small" style={{ cursor: 'pointer' }}>{answered ? 'Edit how you feel' : 'How do you feel? (3 quick taps)'}</summary>
+          <summary className="small" style={{ cursor: 'pointer' }}>{answered ? tr("Edit how you feel") : tr("How do you feel? (3 quick taps)")}</summary>
           <div className="stack" style={{ marginTop: 8 }}>
-            <Q label="Sleep last night" value={g?.sleep} opts={LEVELS} onChange={(v) => setToday({ sleep: v })} />
-            <Q label="Energy" value={g?.energy} opts={LEVELS} onChange={(v) => setToday({ energy: v })} />
-            <Q label="Muscle soreness" value={g?.soreness} opts={SORE} onChange={(v) => setToday({ soreness: v })} />
+            <Q label={tr("Sleep last night")} value={g?.sleep} opts={LEVELS} onChange={(v) => setToday({ sleep: v })} />
+            <Q label={tr("Energy")} value={g?.energy} opts={LEVELS} onChange={(v) => setToday({ energy: v })} />
+            <Q label={tr("Muscle soreness")} value={g?.soreness} opts={SORE} onChange={(v) => setToday({ soreness: v })} />
             {tracking && (
               <>
-                <Q label="Cycle symptoms (cramps, PMS, headache)" value={g?.cycleSymptoms} opts={['None', 'Mild', 'Moderate', 'Severe']} onChange={(v) => setToday({ cycleSymptoms: v })} />
+                <Q label={tr("Cycle symptoms (cramps, PMS, headache)")} value={g?.cycleSymptoms} opts={['None', 'Mild', 'Moderate', 'Severe']} onChange={(v) => setToday({ cycleSymptoms: v })} />
                 <label className="row small" style={{ gap: 8 }}>
                   <input type="checkbox" style={{ width: 'auto' }} checked={!!g?.period}
                     onChange={(e) => { setToday({ period: e.target.checked }); if (e.target.checked && (!c || c.day > 10)) mutate(addPeriodStart(today())); }} />
-                  On my period today
+                  {tr("On my period today")}
                 </label>
               </>
             )}
           </div>
         </details>
       )}
-      {onApply && <button className="btn sm block" style={{ marginTop: 10 }} onClick={onApply}>Update today’s weights to match</button>}
+      {onApply && <button className="btn sm block" style={{ marginTop: 10 }} onClick={onApply}>{tr("Update today’s weights to match")}</button>}
     </div>
   );
 }
