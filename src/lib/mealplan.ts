@@ -9,8 +9,10 @@ import type { AppState, Food, MealItem, PlannedDay, PlannedMeal, NutrientKey, Nu
 import { NUTRIENTS } from '../types';
 import { BUILTIN_FOODS } from '../data/foods';
 import { dailyTargets, microTargets, scale, sum } from './nutrition';
-import { allowedNow } from './protocol';
+import { activeTest, allowedNow, itemByKey, itemFood, yogurtToday } from './protocol';
 import { SCHEDULE } from '../data/programs';
+import { ITEM_FOODS } from './protocol';
+const ITEM_TEST_GRAMS = (key: string) => ITEM_FOODS[key]?.testGrams ?? 30;
 
 export type DietStyle = 'balanced' | 'pescetarian' | 'vegetarian' | 'vegan' | 'keto' | 'carnivore' | 'protocol';
 export type TrainTime = 'morning' | 'midday' | 'evening';
@@ -38,7 +40,12 @@ function fits(style: DietStyle, name: string, s: AppState): boolean {
     case 'vegetarian': return !MEAT.test(name) && !FISH.test(name);
     case 'vegan': return !MEAT.test(name) && !FISH.test(name) && !EGG.test(name) && !isDairy(name) && !/honey/i.test(name);
     case 'carnivore': return MEAT.test(name) || FISH.test(name) || EGG.test(name) || /(butter|cheese|tallow|lard)/i.test(name);
-    case 'protocol': return allowedNow(s, name);
+    case 'protocol': {
+      // The food under test appears only as the measured daily test portion, never in regular meals.
+      const tested = s.protocol ? activeTest(s.protocol) : undefined;
+      if (tested && itemByKey(tested.food)?.re.test(name)) return false;
+      return allowedNow(s, name);
+    }
     default: return true;
   }
 }
@@ -149,7 +156,26 @@ export function buildMealPlan(s: AppState, inp: PlanInputs): { days: PlannedDay[
   const carbs = keto || carni ? [] : pool(P.carb);
   const vegs = carni ? [] : pool(keto ? P.ketoVeg : P.veg);
   const fats = carni ? pool(P.animalFat) : keto ? pool(P.ketoFat) : pool(proto ? [...P.fat, ...P.animalFat] : P.fat);
-  const fruits = carni ? [] : pool(keto ? P.ketoFruit : P.fruit);
+  let fruits = carni ? [] : pool(keto ? P.ketoFruit : P.fruit);
+  let vegsP = vegs, fatsP = fats, mainsP = mains;
+
+  // Gut reset: build from the protocol itself — tolerated foods in their protocol preparation,
+  // the food currently being tested as a small daily test portion, and the yogurt ramp in phase 3.
+  const pr = proto ? s.protocol : undefined;
+  const okFoods = (group?: 'veg' | 'fruit') => (pr ? pr.tests.filter((x) => x.result === 'ok').map((x) => itemByKey(x.food)).filter((it) => it && (group ? it.group === group : true)).map((it) => itemFood(pr, it!.key)!).filter((n) => !!food(n)) : []);
+  const tested = pr ? activeTest(pr) : undefined;
+  const testFood = pr && tested ? itemFood(pr, tested.food) : undefined;
+  if (pr) {
+    const ok = new Set(pr.tests.filter((x) => x.result === 'ok').map((x) => x.food));
+    vegsP = pr.phase >= 3 ? [...new Set([...okFoods('veg'), ...vegs])] : okFoods('veg');
+    fruits = pr.phase >= 3 ? [...new Set([...okFoods('fruit'), ...fruits])] : okFoods('fruit');
+    fatsP = [...pool(['Beef tallow', 'Lard', 'Duck fat']), ...(ok.has('butter') ? [itemFood(pr, 'butter')!] : []), ...(pr.phase >= 3 ? pool(P.fat) : [])].filter((n) => !!food(n));
+    if (ok.has('tartare')) mainsP = [...mains, itemFood(pr, 'tartare')!];
+  }
+  const protoExtras = pr ? { cheese: pr.tests.some((x) => x.food === 'cheese' && x.result === 'ok') ? itemFood(pr, 'cheese') : undefined,
+    milk: pr.tests.some((x) => x.food === 'milk' && x.result === 'ok') ? itemFood(pr, 'milk') : undefined,
+    ferments: pr.tests.filter((x) => x.result === 'ok' && ['kefir', 'sauerkraut', 'kimchi'].includes(x.food)).map((x) => itemFood(pr, x.food)!),
+    yogurtGrams: (yogurtToday(pr)?.tbsp ?? 0) * 15 } : undefined;
 
   const days: PlannedDay[] = weekdays.map((wd, di) => {
     const training = trainDays.includes(wd);
@@ -164,20 +190,23 @@ export function buildMealPlan(s: AppState, inp: PlanInputs): { days: PlannedDay[
       const add = (role: Part['role'], name: string | undefined, grams: number) => { const f = name ? food(name) : undefined; if (f && !parts.some((p) => p.food.id === f.id)) parts.push({ role, food: f, grams }); };
       if (slot.kind === 'breakfast') {
         const bp = pool(P.bProtein);
-        add('protein', pick(bp.length ? bp : mains, k + si), 150);
+        add('protein', pick(bp.length ? bp : mainsP, k + si), 150);
         if (!keto && !carni) add('carb', pick(pool(P.bCarb).length ? pool(P.bCarb) : carbs, k), 60);
         if (fruits.length) add('fruit', pick(fruits, k + 1), keto ? 50 : 100);
-        add('fat', pick(pool(P.bFat).length && !carni ? pool(P.bFat) : fats, k + 2), 15);
+        add('fat', pick(pool(P.bFat).length && !carni ? pool(P.bFat) : fatsP, k + 2), 15);
+        if (protoExtras?.yogurtGrams) { add('veg', 'L. reuteri yogurt (homemade)', protoExtras.yogurtGrams); }
         if (keto || carni) add('protein', pick(pool(['Egg, whole', 'Bacon, cooked (crispy)']), k), 100);
       } else if (slot.kind === 'main') {
         const fishDay = !['vegan', 'vegetarian'].includes(style) && fishMains.length && (di === 1 || di === 4) && slot.key === 'dinner';
-        add('protein', fishDay ? pick(fishMains, k) : pick(mains, k * 2 + si), 150);
+        add('protein', fishDay && !pr ? pick(fishMains, k) : pick(mainsP, k * 2 + si), 150);
         if (carbs.length) add('carb', pick(carbs, k + si), 200);
-        if (vegs.length) { add('veg', pick(vegs, k * 2 + si), 120); add('veg', pick(vegs, k * 2 + si + 5), 100); }
-        if (fats.length) add('fat', pick(fats, k + si), keto ? 25 : 10);
+        if (vegsP.length) { add('veg', pick(vegsP, k * 2 + si), 120); if (vegsP.length > 1) add('veg', pick(vegsP, k * 2 + si + 5), 100); }
+        if (fatsP.length) add('fat', pick(fatsP, k + si), keto ? 25 : 10);
+        if (protoExtras?.ferments.length && slot.key === 'dinner') add('veg', pick(protoExtras.ferments, k), /kefir/i.test(pick(protoExtras.ferments, k)) ? 150 : 15);
       } else if (slot.kind === 'pre') {
         // Keto/carnivore: no starchy carbs before training (a few berries at most on keto).
-        const pc = keto ? pool(P.ketoFruit) : carni ? [] : pool(P.preCarb);
+        let pc = keto ? pool(P.ketoFruit) : carni ? [] : pool(P.preCarb);
+        if (!pc.length && !keto && !carni) pc = carbs; // e.g. gut reset phase 1: rice or potato
         if (pc.length) add(keto ? 'fruit' : 'carb', pick(pc, k), keto ? 60 : 100);
         const sp = pool(P.snackProtein);
         if (sp.length) add('protein', pick(sp, k + 1), 150);
@@ -188,11 +217,15 @@ export function buildMealPlan(s: AppState, inp: PlanInputs): { days: PlannedDay[
         if (!keto && !carni) { const sc = pool(P.snackCarb); if (sc.length) add('carb', pick(sc, k + si), 120); }
         if (keto) add('fat', pick(pool(['Hard cheese 28% (Gouda-type)', 'Walnuts', 'Almonds']), k), 30);
         const sf = pool(P.snackFat); if (sf.length && !carni) add('fat', pick(sf, k), 20);
+        if (protoExtras?.cheese) add('fat', protoExtras.cheese, 25);
+        if (protoExtras?.milk) add('veg', protoExtras.milk, 150);
       }
+      const isTestMeal = !!testFood && slot.kind === 'main' && sl.findIndex((x) => x.kind === 'main') === si;
+      if (isTestMeal) add('veg', testFood, ITEM_TEST_GRAMS(tested!.food));
       const solved = solveMeal(parts, kcal, protein, keto || carni || !parts.some((p) => p.role === 'carb'));
-      const items: MealItem[] = solved.map((p) => ({ foodId: p.food.id, name: p.food.name, grams: p.grams }));
-      const title = items.filter((x) => solved.find((p) => p.food.id === x.foodId)!.role !== 'fat').slice(0, 3).map((x) => short(x.name)).join(' + ');
-      return { slot: slot.label, title: title || 'Meal', items };
+      const items: MealItem[] = solved.map((p) => ({ foodId: p.food.id, name: p.food.name, grams: p.grams, ...(isTestMeal && p.food.name === testFood ? { test: true } : {}) }));
+      const title = items.filter((x) => !x.test && solved.find((p) => p.food.id === x.foodId)!.role !== 'fat').slice(0, 3).map((x) => short(x.name)).join(' + ');
+      return { slot: slot.label, title: (title || 'Meal') + (isTestMeal ? ` · 🧪 test: ${short(testFood!)}` : ''), items };
     });
     return { weekday: wd, training, meals };
   });
@@ -204,7 +237,7 @@ export function buildMealPlan(s: AppState, inp: PlanInputs): { days: PlannedDay[
     const diff = target.kcal - tot;
     if (Math.abs(diff) < target.kcal * 0.05) continue;
     const flexRole = keto || carni ? /(oil|butter|tallow|lard|fat|avocado|cheese)/i : /(rice|potato|pasta|quinoa|bulgur|couscous|oats|bread|banana)/i;
-    const flex = d.meals.flatMap((m) => m.items).filter((x) => flexRole.test(x.name));
+    const flex = d.meals.flatMap((m) => m.items).filter((x) => flexRole.test(x.name) && !x.test);
     const flexKcal = flex.reduce((a, x) => a + ((food(x.name)?.per100.kcal ?? 0) * x.grams) / 100, 0);
     if (flexKcal > 0) { const f = Math.max(0.5, Math.min(1.8, 1 + diff / flexKcal)); flex.forEach((x) => { x.grams = round5(x.grams * f); }); }
   }
@@ -244,7 +277,7 @@ function dietNotes(style: DietStyle, s: AppState, phase: number, days: PlannedDa
     vegan: ['Protein target set 10% higher, because plant proteins are slightly less digestible. Soy, tempeh, seitan and legumes are the best sources, and mixing them through the day covers all amino acids.', 'Vegans need a vitamin B12 supplement. Also consider vitamin D, an algae omega-3 and iodine, and choose calcium-fortified drinks and yogurts. A blood test now and then is a good idea.'],
     keto: ['Carbs kept around 30 g a day. Training performance often dips for 2–4 weeks while you adapt, especially in high-rep or sprint work.', 'Low-carb diets lose water and salt: salt your food, and eat potassium and magnesium-rich foods (avocado, spinach, nuts). Fiber can run low, so keep the vegetables in.'],
     carnivore: ['Animal foods only, so fiber and vitamin C are close to zero and calcium can be low. Fresh meat provides a little vitamin C; liver or eggs add vitamin A. There is little long-term research on this diet.', 'Consider blood work (lipids, kidney values) if you stay on it for long. Keep salt and water up.'],
-    protocol: [`Only foods from your current gut-reset phase (phase ${phase}). As you reintroduce foods, rebuild the plan to include them.`, phase === 1 ? 'Phase 1 is meat, eggs, animal fats, fresh white rice and peeled potatoes, so fiber, vitamin C and calcium are low by design for a few weeks.' : 'Keep testing one new food at a time. Reintroduced foods appear in rebuilt plans automatically.'],
+    protocol: [`Built from your gut-reset protocol (phase ${phase}): only the foods your phase allows, in their protocol preparation. The plan updates itself when your phase changes, a test ends or a food is tolerated.`, 'The food you are currently testing appears once a day as a small 🧪 test portion. Log how you feel in the daily check-in.', phase === 1 ? 'Phase 1 is meat, eggs, animal fats, fresh white rice and peeled potatoes, so fiber, vitamin C and calcium are low by design for a few weeks.' : 'Keep testing one new food at a time. Reintroduced foods appear in rebuilt plans automatically.'],
   };
   return [...common, ...specific[style]];
 }

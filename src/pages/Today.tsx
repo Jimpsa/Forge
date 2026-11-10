@@ -8,6 +8,7 @@ import { ReadinessCard } from '../components/Readiness';
 import { CycleCard } from '../components/Cycle';
 import { RecapCard, RingsCard, StreakCard } from '../components/Rewards';
 import { programInfo } from '../lib/program';
+import { PrepCard } from '../components/Prep';
 import type { Tab } from '../App';
 
 export function Today({ go }: { go: (t: Tab) => void }) {
@@ -55,6 +56,7 @@ export function Today({ go }: { go: (t: Tab) => void }) {
       </div>
 
       {!todays.length && <ReadinessCard compact />}
+      <PrepCard />
       <RingsCard onOpen={() => go('diet')} />
       <RecapCard dismissible />
       <StreakCard />

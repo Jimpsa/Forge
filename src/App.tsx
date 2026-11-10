@@ -6,6 +6,7 @@ import { newlyEarned, perfectDay } from './lib/achievements';
 import { celebrate } from './lib/fx';
 import { ToastHost, toast } from './components/Toast';
 import { ConsentScreen } from './components/Legal';
+import { useProtocolPlanSync } from './pages/MealPlanner';
 import { LEGAL_VERSION } from './data/legal';
 import { Icon } from './components/Icon';
 import { today } from './lib/util';
@@ -62,6 +63,7 @@ export default function App() {
     return () => mq.forEach((m) => m.removeEventListener('change', on));
   }, [settings.palette, settings.mode, settings.motion]); // eslint-disable-line react-hooks/exhaustive-deps
   useCelebrations();
+  useProtocolPlanSync();
   const tabIndex = TABS.findIndex((x) => x.key === tab);
   useEffect(() => { window.scrollTo(0, 0); setScreen(tab); }, [tab]);
   useEffect(() => { if (sync.status === 'cloud' && s.active) setTab('train'); }, [sync.status === 'cloud']); // eslint-disable-line react-hooks/exhaustive-deps

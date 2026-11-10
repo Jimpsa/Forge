@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Meal, PlannedDay, PlannedMeal } from '../types';
 import { mutate, useAppState } from '../lib/storage';
 import { STYLES, buildMealPlan, dayTarget, dayTotals, microCoverage, netCarbs, portionLabel, shoppingList, type DietStyle, type PlanInputs, type TrainTime } from '../lib/mealplan';
@@ -8,6 +8,25 @@ import { fmt, today, uid } from '../lib/util';
 import { Bar, Seg, Sheet } from '../components/ui';
 import { askConfirm } from '../components/confirm';
 import { shareText } from '../components/Rewards';
+import { PrepCard } from '../components/Prep';
+import { toast } from '../components/Toast';
+import { PHASES, prepItems, protocolPlanKey } from '../lib/protocol';
+import { getState } from '../lib/storage';
+
+/** Keeps a gut-reset meal plan in step with the protocol: rebuilds it when the phase, tests or yogurt step change. */
+export function useProtocolPlanSync() {
+  const s = useAppState();
+  const key = protocolPlanKey(s);
+  useEffect(() => {
+    const plan = s.mealPlan;
+    if (!plan || plan.style !== 'protocol' || !s.protocol || plan.protocolKey === key) return;
+    const inputs = plan.inputs ?? { meals: 4 as const, trainTime: 'evening' as const, seed: 0 };
+    const fresh = buildMealPlan(getState(), { style: 'protocol', ...inputs });
+    const phaseChanged = plan.protocolKey && plan.protocolKey.split('|')[0] !== String(s.protocol.phase);
+    mutate((st) => { st.mealPlan = { ...plan, days: fresh.days, notes: fresh.notes, protocolKey: key }; });
+    if (plan.protocolKey) toast({ title: 'Meal plan updated', sub: phaseChanged ? `Now following ${PHASES[s.protocol.phase].name}.` : 'Your gut-reset foods changed, so the menu was rebuilt.' });
+  }, [key, s.mealPlan?.style]); // eslint-disable-line react-hooks/exhaustive-deps
+}
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const todayWeekday = () => WEEKDAYS[(new Date().getDay() + 6) % 7];
@@ -31,7 +50,7 @@ function MealCard({ m, onLog, logged }: { m: PlannedMeal; onLog?: () => void; lo
         <div><div className="tiny muted">{m.slot}</div><strong className="small">{m.title}</strong></div>
         {onLog && (logged ? <span className="pill accent">Logged ✓</span> : <button className="btn sm" onClick={onLog}>Log</button>)}
       </div>
-      <div className="tiny muted" style={{ marginTop: 3 }}>{m.items.map((x) => `${x.name.split(',')[0]} ${portionLabel(x.name, x.grams)}`).join(' · ')}</div>
+      <div className="tiny muted" style={{ marginTop: 3 }}>{m.items.map((x) => `${x.test ? '🧪 ' : ''}${x.name.split(',')[0]} ${portionLabel(x.name, x.grams)}${x.test ? ' (test portion)' : ''}`).join(' · ')}</div>
       <div className="tiny" style={{ marginTop: 2 }}>{fmt(n.kcal)} kcal · P {fmt(n.protein)} · C {fmt(n.carbs)} · F {fmt(n.fat)}</div>
     </div>
   );
@@ -45,7 +64,7 @@ export function MealPlanCard({ onBuild }: { onBuild: () => void }) {
     return (
       <div className="card" style={{ borderColor: 'var(--accent)' }}>
         <h2 style={{ marginBottom: 4 }}>Build my meal plan</h2>
-        <p className="small muted">Pick a diet style (balanced, vegetarian, vegan, keto, carnivore…) and get a nutrient-dense week that hits your targets and follows your training days.</p>
+        <p className="small muted">Pick a diet style (balanced, vegetarian, vegan, keto, carnivore, gut reset…) and get a nutrient-dense week that hits your targets and follows your training days.</p>
         <button className="btn primary block" style={{ marginTop: 12 }} onClick={onBuild}>Design my meal plan</button>
       </div>
     );
@@ -53,6 +72,8 @@ export function MealPlanCard({ onBuild }: { onBuild: () => void }) {
   const day = plan.days.find((d) => d.weekday === todayWeekday()) ?? plan.days[0];
   const style = STYLES.find((x) => x.key === plan.style);
   return (
+    <>
+    {plan.style === 'protocol' && <PrepCard compact />}
     <div className="card" style={{ borderColor: 'var(--accent)' }}>
       <div className="row between">
         <div><div className="tiny muted">Meal plan · {style?.label} · {day.weekday}</div><h2 style={{ margin: '2px 0' }}>{day.training ? 'Training day' : 'Rest day'} menu</h2></div>
@@ -60,6 +81,7 @@ export function MealPlanCard({ onBuild }: { onBuild: () => void }) {
       </div>
       {day.meals.map((m, i) => <MealCard key={i} m={m} logged={loggedSlots.includes(m.slot)} onLog={() => { logMeal(m); setLogged((x) => [...x, m.slot]); }} />)}
     </div>
+    </>
   );
 }
 
@@ -76,11 +98,11 @@ export function MealPlanner({ open, onClose }: { open: boolean; onClose: () => v
   const tgt = dayTarget(s, inp.style, day.training);
   const micros = useMemo(() => microCoverage(s, days), [days]); // eslint-disable-line react-hooks/exhaustive-deps
   const list = useMemo(() => shoppingList(days), [days]);
-  const styles = STYLES.filter((x) => x.key !== 'protocol' || s.protocol);
+  const styles = STYLES;
 
   const save = async () => {
     if (s.mealPlan && !(await askConfirm('Replace your current meal plan?', 'Replace'))) return;
-    mutate((st) => { st.mealPlan = { id: uid(), style: inp.style, createdAt: today(), days, notes: fresh.notes }; });
+    mutate((st) => { st.mealPlan = { id: uid(), style: inp.style, createdAt: today(), days, notes: fresh.notes, inputs: { meals: inp.meals, trainTime: inp.trainTime, seed: inp.seed }, protocolKey: inp.style === 'protocol' ? protocolPlanKey(st) : undefined }; });
     celebrate(null, 60);
     onClose();
   };
@@ -94,6 +116,17 @@ export function MealPlanner({ open, onClose }: { open: boolean; onClose: () => v
             {styles.map((x) => <button key={x.key} type="button" className={'btn sm' + (inp.style === x.key ? ' primary' : '')} onClick={() => set({ style: x.key })}>{x.label}</button>)}
           </div>
           <p className="tiny muted" style={{ marginTop: 6 }}>{STYLES.find((x) => x.key === inp.style)?.blurb}</p>
+          {inp.style === 'protocol' && !s.protocol && (
+            <div className="card flat" style={{ marginTop: 8, borderColor: 'var(--accent-2)' }}>
+              <p className="small">You haven’t started the gut reset yet. Start it today in Phase 1 (meat, eggs, animal fats, fresh white rice and peeled potatoes), and the plan will follow every phase from here.</p>
+              <div className="row" style={{ marginTop: 8 }}>
+                <button className="btn sm primary grow" onClick={() => mutate((st) => { st.protocol = { start: today(), phase: 1, phaseStart: today(), raw: false, tests: [] }; })}>Start · cooked route</button>
+                <button className="btn sm grow" onClick={() => mutate((st) => { st.protocol = { start: today(), phase: 1, phaseStart: today(), raw: true, tests: [] }; })}>Start · raw route</button>
+              </div>
+              <p className="tiny muted" style={{ marginTop: 6 }}>Already on it? Set your real start date and phase in Coach → Reset.</p>
+            </div>
+          )}
+          {inp.style === 'protocol' && s.protocol && <p className="tiny" style={{ marginTop: 6 }}>Following {PHASES[s.protocol.phase].name}. The plan updates by itself when your phase or tested foods change.</p>}
         </div>
         <div className="grid2">
           <div><div className="small" style={{ marginBottom: 4 }}>Meals per day</div>
@@ -141,6 +174,7 @@ export function MealPlanner({ open, onClose }: { open: boolean; onClose: () => v
           <button className="btn sm" style={{ marginTop: 8 }} onClick={() => setShop(!shop)}>{shop ? 'Hide' : 'Show'} shopping list for the week</button>
           {shop && (
             <div style={{ marginTop: 8 }}>
+              {inp.style === 'protocol' && prepItems(s).length > 0 && <div className="tiny" style={{ margin: '4px 0 6px', color: 'var(--accent-2)' }}>Coming up soon: {prepItems(s).flatMap((x) => x.buy).join(', ')}</div>}
               {list.map((x) => <div key={x.name} className="row between small" style={{ padding: '3px 0' }}><span>{x.name}</span><span className="num muted">{x.grams >= 1000 ? `${fmt(x.grams / 1000, 1)} kg` : `${fmt(x.grams)} g`}</span></div>)}
               <button className="btn sm" style={{ marginTop: 8 }} onClick={() => shareText('Forge shopping list', list.map((x) => `• ${x.name}: ${x.grams >= 1000 ? `${fmt(x.grams / 1000, 1)} kg` : `${fmt(x.grams)} g`}`).join('\n'))}>Share / copy list</button>
             </div>

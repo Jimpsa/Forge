@@ -9,6 +9,7 @@ import { analyze } from '../lib/coach';
 import { fmt, prettyDate, shortDate, today, uid } from '../lib/util';
 import { Bar, Seg } from '../components/ui';
 import { askConfirm } from '../components/confirm';
+import { PrepCard } from '../components/Prep';
 
 const upd = (fn: (p: Protocol) => void) => mutate((s) => { if (s.protocol) fn(s.protocol); });
 
@@ -43,6 +44,7 @@ export function Reset({ goGut, ask }: { goGut: () => void; ask: (q: string) => v
         </div>
       </div>
 
+      <PrepCard />
       <div className="card" style={{ borderColor: checkedIn ? 'var(--border)' : 'var(--warn)' }}>
         <div className="row between">
           <div><strong>{checkedIn ? '✅ Today’s log is done' : '📝 Log today'}</strong><div className="tiny muted">Stool, bloating, pain, skin, energy, sleep and mood — plus your food in the Diet tab.</div></div>

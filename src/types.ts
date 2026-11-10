@@ -200,6 +200,7 @@ export interface Celebrated {
   perfectDays?: string[]; // dates
   badges?: Record<string, string>; // badge id -> date earned
   recapSeen?: string; // week start of the last recap opened
+  prepDone?: string[]; // gut-reset prep reminders the user ticked off
 }
 
 export interface SavedProgram {
@@ -214,10 +215,10 @@ export interface SavedProgram {
   weekly: Record<string, number>;
 }
 
-export interface MealItem { foodId: string; name: string; grams: number }
+export interface MealItem { foodId: string; name: string; grams: number; test?: boolean }
 export interface PlannedMeal { slot: string; title: string; items: MealItem[] }
 export interface PlannedDay { weekday: string; training: boolean; meals: PlannedMeal[] }
-export interface SavedMealPlan { id: string; style: string; createdAt: string; days: PlannedDay[]; notes: string[] }
+export interface SavedMealPlan { id: string; style: string; createdAt: string; days: PlannedDay[]; notes: string[]; inputs?: { meals: 3 | 4 | 5; trainTime: 'morning' | 'midday' | 'evening'; seed: number }; protocolKey?: string }
 
 /** Record of what the user agreed to (GDPR: consent must be demonstrable). */
 export interface Consent { version: string; date: string; age16: boolean; terms: boolean; health: boolean }

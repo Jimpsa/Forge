@@ -20,8 +20,8 @@ const same = (label: string) => ({ raw: label, cooked: label });
 
 export const ITEMS: ProtocolItem[] = [
   // 2A — in this order
-  { key: 'butter', raw: 'Raw butter', cooked: 'High-quality butter (grass-fed/organic)', step: '2A', re: /butter|ghee/i, rawRisk: true },
-  { key: 'cheese', raw: 'Raw cheese', cooked: 'Aged high-quality cheese (grass-fed/organic)', step: '2A', re: /cheese|\bost\b|cheddar|parmesan|gruy/i, rawRisk: true, histamine: true, tip: 'Aged cheese is high in histamine — start with a very small piece.' },
+  { key: 'butter', raw: 'Raw butter', cooked: 'High-quality butter (grass-fed/organic)', step: '2A', re: /^(raw )?butter\b|^butter,|ghee/i, rawRisk: true },
+  { key: 'cheese', raw: 'Raw cheese', cooked: 'Aged high-quality cheese (grass-fed/organic)', step: '2A', re: /(raw cheese|hard cheese|cheddar|parmesan|gruy|präst|herrgård)/i, rawRisk: true, histamine: true, tip: 'Aged cheese is high in histamine — start with a very small piece.' },
   { key: 'yolk', raw: 'Raw egg yolks', cooked: 'Soft-cooked (runny) yolks, pasture-raised eggs', step: '2A', re: /yolk/i, rawRisk: true },
   // 2B
   { key: 'tartare', raw: 'Raw meat tartare', cooked: 'Lightly seared high-quality beef', step: '2B', re: /tartare|carpaccio|seared|rare beef/i, rawRisk: true, tip: 'Use a fresh whole cut, minced the same day. Leftover/aged meat builds histamine.' },
@@ -40,7 +40,7 @@ export const ITEMS: ProtocolItem[] = [
   { key: 'papaya', ...same('Papaya'), step: '2B', group: 'fruit', re: /papaya/i, histamine: true },
   { key: 'banana', ...same('Firm, just-ripe banana'), step: '2B', group: 'fruit', re: /banana|banan/i, tip: 'Firm, slightly green-tipped bananas are lower in FODMAPs than very ripe ones.' },
   // 3
-  { key: 'milk', raw: 'Raw milk', cooked: 'Organic whole milk (gently pasteurised, non-homogenised if available)', step: '3', re: /milk|mjölk/i, rawRisk: true, tip: 'Add after the yogurt is well tolerated. Start with a small glass or less.' },
+  { key: 'milk', raw: 'Raw milk', cooked: 'Organic whole milk (gently pasteurised, non-homogenised if available)', step: '3', re: /^(raw milk|whole milk|milk,)|mjölk/i, rawRisk: true, tip: 'Add after the yogurt is well tolerated. Start with a small glass or less.' },
   // 3 — fermented foods last
   { key: 'kefir', ...same('Kefir'), step: '3F', re: /kefir/i, histamine: true },
   { key: 'sauerkraut', ...same('Sauerkraut'), step: '3F', re: /sauerkraut|surkål/i, histamine: true, tip: 'Start with 1–2 teaspoons.' },
@@ -169,4 +169,97 @@ export function protocolContext(s: AppState): string {
   const nxt = upcoming(p)[0];
   if (nxt && p.phase > 1) lines.push(`Next suggested food: ${itemLabel(p, nxt)}.`);
   return lines.join('\n');
+}
+
+// ---------------- Meal-plan integration ----------------
+
+/** Database food (raw route / cooked route) and a small first-test portion for each protocol item. */
+export const ITEM_FOODS: Record<string, { raw: string; cooked: string; testGrams: number }> = {
+  butter: { raw: 'Raw butter', cooked: 'Butter', testGrams: 5 },
+  cheese: { raw: 'Raw cheese (hard)', cooked: 'Hard cheese 28% (Gouda-type)', testGrams: 15 },
+  yolk: { raw: 'Egg yolk, raw', cooked: 'Egg yolk, soft-cooked', testGrams: 17 },
+  tartare: { raw: 'Beef tartare (raw)', cooked: 'Beef steak, cooked', testGrams: 60 },
+  carrot: { raw: 'Carrot, boiled', cooked: 'Carrot, boiled', testGrams: 50 },
+  cucumber: { raw: 'Cucumber', cooked: 'Cucumber', testGrams: 50 },
+  zucchini: { raw: 'Zucchini, peeled, cooked', cooked: 'Zucchini, peeled, cooked', testGrams: 50 },
+  squash: { raw: 'Butternut squash, baked', cooked: 'Butternut squash, baked', testGrams: 40 },
+  parsnip: { raw: 'Parsnip, boiled', cooked: 'Parsnip, boiled', testGrams: 50 },
+  greenbeans: { raw: 'Green beans, cooked', cooked: 'Green beans, cooked', testGrams: 50 },
+  spinach: { raw: 'Spinach, cooked', cooked: 'Spinach, cooked', testGrams: 40 },
+  lettuce: { raw: 'Lettuce', cooked: 'Lettuce', testGrams: 30 },
+  blueberries: { raw: 'Blueberries', cooked: 'Blueberries', testGrams: 40 },
+  strawberries: { raw: 'Strawberries', cooked: 'Strawberries', testGrams: 40 },
+  kiwi: { raw: 'Kiwi', cooked: 'Kiwi', testGrams: 40 },
+  orange: { raw: 'Orange', cooked: 'Orange', testGrams: 50 },
+  papaya: { raw: 'Papaya', cooked: 'Papaya', testGrams: 50 },
+  banana: { raw: 'Banana', cooked: 'Banana', testGrams: 50 },
+  milk: { raw: 'Raw milk, whole', cooked: 'Whole milk, organic', testGrams: 100 },
+  kefir: { raw: 'Kefir', cooked: 'Kefir', testGrams: 50 },
+  sauerkraut: { raw: 'Sauerkraut', cooked: 'Sauerkraut', testGrams: 10 },
+  kimchi: { raw: 'Kimchi', cooked: 'Kimchi', testGrams: 10 },
+};
+export const itemFood = (p: Protocol, key: string) => (p.raw ? ITEM_FOODS[key]?.raw : ITEM_FOODS[key]?.cooked);
+
+/** Changes whenever the foods available to a gut-reset meal plan change (phase, route, tests, yogurt step). */
+export function protocolPlanKey(s: AppState) {
+  const p = s.protocol;
+  if (!p) return 'none';
+  const ok = p.tests.filter((t) => t.result === 'ok').map((t) => t.food).sort().join(',');
+  const cur = activeTest(p)?.food ?? '';
+  const y = yogurtToday(p);
+  return `${p.phase}|${p.raw ? 'raw' : 'cooked'}|${ok}|${cur}|${y ? Math.ceil(y.tbsp / 4) : 0}`;
+}
+
+export interface PrepItem { id: string; inDays: number; title: string; detail: string; buy: string[] }
+
+const PHASE2_MIN_DAYS = 21;
+
+/** What's coming up in the protocol in the next ~week, so you can shop and prepare in time. */
+export function prepItems(s: AppState): PrepItem[] {
+  const p = s.protocol;
+  if (!p) return [];
+  const out: PrepItem[] = [];
+  const day = dayOf(p.phaseStart);
+  if (p.phase === 1) {
+    const left = PHASES[1].minDays - day + 1;
+    if (left <= 7) out.push({
+      id: `p2-${p.phaseStart}`, inDays: Math.max(0, left),
+      title: left > 0 ? `Phase 2 in about ${left} day${left === 1 ? '' : 's'}` : 'Phase 2 can start once you feel settled',
+      detail: 'Step 2A brings back these animal foods, one at a time and in this order. Get them in time, and only move on if your digestion has settled.',
+      buy: ['butter', 'cheese', 'yolk'].map((k) => itemLabel(p, itemByKey(k)!)),
+    });
+  }
+  if (p.phase === 2) {
+    const cur = activeTest(p);
+    const next = upcoming(p)[0];
+    if (next) {
+      const inDays = cur ? Math.max(0, 3 - dayOf(cur.start) + 1) : 0;
+      out.push({
+        id: `next-${next.key}`, inDays,
+        title: cur ? `Next test in ${inDays === 0 ? 'under a day' : `${inDays} day${inDays === 1 ? '' : 's'}`}: ${itemLabel(p, next)}` : `Ready for the next test: ${itemLabel(p, next)}`,
+        detail: cur ? `If ${itemLabel(p, itemByKey(cur.food)!).toLowerCase()} goes well, this is next. Have it at home so you can start right away.` : 'Start it from Coach → Reset when you feel settled.',
+        buy: [itemLabel(p, next)],
+      });
+    }
+    if (day >= PHASE2_MIN_DAYS - 7) {
+      const left = Math.max(0, PHASE2_MIN_DAYS - day + 1);
+      out.push({
+        id: `p3-${p.phaseStart}`, inDays: left,
+        title: left > 0 ? `Phase 3 in about ${left} day${left === 1 ? '' : 's'}: start your yogurt` : 'Phase 3: start your yogurt',
+        detail: 'Phase 3 opens with homemade L. reuteri yogurt. The first batch ferments for about 36 hours at around 41 °C, so start it a couple of days before you need it. Keep a spoonful of each batch to start the next one.',
+        buy: ['L. reuteri starter (probiotic tablets with the L. reuteri strains)', p.raw ? 'Raw cream or half-and-half' : 'Organic half-and-half or whole milk', 'A little prebiotic fiber (e.g. inulin)', 'A yogurt maker or sous-vide that holds ~41 °C'],
+      });
+    }
+  }
+  if (p.phase === 3) {
+    const y = yogurtToday(p);
+    const next = upcoming(p)[0];
+    if (y && y.tbsp >= 8 && next) out.push({
+      id: `p3-next-${next.key}`, inDays: 0,
+      title: `Coming up: ${itemLabel(p, next)}`,
+      detail: next.step === '3' ? 'Add it once the yogurt is well tolerated. Start with a small glass or less.' : 'Fermented foods come last. Start with a teaspoon or two.',
+      buy: [itemLabel(p, next)],
+    });
+  }
+  return out.filter((x) => !s.celebrated?.prepDone?.includes(x.id));
 }
